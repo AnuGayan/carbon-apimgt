@@ -4247,7 +4247,7 @@ public class ApisApiServiceImpl implements ApisApiService {
             if (StringUtils.equalsIgnoreCase(query, "deployed:true")) {
                 List<APIRevision> apiDeployedRevisions = new ArrayList<>();
                 for (APIRevision apiRevision : apiRevisions) {
-                    if (apiRevision.getApiRevisionDeploymentList().size() != 0) {
+                    if (!apiRevision.getApiRevisionDeploymentList().isEmpty()) {
                         apiDeployedRevisions.add(apiRevision);
                     }
                 }
@@ -4255,7 +4255,7 @@ public class ApisApiServiceImpl implements ApisApiService {
             } else {
                 List<APIRevision> apiNotDeployedRevisions = new ArrayList<>();
                 for (APIRevision apiRevision : apiRevisions) {
-                    if (apiRevision.getApiRevisionDeploymentList().size() == 0) {
+                    if (apiRevision.getApiRevisionDeploymentList().isEmpty()) {
                         apiNotDeployedRevisions.add(apiRevision);
                     }
                 }
