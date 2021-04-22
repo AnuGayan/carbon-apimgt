@@ -3733,7 +3733,7 @@ public class ApisApiServiceImpl implements ApisApiService {
                 ServiceCatalogImpl serviceCatalog = new ServiceCatalogImpl();
                 service = serviceCatalog.getServiceByNameAndVersion(serviceName, serviceVersion, tenantId);
                 if (service == null) {
-                    throw new APIManagementException(ExceptionCodes.from(ExceptionCodes.ERROR_WHILE_TRYING_TO_DISCOVER_SERVICES));
+                    throw new APIManagementException("No matching service version found", ExceptionCodes.SERVICE_VERSION_IS_NOT_FOUND);
                 }
             }
             if (StringUtils.isNotEmpty(serviceVersion) && !serviceVersion
