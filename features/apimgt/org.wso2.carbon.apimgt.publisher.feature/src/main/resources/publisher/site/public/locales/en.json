@@ -4055,12 +4055,6 @@
       "value": "* You are not authorized to publish the API to external developer portals due to insufficient permissions"
     }
   ],
-  "Apis.Details.GoTo.Components.GoToSuggestions.no.result": [
-    {
-      "type": 0,
-      "value": "There are no results for this query"
-    }
-  ],
   "Apis.Details.GoTo.GoTo.btn": [
     {
       "type": 0,
@@ -7868,7 +7862,7 @@
   "ServiceCatalog.Listing.Listing.heading": [
     {
       "type": 0,
-      "value": "Service Catalog"
+      "value": "Services"
     }
   ],
   "ServiceCatalog.Listing.Listing.heading.displaying.service": [
