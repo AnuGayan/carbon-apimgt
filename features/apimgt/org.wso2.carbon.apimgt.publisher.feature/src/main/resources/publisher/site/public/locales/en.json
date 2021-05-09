@@ -4055,10 +4055,22 @@
       "value": "* You are not authorized to publish the API to external developer portals due to insufficient permissions"
     }
   ],
+  "Apis.Details.GoTo.Components.GoToSuggestions.no.result": [
+    {
+      "type": 0,
+      "value": "There are no results for this query"
+    }
+  ],
   "Apis.Details.GoTo.GoTo.btn": [
     {
       "type": 0,
       "value": "Go To"
+    }
+  ],
+  "Apis.Details.GoTo.button.placeholder": [
+    {
+      "type": 0,
+      "value": "Page Search"
     }
   ],
   "Apis.Details.LifeCycle.CheckboxLabels.business.plans.selected": [
@@ -4223,16 +4235,16 @@
       "value": "Select a plan for the API product."
     }
   ],
-  "Apis.Details.LifeCycle.components": [
-    {
-      "type": 0,
-      "value": "Publish API without deployments"
-    }
-  ],
-  "Apis.Details.LifeCycle.publish.content": [
+  "Apis.Details.LifeCycle.components.confirm.publish.message": [
     {
       "type": 0,
       "value": "The API will not be available for consumption unless it is deployed."
+    }
+  ],
+  "Apis.Details.LifeCycle.components.confirm.publish.title": [
+    {
+      "type": 0,
+      "value": "Publish API without deployments"
     }
   ],
   "Apis.Details.LifeCycle.publish.content.info.deployments": [
@@ -7813,6 +7825,12 @@
     {
       "type": 0,
       "value": "Create API"
+    }
+  ],
+  "ServiceCatalog.CreateApi.update.btn.in.progress": [
+    {
+      "type": 0,
+      "value": "Creating API ..."
     }
   ],
   "ServiceCatalog.Listing.Delete.cancel": [
