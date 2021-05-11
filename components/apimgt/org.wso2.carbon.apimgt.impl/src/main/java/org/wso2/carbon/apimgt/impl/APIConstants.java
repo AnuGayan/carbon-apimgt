@@ -347,8 +347,7 @@ public final class APIConstants {
     public static final String API_SECURITY_OAUTH_BASIC_AUTH_API_KEY_MANDATORY = "oauth_basic_auth_api_key_mandatory";
     public static final String CERTIFICATE_COMMON_NAME = "CN";
     public static final List<String> APPLICATION_LEVEL_SECURITY = Arrays.asList("basic_auth", "api_key", "oauth2");
-    public static final String BEGIN_CERTIFICATE_STRING = "-----BEGIN CERTIFICATE-----\n";
-    public static final String BEGIN_CERTIFICATE_STRING_SPACE = "-----BEGIN CERTIFICATE----- ";
+    public static final String BEGIN_CERTIFICATE_STRING = "-----BEGIN CERTIFICATE-----";
     public static final String END_CERTIFICATE_STRING = "-----END CERTIFICATE-----";
 
     public static final String API_RELATED_CUSTOM_PROPERTIES_SURFIX = "__display";
@@ -2046,7 +2045,7 @@ public final class APIConstants {
     public static final String[] WEBSUB_DEFAULT_METHODS = {"post"};
     public static final String[] WEBSUB_SUPPORTED_METHODS = { "subscribe" };
     public static final String[] SSE_SUPPORTED_METHODS = { "subscribe" };
-    public static final String[] WS_SUPPORTED_METHODS = { "subscribe" };
+    public static final String[] WS_SUPPORTED_METHODS = { "subscribe", "publish" };
 
     public static final String JSON_GRANT_TYPES = "grant_types";
     public static final String JSON_USERNAME = "username";
