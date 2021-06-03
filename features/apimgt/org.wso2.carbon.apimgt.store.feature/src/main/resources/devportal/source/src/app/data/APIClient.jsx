@@ -120,6 +120,10 @@ class APIClient {
         const url = new URL(spec.servers[0].url);
         url.host = this.host;
         spec.servers[0].url = String(url);
+        spec.host = this.host;
+        spec.basePath = Settings.app.proxy_context_path
+            ? Settings.app.proxy_context_path + spec.basePath
+            : spec.basePath;
         spec.security = [{ OAuth2Security: ['apim:api_subscribe'] }];
         return spec;
     }
