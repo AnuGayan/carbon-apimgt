@@ -117,6 +117,11 @@ class APIClient {
         const url = new URL(spec.servers[0].url);
         url.host = this.environment.host;
         updatedSpec.servers[0].url = String(url);
+        alert('need to check here');
+        updatedSpec.host = this.environment.host;
+        updatedSpec.basePath = Configurations.app.proxy_context_path
+            ? Configurations.app.proxy_context_path + spec.basePath
+            : spec.basePath;
         return updatedSpec;
     }
 
