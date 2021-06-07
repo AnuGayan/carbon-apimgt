@@ -31,10 +31,6 @@ const AppConfig = {
         },
         docUrl: 'https://apim.docs.wso2.com/en/4.0.0/',
     },
-    idp: {
-        origin: 'https://localhost:9443',
-        checkSessionEndpoint: 'https://localhost:9443/oidc/checksession',
-    },
 };
 
 if (typeof module !== 'undefined') {
