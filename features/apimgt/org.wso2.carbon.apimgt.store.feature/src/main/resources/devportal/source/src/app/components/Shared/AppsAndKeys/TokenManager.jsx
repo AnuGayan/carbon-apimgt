@@ -332,7 +332,7 @@ class TokenManager extends React.Component {
                         };
                         this.setState({
                             keys, keyRequest: newRequest, keyManagers: responseKeyManagerList, selectedTab,
-                            importDisabled: mode === 'MAPPED',
+                            importDisabled: (mode === 'MAPPED' || mode === 'CREATED'),
                         });
                     } else {
                         const selectdKMGrants = selectdKM.availableGrantTypes || [];
@@ -566,6 +566,7 @@ class TokenManager extends React.Component {
             })
             .then(() => {
                 this.setState({ providedConsumerKey: '', providedConsumerSecret: '' });
+                this.loadApplication();
                 Alert.info(intl.formatMessage({
                     id: 'Shared.AppsAndKeys.TokenManager.key.provide.success',
                     defaultMessage: 'Application keys provided successfully',
