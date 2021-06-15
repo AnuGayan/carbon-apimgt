@@ -838,7 +838,7 @@ public class APIMappingUtil {
         apiInfoDTO.setIsSubscriptionAvailable(isSubscriptionAvailable(apiTenant, subscriptionAvailability,
                 subscriptionAllowedTenants));
         int free = 0, commercial = 0;
-        for (Tier tier : apiTiers) {
+        for (Tier tier : throttlingPolicies) {
             tier = APIUtil.getTierFromCache(tier.getName(), apiTenant);
             if (RestApiConstants.FREE.equalsIgnoreCase(tier.getTierPlan())) {
                 free = free + 1;
