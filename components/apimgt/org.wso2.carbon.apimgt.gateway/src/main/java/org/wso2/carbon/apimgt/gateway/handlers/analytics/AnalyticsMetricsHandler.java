@@ -82,7 +82,9 @@ public class AnalyticsMetricsHandler extends AbstractExtendedSynapseHandler {
             return true;
         }
         if (GatewayUtils.isAPIStatusPrototype(messageContext)) {
-            // log the reason
+            if (log.isDebugEnabled()){
+                log.debug("Skipping prototype APIs as analytics does not support this type of API");
+            }
             return true;
         }
         AnalyticsDataProvider provider;
