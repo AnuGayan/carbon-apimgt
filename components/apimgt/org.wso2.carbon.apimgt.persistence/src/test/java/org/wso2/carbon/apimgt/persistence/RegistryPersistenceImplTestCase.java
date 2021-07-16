@@ -304,6 +304,7 @@ public class RegistryPersistenceImplTestCase {
         String apiProviderName = artifact.getAttribute(APIConstants.API_OVERVIEW_PROVIDER);
         apiProviderName = RegistryPersistenceUtil.replaceEmailDomain(apiProviderName);
         String apiName = artifact.getAttribute(APIConstants.API_OVERVIEW_NAME);
+        String apiDescription = artifact.getAttribute(APIConstants.API_OVERVIEW_DESCRIPTION);
         String apiVersion = artifact.getAttribute(APIConstants.API_OVERVIEW_VERSION);
         String apiPath = APIConstants.API_ROOT_LOCATION + RegistryConstants.PATH_SEPARATOR + apiProviderName
                 + RegistryConstants.PATH_SEPARATOR + apiName + RegistryConstants.PATH_SEPARATOR + apiVersion
@@ -315,6 +316,7 @@ public class RegistryPersistenceImplTestCase {
         Organization org = new Organization(SUPER_TENANT_DOMAIN);
         PublisherAPI publisherAPI = apiPersistenceInstance.getPublisherAPI(org, apiUUID);
         Assert.assertEquals("API UUID does not match", apiUUID, publisherAPI.getId());
+        Assert.assertEquals("API Description does not match", apiDescription, publisherAPI.getDescription());
     }
     
     @Test
@@ -330,12 +332,14 @@ public class RegistryPersistenceImplTestCase {
         Mockito.when(registry.getTags(anyString())).thenReturn(tags);
         GenericArtifact artifact = PersistenceHelper.getSampleAPIArtifact();
         String apiUUID = artifact.getId();
-        
+        String apiDescription = artifact.getAttribute(APIConstants.API_OVERVIEW_DESCRIPTION);
+
         APIPersistence apiPersistenceInstance = new RegistryPersistenceImplWrapper(registry, artifact);
 
         Organization org = new Organization(SUPER_TENANT_DOMAIN);
         DevPortalAPI devAPI = apiPersistenceInstance.getDevPortalAPI(org, apiUUID);
         Assert.assertEquals("API UUID does not match", apiUUID, devAPI.getId());
+        Assert.assertEquals("API Description does not match", apiDescription, devAPI.getDescription());
     }
     
     @Test
