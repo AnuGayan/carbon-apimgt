@@ -5852,6 +5852,7 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
                     }
                     Map<String, Tier> definedTiers = APIUtil.getTiers(tenantId);
                     Set<Tier> availableTiers = APIUtil.getAvailableTiers(definedTiers, tiers, mappedAPI.getId().getApiName());
+                    mappedAPI.removeAllTiers();
                     mappedAPI.setAvailableTiers(availableTiers);
                     apiList.add(mappedAPI);
                 }
@@ -6018,6 +6019,7 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
                 }
                 Map<String, Tier> definedTiers = APIUtil.getTiers(tenantId);
                 Set<Tier> availableTiers = APIUtil.getAvailableTiers(definedTiers, tiers, api.getId().getApiName());
+                api.removeAllTiers();
                 api.setAvailableTiers(availableTiers);
                 return api;
             } else {
@@ -6112,6 +6114,7 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
                 }
                 Map<String, Tier> definedTiers = APIUtil.getTiers(tenantId);
                 Set<Tier> availableTiers = APIUtil.getAvailableTiers(definedTiers, tiers, api.getId().getApiName());
+                api.removeAllTiers();
                 api.setAvailableTiers(availableTiers);
                 return api;
             } else {

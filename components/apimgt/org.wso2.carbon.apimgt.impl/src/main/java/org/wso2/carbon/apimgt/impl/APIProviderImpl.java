@@ -8763,6 +8763,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                 }
                 Map<String, Tier> definedTiers = APIUtil.getTiers(tenantId);
                 Set<Tier> availableTiers = APIUtil.getAvailableTiers(definedTiers, tiers, api.getId().getApiName());
+                api.removeAllTiers();
                 api.setAvailableTiers(availableTiers);
                 return api;
             } else {
