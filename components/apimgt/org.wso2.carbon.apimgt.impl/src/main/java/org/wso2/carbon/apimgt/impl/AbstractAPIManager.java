@@ -3890,6 +3890,7 @@ public abstract class AbstractAPIManager implements APIManager {
         }
         Map<String, Tier> definedTiers = APIUtil.getTiers(tenantId);
         Set<Tier> availableTier = APIUtil.getAvailableTiers(definedTiers, tiers, api.getId().getApiName());
+        api.removeAllTiers();
         api.setAvailableTiers(availableTier);
 
         //Scopes
