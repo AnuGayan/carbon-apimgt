@@ -496,11 +496,26 @@ public class JWTValidator {
 
     private boolean isValidCertificateBoundAccessToken(SignedJWTInfo signedJWTInfo) { //Holder of Key token
 
-        if (signedJWTInfo.getX509ClientCertificate() == null ||
-                StringUtils.isEmpty(signedJWTInfo.getX509ClientCertificateHash())) {
-            return true; // If cnf is not available - 200 success
+        if (isCertificateBoundAccessTokenEnabled()) {
+            if (signedJWTInfo.getX509ClientCertificate() == null ||
+                    StringUtils.isEmpty(signedJWTInfo.getX509ClientCertificateHash())) {
+                return true; // If cnf is not available - 200 success
+            }
+            return StringUtils.equals(signedJWTInfo.getX509ClientCertificateHash(),
+                    signedJWTInfo.getCertificateThumbprint());
         }
-        return signedJWTInfo.getX509ClientCertificateHash().equals(signedJWTInfo.getCertificateThumbprint());
+        return true;
+    }
+
+    private boolean isCertificateBoundAccessTokenEnabled() {
+
+        APIManagerConfiguration config = org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder.getInstance().
+                getAPIManagerConfigurationService().getAPIManagerConfiguration();
+        if (config != null) {
+            String firstProperty = config.getFirstProperty(APIConstants.ENABLE_CERTIFICATE_BOUND_ACCESS_TOKEN);
+            return Boolean.parseBoolean(firstProperty);
+        }
+        return false;
     }
 
     protected long getTimeStampSkewInSeconds() {
