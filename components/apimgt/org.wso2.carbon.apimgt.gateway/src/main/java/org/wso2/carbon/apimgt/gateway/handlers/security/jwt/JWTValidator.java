@@ -45,6 +45,7 @@ import org.wso2.carbon.apimgt.gateway.jwt.RevokedJWTDataHolder;
 import org.wso2.carbon.apimgt.gateway.utils.GatewayUtils;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.APIManagerConfiguration;
+import org.wso2.carbon.apimgt.impl.APIManagerConfigurationService;
 import org.wso2.carbon.apimgt.impl.caching.CacheProvider;
 import org.wso2.carbon.apimgt.impl.dto.APIKeyValidationInfoDTO;
 import org.wso2.carbon.apimgt.impl.dto.ExtendedJWTConfigurationDto;
@@ -509,11 +510,14 @@ public class JWTValidator {
 
     private boolean isCertificateBoundAccessTokenEnabled() {
 
-        APIManagerConfiguration config = org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder.getInstance().
-                getAPIManagerConfigurationService().getAPIManagerConfiguration();
-        if (config != null) {
-            String firstProperty = config.getFirstProperty(APIConstants.ENABLE_CERTIFICATE_BOUND_ACCESS_TOKEN);
-            return Boolean.parseBoolean(firstProperty);
+        APIManagerConfigurationService apimConfigService = org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder.
+                getInstance().getAPIManagerConfigurationService();
+        if (apimConfigService != null) {
+            APIManagerConfiguration config = apimConfigService.getAPIManagerConfiguration();
+            if (config != null) {
+                String firstProperty = config.getFirstProperty(APIConstants.ENABLE_CERTIFICATE_BOUND_ACCESS_TOKEN);
+                return Boolean.parseBoolean(firstProperty);
+            }
         }
         return false;
     }
