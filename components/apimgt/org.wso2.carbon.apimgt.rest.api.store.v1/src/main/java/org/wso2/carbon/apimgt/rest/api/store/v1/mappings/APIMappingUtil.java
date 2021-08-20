@@ -807,10 +807,20 @@ public class APIMappingUtil {
         
         Set<Tier> throttlingPolicies = new HashSet<Tier>();
         List<String> throttlingPolicyNames = new ArrayList<>();
+        String tiers = null;
         Set<Tier> apiTiers = api.getAvailableTiers();
+        Set<String> tierNameSet = new HashSet<String>();
+        for (Tier t : apiTiers) {
+            tierNameSet.add(t.getName());
+        }
+        if (api.getAvailableTiers() != null) {
+            tiers = String.join("||", tierNameSet);
+        }
+        Map<String, Tier> definedTiers = APIUtil.getTiers(APIUtil.getTenantId(RestApiCommonUtil.getLoggedInUsername()));
+        Set<Tier> availableTiers = APIUtil.getAvailableTiers(definedTiers, tiers, api.getId().getApiName());
         APIConsumer apiConsumer = RestApiCommonUtil.getLoggedInUserConsumer();
         Set<String> deniedTiers = apiConsumer.getDeniedTiers();
-        for (Tier currentTier : apiTiers) {
+        for (Tier currentTier : availableTiers) {
             if (!deniedTiers.contains(currentTier.getName())) {
                 throttlingPolicies.add(currentTier);
                 throttlingPolicyNames.add(currentTier.getName());
@@ -880,10 +890,20 @@ public class APIMappingUtil {
 
         Set<Tier> throttlingPolicies = new HashSet<Tier>();
         List<String> throttlingPolicyNames = new ArrayList<>();
+        String tiers = null;
         Set<Tier> apiTiers = apiProduct.getAvailableTiers();
+        Set<String> tierNameSet = new HashSet<String>();
+        for (Tier t : apiTiers) {
+            tierNameSet.add(t.getName());
+        }
+        if (apiProduct.getAvailableTiers() != null) {
+            tiers = String.join("||", tierNameSet);
+        }
+        Map<String, Tier> definedTiers = APIUtil.getTiers(APIUtil.getTenantId(RestApiCommonUtil.getLoggedInUsername()));
+        Set<Tier> availableTiers = APIUtil.getAvailableTiers(definedTiers, tiers, apiProduct.getId().getName());
         APIConsumer apiConsumer = RestApiCommonUtil.getLoggedInUserConsumer();
         Set<String> deniedTiers = apiConsumer.getDeniedTiers();
-        for (Tier currentTier : apiTiers) {
+        for (Tier currentTier : availableTiers) {
             if (!deniedTiers.contains(currentTier.getName())) {
                 throttlingPolicies.add(currentTier);
                 throttlingPolicyNames.add(currentTier.getName());

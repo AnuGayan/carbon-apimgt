@@ -45,7 +45,6 @@ import org.wso2.carbon.apimgt.gateway.jwt.RevokedJWTDataHolder;
 import org.wso2.carbon.apimgt.gateway.utils.GatewayUtils;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.APIManagerConfiguration;
-import org.wso2.carbon.apimgt.impl.APIManagerConfigurationService;
 import org.wso2.carbon.apimgt.impl.caching.CacheProvider;
 import org.wso2.carbon.apimgt.impl.dto.APIKeyValidationInfoDTO;
 import org.wso2.carbon.apimgt.impl.dto.ExtendedJWTConfigurationDto;
@@ -497,29 +496,11 @@ public class JWTValidator {
 
     private boolean isValidCertificateBoundAccessToken(SignedJWTInfo signedJWTInfo) { //Holder of Key token
 
-        if (isCertificateBoundAccessTokenEnabled()) {
-            if (signedJWTInfo.getX509ClientCertificate() == null ||
-                    StringUtils.isEmpty(signedJWTInfo.getX509ClientCertificateHash())) {
-                return true; // If cnf is not available - 200 success
-            }
-            return StringUtils.equals(signedJWTInfo.getX509ClientCertificateHash(),
-                    signedJWTInfo.getCertificateThumbprint());
+        if (signedJWTInfo.getX509ClientCertificate() == null ||
+                StringUtils.isEmpty(signedJWTInfo.getX509ClientCertificateHash())) {
+            return true; // If cnf is not available - 200 success
         }
-        return true;
-    }
-
-    private boolean isCertificateBoundAccessTokenEnabled() {
-
-        APIManagerConfigurationService apimConfigService = org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder.
-                getInstance().getAPIManagerConfigurationService();
-        if (apimConfigService != null) {
-            APIManagerConfiguration config = apimConfigService.getAPIManagerConfiguration();
-            if (config != null) {
-                String firstProperty = config.getFirstProperty(APIConstants.ENABLE_CERTIFICATE_BOUND_ACCESS_TOKEN);
-                return Boolean.parseBoolean(firstProperty);
-            }
-        }
-        return false;
+        return signedJWTInfo.getX509ClientCertificateHash().equals(signedJWTInfo.getCertificateThumbprint());
     }
 
     protected long getTimeStampSkewInSeconds() {
