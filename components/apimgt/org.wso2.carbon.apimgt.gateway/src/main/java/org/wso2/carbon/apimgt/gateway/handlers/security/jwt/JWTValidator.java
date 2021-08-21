@@ -523,7 +523,11 @@ public class JWTValidator {
                 if (getGatewayKeyCache().get(jti) != null) {
                     JWTValidationInfo tempJWTValidationInfo = (JWTValidationInfo) getGatewayKeyCache().get(jti);
                     checkTokenExpiration(jti, tempJWTValidationInfo, tenantDomain);
-                    tempJWTValidationInfo.setValid(isValidCertificateBoundAccessToken(signedJWTInfo));
+                    /* Only when cnf validation fails the validation info is updated when it passes the other
+                     validations are performed */
+                    if (!isValidCertificateBoundAccessToken(signedJWTInfo)) {
+                        tempJWTValidationInfo.setValid(false);
+                    }
                     jwtValidationInfo = tempJWTValidationInfo;
                 }
             } else if (SignedJWTInfo.ValidationStatus.INVALID.equals(signedJWTInfo.getValidationStatus())
