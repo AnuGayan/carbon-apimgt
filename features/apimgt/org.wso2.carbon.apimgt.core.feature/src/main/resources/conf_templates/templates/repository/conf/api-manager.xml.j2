@@ -1382,4 +1382,14 @@
         {% endfor %}
     </ExtensionListeners>
     {% endif %}
+
+   {% if apim.lambda_mediator_config is defined %}
+   <LambdaMediatorConfig>
+       <PassRequestParamsToLambdaFunction>{{apim.lambda_mediator_config.pass_request_params}}</PassRequestParamsToLambdaFunction>
+   </LambdaMediatorConfig>
+   {% else %}
+   <LambdaMediatorConfig>
+       <PassRequestParamsToLambdaFunction>false</PassRequestParamsToLambdaFunction>
+   </LambdaMediatorConfig>
+   {% endif %}
 </APIManager>
