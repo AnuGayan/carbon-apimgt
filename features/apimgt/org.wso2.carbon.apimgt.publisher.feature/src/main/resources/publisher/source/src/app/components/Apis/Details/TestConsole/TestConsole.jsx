@@ -471,7 +471,7 @@ class TestConsole extends React.Component {
             <>
                 {!isProtoTyped && (
                     <>
-                        <Typography variant='h4' align='left' className={classes.mainTitle}>
+                        <Typography variant='h4' component='h2' align='left' className={classes.mainTitle}>
                             <FormattedMessage
                                 id='Apis.Details.index.Tryout'
                                 defaultMessage='Test Console'
@@ -526,7 +526,7 @@ class TestConsole extends React.Component {
                 )}
                 {(isProtoTyped && enableForTest) && (
                     <Paper className={classes.paper}>
-                        <Typography variant='h4' className={classes.titleSub}>
+                        <Typography variant='h4' component='h2' className={classes.titleSub}>
                             <FormattedMessage id='Apis.Details.index.Tryout' defaultMessage='Test Console' />
                         </Typography>
                         <TryOutController
@@ -563,7 +563,7 @@ class TestConsole extends React.Component {
                 )}
                 {(isProtoTyped && !enableForTest) && (
                     <>
-                        <Typography variant='h4' align='left' className={classes.mainTitle}>
+                        <Typography variant='h4' component='h2' align='left' className={classes.mainTitle}>
                             <FormattedMessage
                                 id='Apis.Details.index.Tryout'
                                 defaultMessage='Test Console'
