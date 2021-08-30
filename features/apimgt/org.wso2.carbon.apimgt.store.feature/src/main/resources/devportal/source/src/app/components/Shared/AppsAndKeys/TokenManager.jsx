@@ -397,11 +397,6 @@ class TokenManager extends React.Component {
                 return;
             }
         }
-
-        if (!this.isValidAdditionalProperties(keyRequest)) {
-            return;
-        }
-
         this.setState({ isLoading: true });
 
         this.application
@@ -453,38 +448,6 @@ class TokenManager extends React.Component {
                     defaultMessage: 'Error occurred when generating application keys',
                 }));
             }).finally(() => this.setState({ isLoading: false }));
-    }
-
-    /**
-     * Validate additional properties if the resident key manager is selected
-     */
-    isValidAdditionalProperties = (keyRequest) => {
-        const { intl } = this.props;
-
-        if (keyRequest.keyManager === "Resident Key Manager" && keyRequest.additionalProperties !== null) {
-            for (const property in keyRequest.additionalProperties) {
-                let propertyValue = keyRequest.additionalProperties[property];
-                if (propertyValue !== 'N/A' && propertyValue !== '') {
-                    if (isNaN(Number(propertyValue))) {
-                        Alert.error(intl.formatMessage({
-                            id: 'Shared.AppsAndKeys.TokenManager.key.generate.error.nan',
-                            defaultMessage: 'Invalid values provided. ' +
-                                'Please provide numeric values for configuration values.',
-                        }));
-                        return false;
-                    }
-                    if (Number(propertyValue) < 0) {
-                        Alert.error(intl.formatMessage({
-                            id: 'Shared.AppsAndKeys.TokenManager.key.generate.error.negativevalue',
-                            defaultMessage: 'Invalid values provided. ' +
-                                'Please provide positive numeric values for configuration values.',
-                        }));
-                        return false;
-                    }
-                }
-            }
-        }
-        return true;
     }
 
     /**
