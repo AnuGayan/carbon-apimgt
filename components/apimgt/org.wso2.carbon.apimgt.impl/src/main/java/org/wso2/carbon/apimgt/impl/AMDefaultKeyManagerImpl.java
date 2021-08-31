@@ -1128,8 +1128,9 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
                         try {
                             Double doubleValue = Double.parseDouble(additionalProperty);
                             if (doubleValue < 0) {
-                                // if the value is a negative value, Long.MAX_VALUE will be assigned
-                                entry.setValue(new Gson().toJsonTree(Long.MAX_VALUE));
+                                String errMsg = "Application configuration values cannot have negative values.";
+                                throw new APIManagementException(errMsg, ExceptionCodes
+                                        .from(ExceptionCodes.INVALID_APPLICATION_ADDITIONAL_PROPERTIES, errMsg));
                             }
                         } catch (NumberFormatException e) {
                             String errMsg = "Application configuration values cannot have string values.";
