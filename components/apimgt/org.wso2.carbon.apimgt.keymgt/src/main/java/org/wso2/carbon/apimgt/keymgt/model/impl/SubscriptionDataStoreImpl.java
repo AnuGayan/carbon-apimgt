@@ -129,7 +129,7 @@ public class SubscriptionDataStoreImpl implements SubscriptionDataStore {
                 log.debug("Loading Application to the in-memory datastore. applicationId = " + application.getId());
                 addOrUpdateApplication(application);
             } else {
-                log.debug("Application not found. applicationId = " + application.getId());
+                log.debug("Application not found. applicationId = " + appId);
             }
         }
 
