@@ -76,7 +76,7 @@ public class KeyManagerMappingUtil {
             jsonObject.remove(APIConstants.KeyManager.TOKEN_ENDPOINT);
         }
         JsonElement displayTokenEndpointElement = jsonObject.get(APIConstants.KeyManager.DISPLAY_TOKEN_ENDPOINT);
-        if (!displayTokenEndpointElement.isJsonNull()) {
+        if (displayTokenEndpointElement != null && !displayTokenEndpointElement.getAsString().trim().isEmpty()) {
             keyManagerDTO.setDisplayTokenEndpoint(displayTokenEndpointElement.getAsString());
             jsonObject.remove(APIConstants.KeyManager.DISPLAY_TOKEN_ENDPOINT);
         }
@@ -86,7 +86,8 @@ public class KeyManagerMappingUtil {
             jsonObject.remove(APIConstants.KeyManager.REVOKE_ENDPOINT);
         }
         JsonElement displayRevokeEndpointElement = jsonObject.get(APIConstants.KeyManager.DISPLAY_REVOKE_ENDPOINT);
-        if (!displayRevokeEndpointElement.isJsonNull()) {
+        if (displayRevokeEndpointElement != null &&
+                !displayRevokeEndpointElement.getAsString().trim().isEmpty()) {
             keyManagerDTO.setDisplayRevokeEndpoint(displayRevokeEndpointElement.getAsString());
             jsonObject.remove(APIConstants.KeyManager.DISPLAY_REVOKE_ENDPOINT);
         }

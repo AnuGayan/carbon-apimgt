@@ -58,7 +58,8 @@ public class KeyManagerMappingUtil {
                     jsonObject.get(APIConstants.KeyManager.ENABLE_TOKEN_HASH).getAsBoolean());
         }
         if (jsonObject.has(APIConstants.KeyManager.DISPLAY_TOKEN_ENDPOINT) &&
-                !jsonObject.get(APIConstants.KeyManager.DISPLAY_TOKEN_ENDPOINT).isJsonNull()) {
+                !jsonObject.get(APIConstants.KeyManager.DISPLAY_TOKEN_ENDPOINT).isJsonNull() &&
+                !jsonObject.get(APIConstants.KeyManager.DISPLAY_TOKEN_ENDPOINT).getAsString().trim().isEmpty()) {
             keyManagerInfoDTO.setTokenEndpoint(
                     jsonObject.get(APIConstants.KeyManager.DISPLAY_TOKEN_ENDPOINT).getAsString());
         } else {
@@ -68,7 +69,8 @@ public class KeyManagerMappingUtil {
             }
         }
         if (jsonObject.has(APIConstants.KeyManager.DISPLAY_REVOKE_ENDPOINT) &&
-                !jsonObject.get(APIConstants.KeyManager.DISPLAY_REVOKE_ENDPOINT).isJsonNull()) {
+                !jsonObject.get(APIConstants.KeyManager.DISPLAY_REVOKE_ENDPOINT).isJsonNull() &&
+                !jsonObject.get(APIConstants.KeyManager.DISPLAY_REVOKE_ENDPOINT).getAsString().trim().isEmpty()) {
             keyManagerInfoDTO.setRevokeEndpoint(
                     jsonObject.get(APIConstants.KeyManager.DISPLAY_REVOKE_ENDPOINT).getAsString());
         } else {
