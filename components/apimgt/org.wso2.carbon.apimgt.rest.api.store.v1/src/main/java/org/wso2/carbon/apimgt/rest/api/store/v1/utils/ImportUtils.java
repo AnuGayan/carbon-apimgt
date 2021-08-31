@@ -294,9 +294,6 @@ public class ImportUtils {
                 jsonParamObj.put(APIConstants.JSON_CLIENT_SECRET, applicationKeyDTO.getConsumerSecret());
             }
         }
-        if (!StringUtils.isEmpty(applicationKeyDTO.getCallbackUrl())) {
-            jsonParamObj.put(APIConstants.JSON_CALLBACK_URL, applicationKeyDTO.getCallbackUrl());
-        }
         if (applicationKeyDTO.getAdditionalProperties() != null) {
             String additionalProperties = new Gson().toJson(applicationKeyDTO.getAdditionalProperties());
             org.json.JSONObject jsonObject = new org.json.JSONObject(additionalProperties);
