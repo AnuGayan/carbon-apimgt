@@ -129,10 +129,10 @@ public class ApplicationsApiServiceImpl implements ApplicationsApiService {
         ApplicationListDTO applicationListDTO = new ApplicationListDTO();
 
         String username = RestApiCommonUtil.getLoggedInUsername();
-        
+
         // todo: Do a second level filtering for the incoming group ID.
         // todo: eg: use case is when there are lots of applications which is accessible to his group "g1", he wants to see
-        // todo: what are the applications shared to group "g2" among them. 
+        // todo: what are the applications shared to group "g2" among them.
         groupId = RestApiUtil.getLoggedInUserGroupId();
         try {
             APIConsumer apiConsumer = RestApiCommonUtil.getConsumer(username);
@@ -223,15 +223,8 @@ public class ApplicationsApiServiceImpl implements ApplicationsApiService {
                         oldApplication.getUUID());
             } else {
                 application = preProcessAndAddApplication(ownerId, applicationDTO);
+                update = Boolean.FALSE;
             }
-
-            // Get keys to import
-            List<ApplicationKeyDTO> applicationKeys = applicationDTO.getKeys();
-            for (ApplicationKeyDTO applicationKey : applicationKeys) {
-                application.addKey(ImportUtils.getAPIKeyFromApplicationKeyDTO(applicationKey));
-            }
-            // Update the application to add keys
-            apiConsumer.updateApplication(application);
 
             List<APIIdentifier> skippedAPIs = new ArrayList<>();
             if (skipSubscriptions == null || !skipSubscriptions) {
@@ -248,10 +241,17 @@ public class ApplicationsApiServiceImpl implements ApplicationsApiService {
 
             // check whether keys need to be skipped while import
             if (skipApplicationKeys == null || !skipApplicationKeys) {
+                // if this is an update, old keys will be removed and the OAuth app will be overridden with new values
+                if (update) {
+                    if (applicationDTO.getKeys().size() > 0 && importedApplication.getKeys().size() > 0) {
+                        importedApplication.getKeys().clear();
+                    }
+                }
                 // Add application keys if present and keys does not exists in the current application
-                if (application.getKeys().size() > 0 && importedApplication.getKeys().size() == 0) {
-                    for (APIKey apiKey : application.getKeys()) {
-                        ImportUtils.addApplicationKey(ownerId, importedApplication, apiKey, apiConsumer);
+                if (applicationDTO.getKeys().size() > 0 && importedApplication.getKeys().size() == 0) {
+                    for (ApplicationKeyDTO applicationKeyDTO : applicationDTO.getKeys()) {
+                        ImportUtils.addApplicationKey(ownerId, importedApplication, applicationKeyDTO, apiConsumer,
+                                update);
                     }
                 }
             }
@@ -417,11 +417,11 @@ public class ApplicationsApiServiceImpl implements ApplicationsApiService {
         try {
             APIConsumer apiConsumer = APIManagerFactory.getInstance().getAPIConsumer(username);
             Application oldApplication = apiConsumer.getApplicationByUUID(applicationId);
-            
+
             if (oldApplication == null) {
                 RestApiUtil.handleResourceNotFoundError(RestApiConstants.RESOURCE_APPLICATION, applicationId, log);
             }
-            
+
             if (!RestAPIStoreUtils.isUserOwnerOfApplication(oldApplication)) {
                 RestApiUtil.handleAuthorizationFailure(RestApiConstants.RESOURCE_APPLICATION, applicationId, log);
             }
@@ -430,7 +430,7 @@ public class ApplicationsApiServiceImpl implements ApplicationsApiService {
                     applicationId);
             ApplicationDTO updatedApplicationDTO = ApplicationMappingUtil.fromApplicationtoDTO(updatedApplication);
             return Response.ok().entity(updatedApplicationDTO).build();
-                
+
         } catch (APIManagementException e) {
             if (RestApiUtil.isDueToApplicationNameWhiteSpaceValidation(e)) {
                 RestApiUtil.handleBadRequest("Application name cannot contains leading or trailing white spaces", log);
