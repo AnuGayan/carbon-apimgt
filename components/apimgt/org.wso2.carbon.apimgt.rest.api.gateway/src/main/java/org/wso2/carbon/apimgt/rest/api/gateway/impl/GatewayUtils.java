@@ -17,7 +17,6 @@ import org.wso2.carbon.apimgt.rest.api.gateway.dto.ApplicationListDTO;
 import org.wso2.carbon.apimgt.rest.api.gateway.dto.SubscriptionDTO;
 import org.wso2.carbon.apimgt.rest.api.gateway.dto.SubscriptionInfoDTO;
 import org.wso2.carbon.apimgt.rest.api.gateway.dto.URLMappingDTO;
-import org.wso2.carbon.apimgt.rest.api.util.utils.RestApiUtil;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import java.util.ArrayList;
@@ -46,6 +45,7 @@ public class GatewayUtils {
         apiInfoDTO.setApiId(api.getApiId());
         apiInfoDTO.setApiType(api.getApiType());
         apiInfoDTO.setName(api.getApiName());
+        apiInfoDTO.setVersion(api.getApiVersion());
         apiInfoDTO.setApiUUID(api.getUuid());
         apiInfoDTO.setContext(api.getContext());
         apiInfoDTO.setIsDefaultVersion(api.isDefaultVersion());
@@ -61,13 +61,16 @@ public class GatewayUtils {
             List<Subscription> subscriptions, SubscriptionDataStore subscriptionDataStore) {
 
         List<SubscriptionInfoDTO> subscriptionInfoDTOList = new ArrayList<>();
-        for (Subscription subscription : subscriptions) {
-            SubscriptionInfoDTO subscriptionInfoDTO = new SubscriptionInfoDTO();
-            subscriptionInfoDTO.setStatus(subscription.getSubscriptionState());
-            subscriptionInfoDTO.setSubscriptionUUID(subscription.getSubscriptionUUId());
-            subscriptionInfoDTO.setSubscriptionPolicy(subscription.getPolicyId());
-            subscriptionInfoDTO.setApplication(convertToApplicationDto(subscription.getAppId(), subscriptionDataStore));
-            subscriptionInfoDTOList.add(subscriptionInfoDTO);
+        if (subscriptions != null) {
+            for (Subscription subscription : subscriptions) {
+                SubscriptionInfoDTO subscriptionInfoDTO = new SubscriptionInfoDTO();
+                subscriptionInfoDTO.setStatus(subscription.getSubscriptionState());
+                subscriptionInfoDTO.setSubscriptionUUID(subscription.getSubscriptionUUId());
+                subscriptionInfoDTO.setSubscriptionPolicy(subscription.getPolicyId());
+                subscriptionInfoDTO.setApplication(convertToApplicationDto(subscription.getAppId(), subscriptionDataStore));
+                subscriptionInfoDTOList.add(subscriptionInfoDTO);
+            }
+
         }
         return subscriptionInfoDTOList;
     }
