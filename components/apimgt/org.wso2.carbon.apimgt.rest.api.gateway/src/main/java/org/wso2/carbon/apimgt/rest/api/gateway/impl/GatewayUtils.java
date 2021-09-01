@@ -61,7 +61,7 @@ public class GatewayUtils {
             List<Subscription> subscriptions, SubscriptionDataStore subscriptionDataStore) {
 
         List<SubscriptionInfoDTO> subscriptionInfoDTOList = new ArrayList<>();
-        if (subscriptions != null){
+        if (subscriptions != null) {
             for (Subscription subscription : subscriptions) {
                 SubscriptionInfoDTO subscriptionInfoDTO = new SubscriptionInfoDTO();
                 subscriptionInfoDTO.setStatus(subscription.getSubscriptionState());
