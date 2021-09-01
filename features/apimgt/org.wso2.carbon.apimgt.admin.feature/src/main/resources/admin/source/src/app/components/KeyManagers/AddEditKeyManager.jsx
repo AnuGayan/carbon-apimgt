@@ -699,7 +699,7 @@ function AddEditKeyManager(props) {
                             )}
                         </Box>
                     </Grid>
-                    {!isResidentKeyManager ? (
+                    {!isResidentKeyManager && (
                         <>
                             <Grid item xs={12}>
                                 <Box marginTop={2} marginBottom={2}>
@@ -981,7 +981,8 @@ function AddEditKeyManager(props) {
                                 </Box>
                             </Grid>
                         </>
-                    ) : (
+                    )}
+                    {isResidentKeyManager && (
                         <>
                             <Grid item xs={12}>
                                 <Box marginTop={2} marginBottom={2}>
