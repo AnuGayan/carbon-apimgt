@@ -462,22 +462,18 @@ public class Utils {
                 (Map) axis2MessageContext.getProperty(org.apache.axis2.context.MessageContext.TRANSPORT_HEADERS);
 
         String certificate = (String) headers.get(Utils.getClientCertificateHeader());
-        byte[] bytes;
         if (certificate != null) {
-            if (!isClientCertificateEncoded()) {
-                certificate = APIUtil.getX509certificateContent(certificate);
-                bytes = certificate.getBytes();
-            } else {
+            if (isClientCertificateEncoded()) {
                 try {
                     certificate = URLDecoder.decode(certificate, "UTF-8");
                 } catch (UnsupportedEncodingException e) {
                     String msg = "Error while URL decoding certificate";
                     throw new APIManagementException(msg, e);
                 }
-
-                certificate = APIUtil.getX509certificateContent(certificate);
-                bytes = Base64.decodeBase64(certificate);
             }
+
+            certificate = APIUtil.getX509certificateContent(certificate);
+            byte[] bytes = Base64.decodeBase64(certificate);
 
             try (InputStream inputStream = new ByteArrayInputStream(bytes)) {
                 return X509Certificate.getInstance(inputStream);
