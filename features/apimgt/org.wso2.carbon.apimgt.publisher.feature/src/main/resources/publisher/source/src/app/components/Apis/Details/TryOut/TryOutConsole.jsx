@@ -39,7 +39,6 @@ import { Link } from 'react-router-dom';
 import MenuItem from '@material-ui/core/MenuItem';
 import Paper from '@material-ui/core/Paper';
 import PropTypes from 'prop-types';
-import SwaggerUI from './SwaggerUI';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 import Utils from 'AppData/Utils';
@@ -48,6 +47,7 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { useAPI } from 'AppComponents/Apis/Details/components/ApiContext';
 import { usePublisherSettings } from 'AppComponents/Shared/AppContext';
+import SwaggerUI from './SwaggerUI';
 
 dayjs.extend(relativeTime);
 
