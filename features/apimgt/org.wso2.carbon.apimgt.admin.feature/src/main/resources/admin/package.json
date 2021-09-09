@@ -6,13 +6,13 @@
     "scripts": {
         "test": "jest",
         "test:coverage": "jest --coverage",
-        "build:prod": "rm -R site/public/dist/; npm rum i18n && NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 webpack --mode production --stats=errors-only",
-        "build:dev": "rm -R site/public/dist/; NODE_ENV=development webpack --mode development --watch ",
+        "build:prod": "rimraf site/public/dist/ && npm rum i18n && cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 webpack --mode production --stats=errors-only",
+        "build:dev": "rimraf site/public/dist/ && cross-env NODE_ENV=development webpack --mode development --watch",
         "analysis": "NODE_ENV=analysis NODE_OPTIONS=--max_old_space_size=8172 webpack --mode production --progress",
         "lint": "eslint source",
-        "i18n": "extract-messages -l=en,fr -o site/public/locales/ -d en --extractFromFormatMessageCall --flat 'source/src/app/**/*.jsx'",
+        "i18n": "cross-env NODE_ENV=production extract-messages -l=en -o site//public//locales// -d en --extractFromFormatMessageCall --flat 'source//src//app//**//*.jsx'",
         "check-unused": "webpack --mode production --env.unused true --display errors-only",
-        "start": "webpack serve --compress --https --port 8081 --mode development "
+        "start": "webpack serve --compress --https --port 8081 --mode development --env script=start"
     },
     "repository": {
         "type": "git",
@@ -68,6 +68,7 @@
         "babel-jest": "^24.9.0",
         "babel-loader": "^8.1.0",
         "babel-plugin-dynamic-import-node": "^2.3.3",
+        "cross-env": "^7.0.3",
         "css-loader": "^0.28.2",
         "enzyme": "^3.11.0",
         "enzyme-adapter-react-16": "^1.15.2",
@@ -89,6 +90,7 @@
         "monaco-editor-webpack-plugin": "^1.9.0",
         "prettier": "^1.19.1",
         "react-hot-loader": "^4.13.0",
+        "rimraf": "^3.0.2",
         "style-loader": "^0.18.1",
         "underscore-template-loader": "^1.1.0",
         "unused-files-webpack-plugin": "^3.4.0",
