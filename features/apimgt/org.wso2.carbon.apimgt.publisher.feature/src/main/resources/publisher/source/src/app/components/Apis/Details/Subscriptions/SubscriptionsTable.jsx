@@ -20,7 +20,7 @@ import React, { Component } from 'react';
 import { FormattedMessage, injectIntl, defineMessages } from 'react-intl';
 import IconButton from '@material-ui/core/IconButton';
 import Button from '@material-ui/core/Button';
-import Box from '@material-ui/core/Box';
+// import Box from '@material-ui/core/Box';
 import FirstPageIcon from '@material-ui/icons/FirstPage';
 import KeyboardArrowLeft from '@material-ui/icons/KeyboardArrowLeft';
 import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
@@ -28,25 +28,18 @@ import LastPageIcon from '@material-ui/icons/LastPage';
 import Paper from '@material-ui/core/Paper';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Grid from '@material-ui/core/Grid';
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableRow from '@material-ui/core/TableRow';
 import TablePagination from '@material-ui/core/TablePagination';
 import Tooltip from '@material-ui/core/Tooltip';
 import withStyles from '@material-ui/core/styles/withStyles';
 import Typography from '@material-ui/core/Typography';
 import PropTypes from 'prop-types';
 import MUIDataTable from 'mui-datatables';
-import InfoIcon from '@material-ui/icons/Info';
-import UserIcon from '@material-ui/icons/Person';
-
-
 import Alert from 'AppComponents/Shared/Alert';
 import API from 'AppData/api';
 import { ScopeValidation, resourceMethod, resourcePath } from 'AppData/ScopeValidation';
 import AuthManager from 'AppData/AuthManager';
 import Invoice from './Invoice';
+import SubscriberDetailsPopup from './SubscriberDetailsPopup';
 
 const styles = (theme) => ({
     heading: {
@@ -270,7 +263,6 @@ class SubscriptionsTable extends Component {
         this.handleChangeRowsPerPage = this.handleChangeRowsPerPage.bind(this);
         this.filterSubscriptions = this.filterSubscriptions.bind(this);
         this.isMonetizedPolicy = this.isMonetizedPolicy.bind(this);
-        this.renderClaims = this.renderClaims.bind(this);
         this.isNotCreator = AuthManager.isNotCreator();
         this.isNotPublisher = AuthManager.isNotPublisher();
     }
@@ -581,25 +573,8 @@ class SubscriptionsTable extends Component {
         promisedSubscriptions
             .then((response) => {
                 for (let i = 0; i < response.body.list.length; i++) {
-                    const { subscriptionId } = response.body.list[i];
                     response.body.list[i].name = response.body.list[i].applicationInfo.name;
-                    const promisedInfo = api.getSubscriberInfo(subscriptionId);
-                    promisedInfo
-                        .then((resp) => {
-                            this.setState((prevState) => ({
-                                subscriberClaims: {
-                                    ...prevState.subscriberClaims,
-                                    [subscriptionId]: resp.body,
-                                },
-                            }));
-                        })
-                        .catch((errorMessage) => {
-                            console.error(errorMessage);
-                            Alert.error(intl.formatMessage({
-                                id: 'Apis.Details.Subscriptions.SubscriptionsTable.subscriber.info.error',
-                                defaultMessage: 'Error while retrieving the subscriber information',
-                            }));
-                        });
+                    response.body.list[i].subscriber = response.body.list[i].applicationInfo.subscriber;
                 }
                 this.setState({
                     subscriptions: response.body.list,
@@ -648,56 +623,6 @@ class SubscriptionsTable extends Component {
     }
 
     /**
-     * Render claims based on the claim object
-     */
-    renderClaims(claimsObject) {
-        const { classes } = this.props;
-        if (claimsObject) {
-            return (
-                <div className={classes.root}>
-                    {claimsObject.name}
-                    <Grid container spacing={1}>
-                        <Grid item>
-                            <UserIcon color='primary' />
-                        </Grid>
-                        <Grid item>
-                            {claimsObject.name}
-                        </Grid>
-                    </Grid>
-                    {claimsObject.claims && (
-                        <div>
-                            <Table className={classes.table}>
-                                <TableBody>
-                                    {claimsObject.claims.map((claim) => (
-                                        <TableRow hover>
-                                            <TableCell>{claim.name}</TableCell>
-                                            {claim.value ? (
-                                                <TableCell>{claim.value}</TableCell>
-                                            ) : (
-                                                <TableCell>Not Available</TableCell>
-                                            )}
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </div>
-                    )}
-                </div>
-            );
-        }
-        return (
-            <div>
-                <Typography className={classes.typography}>
-                    <FormattedMessage
-                        id='Apis.Details.Subscriptions.Subscriber.no.claims'
-                        defaultMessage='No subscriber claims data available'
-                    />
-                </Typography>
-            </div>
-        );
-    }
-
-    /**
      *
      */
     render() {
@@ -731,7 +656,7 @@ class SubscriptionsTable extends Component {
                 },
             },
             {
-                name: 'applicationInfo.subscriber',
+                name: 'subscriber',
                 label: (
                     <FormattedMessage
                         id='Apis.Details.Subscriptions.Listing.column.header.subscriber'
@@ -740,50 +665,62 @@ class SubscriptionsTable extends Component {
                 ),
                 options: {
                     sort: false,
+                    filter: false,
                     customBodyRender: (value, tableMeta) => {
                         if (tableMeta.rowData) {
-                            let claimsObject;
-                            if (subscriberClaims) {
-                                claimsObject = subscriberClaims[tableMeta.rowData[0]];
-                            }
-                            return (
-                                <Box display='flex'>
-                                    <Box pr={1}>
-                                        {subscriberClaims && claimsObject && claimsObject.name}
-                                    </Box>
-                                    <Tooltip
-                                        interactive
-                                        placement='top'
-                                        classes={{
-                                            tooltip: classes.InfoToolTip,
-                                        }}
-                                        title={(
-                                            <>
-                                                {subscriberClaims && (
-                                                    <div>
-                                                        {this.renderClaims(claimsObject)}
-                                                    </div>
-                                                )}
-                                            </>
-                                        )}
-                                    >
-                                        <Grid container direction='row' alignItems='center' spacing={1}>
-                                            <Grid item>
-                                                <Typography>
-                                                    <InfoIcon color='action' />
-                                                </Typography>
-                                            </Grid>
-                                            <Grid item>
-                                                {value}
-                                            </Grid>
-                                        </Grid>
-                                    </Tooltip>
-                                </Box>
-                            );
+                            const subscriptionId = tableMeta.rowData[0];
+                            return (<SubscriberDetailsPopup subscriptionId={subscriptionId} subscriber={value} />);
+                        } else {
+                            return <span>{value}</span>;
                         }
-                        return null;
                     },
                 },
+                // options: {
+                //     sort: false,
+                //     customBodyRender: (value, tableMeta) => {
+                //         if (tableMeta.rowData) {
+                //             let claimsObject;
+                //             if (subscriberClaims) {
+                //                 claimsObject = subscriberClaims[tableMeta.rowData[0]];
+                //             }
+                //             return (
+                //                 <Box display='flex'>
+                //                     <Box pr={1}>
+                //                         {subscriberClaims && claimsObject && claimsObject.name}
+                //                     </Box>
+                //                     <Tooltip
+                //                         interactive
+                //                         placement='top'
+                //                         classes={{
+                //                             tooltip: classes.InfoToolTip,
+                //                         }}
+                //                         title={(
+                //                             <>
+                //                                 {subscriberClaims && (
+                //                                     <div>
+                //                                         {this.renderClaims(claimsObject)}
+                //                                     </div>
+                //                                 )}
+                //                             </>
+                //                         )}
+                //                     >
+                //                         <Grid container direction='row' alignItems='center' spacing={1}>
+                //                             <Grid item>
+                //                                 <Typography>
+                //                                     <InfoIcon color='action' />
+                //                                 </Typography>
+                //                             </Grid>
+                //                             <Grid item>
+                //                                 {value}
+                //                             </Grid>
+                //                         </Grid>
+                //                     </Tooltip>
+                //                 </Box>
+                //             );
+                //         }
+                //         return null;
+                //     },
+                // },
             },
             {
                 name: 'name',

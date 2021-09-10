@@ -2877,8 +2877,14 @@
   "Apis.Details.Subscriptions.Listing.column.header.throttling.tier": {
     "defaultMessage": "Tier"
   },
-  "Apis.Details.Subscriptions.Subscriber.no.claims": {
+  "Apis.Details.Subscriptions.SubscriberDetailsPopup.no.claims": {
     "defaultMessage": "No subscriber claims data available"
+  },
+  "Apis.Details.Subscriptions.SubscriberDetailsPopup.not.available": {
+    "defaultMessage": "Not Available"
+  },
+  "Apis.Details.Subscriptions.SubscriberDetailsPopup.subscriber.info.error": {
+    "defaultMessage": "Error while retrieving the subscriber information"
   },
   "Apis.Details.Subscriptions.SubscriptionAvailability.all.tenants": {
     "defaultMessage": "Available to all the tenants"
@@ -2936,9 +2942,6 @@
   },
   "Apis.Details.Subscriptions.SubscriptionsTable.sub.heading": {
     "defaultMessage": "Manage subscriptions of the API"
-  },
-  "Apis.Details.Subscriptions.SubscriptionsTable.subscriber.info.error": {
-    "defaultMessage": "Error while retrieving the subscriber information"
   },
   "Apis.Details.Subscriptions.SubscriptionsTable.subscription.blocked": {
     "defaultMessage": "Subscription was blocked."
