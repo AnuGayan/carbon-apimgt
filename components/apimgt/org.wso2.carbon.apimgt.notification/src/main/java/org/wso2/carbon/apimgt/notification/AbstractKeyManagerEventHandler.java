@@ -47,7 +47,7 @@ public abstract class AbstractKeyManagerEventHandler implements KeyManagerEventH
         properties.setProperty(APIConstants.NotificationEvent.EVENT_ID, tokenRevocationEvent.getEventId());
         properties.put(APIConstants.NotificationEvent.CONSUMER_KEY, tokenRevocationEvent.getConsumerKey());
         if (StringUtils.isBlank(tokenRevocationEvent.getTokenType())) {
-            tokenRevocationEvent.setTokenType("Default");
+            tokenRevocationEvent.setTokenType(APIConstants.NotificationEvent.APPLICATION_TOKEN_TYPE_OAUTH2);
         }
         properties.put(APIConstants.NotificationEvent.TOKEN_TYPE, tokenRevocationEvent.getTokenType());
         properties.put(APIConstants.NotificationEvent.TENANT_ID, tokenRevocationEvent.getTenantId());
