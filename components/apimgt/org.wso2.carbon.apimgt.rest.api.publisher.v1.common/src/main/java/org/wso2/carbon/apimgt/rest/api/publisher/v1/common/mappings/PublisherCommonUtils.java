@@ -547,9 +547,11 @@ public class PublisherCommonUtils {
                     if (!isMatched && userRoleList != null && APIUtil.compareRoleList(userRoleList, inputRole)) {
                         isMatched = true;
                     }
-                    if (tenantRoleList != null && !APIUtil.compareRoleList(tenantRoleList, inputRole)) {
-                        return "Invalid user roles found in accessControlRole list";
-                    }
+                }
+                String roleString = String.join(",", inputRoles);
+                if (tenantRoleList != null && tenantRoleList.length > 0 &&
+                        !APIUtil.isRoleNameExist(userName, roleString)) {
+                    return "Invalid user roles found in accessControlRole list";
                 }
                 return isMatched ? "" : "This user does not have at least one role specified in API access control.";
             } else {
