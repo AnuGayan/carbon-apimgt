@@ -42,12 +42,8 @@ import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.gateway.APIMgtGatewayConstants;
 import org.wso2.carbon.apimgt.gateway.dto.JWTInfoDto;
 import org.wso2.carbon.apimgt.gateway.dto.JWTTokenPayloadInfo;
-import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityConstants;
-import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityException;
-import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityUtils;
-import org.wso2.carbon.apimgt.gateway.handlers.security.AuthenticationContext;
-import org.wso2.carbon.apimgt.gateway.handlers.security.AuthenticationResponse;
-import org.wso2.carbon.apimgt.gateway.handlers.security.Authenticator;
+import org.wso2.carbon.apimgt.gateway.handlers.security.*;
+import org.wso2.carbon.apimgt.gateway.handlers.security.jwt.JWTValidator;
 import org.wso2.carbon.apimgt.gateway.handlers.security.jwt.generator.AbstractAPIMgtGatewayJWTGenerator;
 import org.wso2.carbon.apimgt.gateway.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.gateway.jwt.RevokedJWTDataHolder;
@@ -89,6 +85,8 @@ public class ApiKeyAuthenticator implements Authenticator {
     private String securityParam;
     private String apiLevelPolicy;
     private boolean isMandatory;
+    protected APIKeyValidator keyValidator;
+    private String securityContextHeader;
 
     public ApiKeyAuthenticator(String authorizationHeader, String apiLevelPolicy, boolean isApiKeyMandatory) {
         this.securityParam = authorizationHeader;
@@ -105,12 +103,20 @@ public class ApiKeyAuthenticator implements Authenticator {
 
     @Override
     public void init(SynapseEnvironment env) {
+        this.keyValidator = new APIKeyValidator();
         initParams();
     }
 
     @Override
     public void destroy() {
+        if (keyValidator != null) {
+            this.keyValidator.cleanup();
+        }
 
+    }
+
+    protected APIKeyValidator getAPIKeyValidator() {
+        return this.keyValidator;
     }
 
     @Override
@@ -121,269 +127,329 @@ public class ApiKeyAuthenticator implements Authenticator {
 
         try {
             // Extract apikey from the request while removing it from the msg context.
-            String apiKey = extractApiKey(synCtx);
-            JWTTokenPayloadInfo payloadInfo = null;
-
-            String splitToken[] = apiKey.split("\\.");
-            JWSHeader decodedHeader;
-            JWTClaimsSet payload = null;
-            SignedJWT signedJWT = null;
-            String certAlias, tokenIdentifier;
-            if (splitToken.length != 3) {
-                log.error("Api Key does not have the format {header}.{payload}.{signature} ");
-                throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
-                        APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE);
-            }
+            String authenticationScheme;
             try {
-                decodedHeader = JWSHeader.parse(new Base64URL(splitToken[0]));
-                signedJWT = SignedJWT.parse(apiKey);
-                tokenIdentifier = signedJWT.getJWTClaimsSet().getJWTID();
-            } catch (IllegalArgumentException e) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Invalid Api Key. Api Key: " + GatewayUtils.getMaskedToken(splitToken[0]), e);
-                }
-                log.error("Invalid JWT token. Failed to decode the Api Key header.");
-                throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
-                        APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE , e);
+                authenticationScheme = getAPIKeyValidator().getResourceAuthenticationScheme(synCtx);
+            } catch (APISecurityException ex) {
+                return new AuthenticationResponse(false, isMandatory, true, ex.getErrorCode(), ex.getMessage());
             }
-            // Check if the decoded header contains type as 'JWT'.
-            if (!decodedHeader.getType().equals(JOSEObjectType.JWT)) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Invalid Api Key token type. Api Key: " + GatewayUtils.getMaskedToken(splitToken[0]));
+            if(APIConstants.AUTH_NO_AUTHENTICATION.equals(authenticationScheme)) {
+                if(log.isDebugEnabled()){
+                    log.debug("Found Authentication Scheme: ".concat(authenticationScheme));
                 }
-                log.error("Invalid Api Key token type.");
-                throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
-                        APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE);
-            }
 
-            if (decodedHeader.getKeyID() == null) {
-                if (log.isDebugEnabled()){
-                    log.debug("Invalid Api Key. Could not find alias in header. Api Key: " +
-                            GatewayUtils.getMaskedToken(splitToken[0]));
+                //using existing constant in Message context removing the additinal constant in API Constants
+                String clientIP = null;
+                org.apache.axis2.context.MessageContext axis2MessageContext = ((Axis2MessageContext) synCtx).
+                        getAxis2MessageContext();
+                Map<String, String> transportHeaderMap = (Map<String, String>)
+                        axis2MessageContext.getProperty
+                                (org.apache.axis2.context.MessageContext.TRANSPORT_HEADERS);
+
+                if (transportHeaderMap != null) {
+                    clientIP = transportHeaderMap.get(APIMgtGatewayConstants.X_FORWARDED_FOR);
                 }
-                log.error("Invalid Api Key. Could not find alias in header");
-                throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
-                        APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE);
+
+                //Setting IP of the client
+                if (clientIP != null && !clientIP.isEmpty()) {
+                    if (clientIP.indexOf(",") > 0) {
+                        clientIP = clientIP.substring(0, clientIP.indexOf(","));
+                    }
+                } else {
+                    clientIP = (String) axis2MessageContext.getProperty(org.apache.axis2.context.MessageContext.REMOTE_ADDR);
+                }
+
+                //Create a dummy AuthenticationContext object with hard coded values for
+                // Tier and KeyType. This is because we cannot determine the Tier nor Key
+                // Type without subscription information..
+                AuthenticationContext authContext = new AuthenticationContext();
+                authContext.setAuthenticated(true);
+                authContext.setTier(APIConstants.UNAUTHENTICATED_TIER);
+                authContext.setStopOnQuotaReach(true);//Since we don't have details on unauthenticated tier we setting stop on quota reach true
+                //Requests are throttled by the ApiKey that is set here. In an unauthenticated scenario,
+                //we will use the client's IP address for throttling.
+                authContext.setApiKey(clientIP);
+                authContext.setKeyType(APIConstants.API_KEY_TYPE_PRODUCTION);
+                //This name is hardcoded as anonymous because there is no associated user token
+                authContext.setUsername(APIConstants.END_USER_ANONYMOUS);
+                authContext.setCallerToken(null);
+                authContext.setApplicationName(null);
+                authContext.setApplicationId(clientIP); //Set clientIp as application ID in unauthenticated scenario
+                authContext.setConsumerKey(null);
+                APISecurityUtils.setAuthenticationContext(synCtx, authContext, securityContextHeader);
+                return new AuthenticationResponse(true, isMandatory, false, 0, null);
+
             } else {
-                certAlias = decodedHeader.getKeyID();
-            }
+                String apiKey = extractApiKey(synCtx);
+                if (APIConstants.NULL_API_KEY.equals(apiKey)) {
+                    log.debug("OAuth headers not found");
+                    return new AuthenticationResponse(false, isMandatory, true,
+                            APISecurityConstants.API_AUTH_MISSING_CREDENTIALS, "Required API key credentials not provided");
+                }
 
-            String apiContext = (String) synCtx.getProperty(RESTConstants.REST_API_CONTEXT);
-            String apiVersion = (String) synCtx.getProperty(RESTConstants.SYNAPSE_REST_API_VERSION);
-            String httpMethod = (String)((Axis2MessageContext) synCtx).getAxis2MessageContext().
-                    getProperty(Constants.Configuration.HTTP_METHOD);
-            String matchingResource = (String) synCtx.getProperty(APIConstants.API_ELECTED_RESOURCE);
+                JWTTokenPayloadInfo payloadInfo = null;
 
-            OpenAPI openAPI = (OpenAPI) synCtx.getProperty(APIMgtGatewayConstants.OPEN_API_OBJECT);
-            if (openAPI == null && !APIConstants.GRAPHQL_API.equals(synCtx.getProperty(APIConstants.API_TYPE))) {
-                log.error("Swagger is missing in the gateway. " +
-                        "Therefore, Api Key authentication cannot be performed.");
-                return new AuthenticationResponse(false, isMandatory, true,
-                        APISecurityConstants.API_AUTH_MISSING_OPEN_API_DEF,
-                        APISecurityConstants.API_AUTH_MISSING_OPEN_API_DEF_ERROR_MESSAGE);
-            }
-            String resourceCacheKey = APIUtil.getResourceInfoDTOCacheKey(apiContext, apiVersion,
-                                                                                    matchingResource, httpMethod);
-            VerbInfoDTO verbInfoDTO = new VerbInfoDTO();
-            verbInfoDTO.setHttpVerb(httpMethod);
-            //Not doing resource level authentication
-            verbInfoDTO.setAuthType(APIConstants.AUTH_NO_AUTHENTICATION);
-            verbInfoDTO.setRequestKey(resourceCacheKey);
-            verbInfoDTO.setThrottling(OpenAPIUtils.getResourceThrottlingTier(openAPI, synCtx));
-            List<VerbInfoDTO> verbInfoList = new ArrayList<>();
-            verbInfoList.add(verbInfoDTO);
-            synCtx.setProperty(APIConstants.VERB_INFO_DTO, verbInfoList);
+                String splitToken[] = apiKey.split("\\.");
+                JWSHeader decodedHeader;
+                JWTClaimsSet payload = null;
+                SignedJWT signedJWT = null;
+                String certAlias, tokenIdentifier;
 
-            String cacheKey = GatewayUtils.getAccessTokenCacheKey(tokenIdentifier, apiContext, apiVersion,
-                    matchingResource, httpMethod);
-            String tenantDomain = GatewayUtils.getTenantDomain();
-            boolean isVerified = false;
-
-            // Validate from cache
-            if (isGatewayTokenCacheEnabled) {
-                String cacheToken = (String) getGatewayApiKeyCache().get(tokenIdentifier);
-                if (cacheToken != null) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Api Key retrieved from the Api Key cache.");
-                    }
-                    if (getGatewayApiKeyDataCache().get(cacheKey) != null) {
-                        // Token is found in the key cache
-                        payloadInfo = (JWTTokenPayloadInfo) getGatewayApiKeyDataCache().get(cacheKey);
-                        String rawPayload = payloadInfo.getRawPayload();
-                        if (!rawPayload.equals(splitToken[1])) {
-                            isVerified = false;
-                        } else {
-                            isVerified = true;
-                        }
-                    }
-                } else if (getInvalidGatewayApiKeyCache().get(tokenIdentifier) != null) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Api Key retrieved from the invalid Api Key cache. Api Key: " +
-                                GatewayUtils.getMaskedToken(splitToken[0]));
-                    }
-                    log.error("Invalid Api Key." + GatewayUtils.getMaskedToken(splitToken[0]));
+                if (splitToken.length != 3) {
+                    log.error("Api Key does not have the format {header}.{payload}.{signature} ");
                     throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
                             APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE);
-                } else if (RevokedJWTDataHolder.isJWTTokenSignatureExistsInRevokedMap(tokenIdentifier)) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Token retrieved from the revoked jwt token map. Token: " + GatewayUtils.
-                                getMaskedToken(splitToken[0]));
-                    }
-                    log.error("Invalid API Key. " + GatewayUtils.getMaskedToken(splitToken[0]));
-                    throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
-                            "Invalid API Key");
-                }
-            } else {
-                if (RevokedJWTDataHolder.isJWTTokenSignatureExistsInRevokedMap(tokenIdentifier)) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Token retrieved from the revoked jwt token map. Token: " + GatewayUtils.
-                                getMaskedToken(splitToken[0]));
-                    }
-                    log.error("Invalid JWT token. " + GatewayUtils.getMaskedToken(splitToken[0]));
-                    throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
-                            "Invalid JWT token");
-                }
-            }
-
-            // Not found in cache or caching disabled
-            if (!isVerified) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Api Key not found in the cache.");
                 }
                 try {
-                    signedJWT = (SignedJWT) JWTParser.parse(apiKey);
-                    payload = signedJWT.getJWTClaimsSet();
-                } catch (JSONException | IllegalArgumentException | ParseException e) {
+                    decodedHeader = JWSHeader.parse(new Base64URL(splitToken[0]));
+                    signedJWT = SignedJWT.parse(apiKey);
+                    tokenIdentifier = signedJWT.getJWTClaimsSet().getJWTID();
+                } catch (IllegalArgumentException e) {
                     if (log.isDebugEnabled()) {
                         log.debug("Invalid Api Key. Api Key: " + GatewayUtils.getMaskedToken(splitToken[0]), e);
                     }
-                    log.error("Invalid JWT token. Failed to decode the Api Key body.");
+                    log.error("Invalid JWT token. Failed to decode the Api Key header.");
                     throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
-                            APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE, e);
+                            APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE , e);
                 }
-                try {
-                    isVerified = GatewayUtils.verifyTokenSignature(signedJWT, certAlias);
-                } catch (APISecurityException e) {
-                    if (e.getErrorCode() == APISecurityConstants.API_AUTH_INVALID_CREDENTIALS) {
-                        throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
-                                APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE);
-                    } else {
-                        throw e;
-                    }
-                }
-                if (isGatewayTokenCacheEnabled) {
-                    // Add token to tenant token cache
-                    if (isVerified) {
-                        getGatewayApiKeyCache().put(tokenIdentifier, tenantDomain);
-                    } else {
-                        getInvalidGatewayApiKeyCache().put(tokenIdentifier, tenantDomain);
-                    }
-
-                    if (!MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) {
-                        try {
-                            // Start super tenant flow
-                            PrivilegedCarbonContext.startTenantFlow();
-                            PrivilegedCarbonContext.getThreadLocalCarbonContext()
-                                    .setTenantDomain(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME, true);
-                            // Add token to super tenant token cache
-                            if (isVerified) {
-                                getGatewayApiKeyCache().put(tokenIdentifier, tenantDomain);
-                            } else {
-                                getInvalidGatewayApiKeyCache().put(tokenIdentifier, tenantDomain);
-                            }
-                        } finally {
-                            PrivilegedCarbonContext.endTenantFlow();
-                        }
-
-                    }
-                }
-            }
-
-            // If Api Key signature is verified
-            if (isVerified) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Api Key signature is verified.");
-                }
-                if (isGatewayTokenCacheEnabled && payloadInfo != null) {
-                    // Api Key is found in the key cache
-                    payload = payloadInfo.getPayload();
-                    if (isJwtTokenExpired(payload)) {
-                        getGatewayApiKeyCache().remove(tokenIdentifier);
-                        getInvalidGatewayApiKeyCache().put(tokenIdentifier, tenantDomain);
-                        log.error("Api Key is expired");
-                        throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
-                                APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE);
-                    }
-                    validateAPIKeyRestrictions(payload, synCtx);
-                } else {
-                    // Retrieve payload from ApiKey
+                // Check if the decoded header contains type as 'JWT'.
+                if (!decodedHeader.getType().equals(JOSEObjectType.JWT)) {
                     if (log.isDebugEnabled()) {
-                        log.debug("ApiKey payload not found in the cache.");
+                        log.debug("Invalid Api Key token type. Api Key: " + GatewayUtils.getMaskedToken(splitToken[0]));
                     }
-                    if (payload == null) {
-                        try {
-                            signedJWT = (SignedJWT) JWTParser.parse(apiKey);
-                            payload = signedJWT.getJWTClaimsSet();
-                        } catch (JSONException | IllegalArgumentException|ParseException e) {
-                            if (log.isDebugEnabled()) {
-                                log.debug("Invalid ApiKey. ApiKey: " + GatewayUtils.getMaskedToken(splitToken[0]));
+                    log.error("Invalid Api Key token type.");
+                    throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
+                            APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE);
+                }
+
+                if (decodedHeader.getKeyID() == null) {
+                    if (log.isDebugEnabled()){
+                        log.debug("Invalid Api Key. Could not find alias in header. Api Key: " +
+                                GatewayUtils.getMaskedToken(splitToken[0]));
+                    }
+                    log.error("Invalid Api Key. Could not find alias in header");
+                    throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
+                            APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE);
+                } else {
+                    certAlias = decodedHeader.getKeyID();
+                }
+
+                String apiContext = (String) synCtx.getProperty(RESTConstants.REST_API_CONTEXT);
+                String apiVersion = (String) synCtx.getProperty(RESTConstants.SYNAPSE_REST_API_VERSION);
+                String httpMethod = (String)((Axis2MessageContext) synCtx).getAxis2MessageContext().
+                        getProperty(Constants.Configuration.HTTP_METHOD);
+                String matchingResource = (String) synCtx.getProperty(APIConstants.API_ELECTED_RESOURCE);
+
+                OpenAPI openAPI = (OpenAPI) synCtx.getProperty(APIMgtGatewayConstants.OPEN_API_OBJECT);
+                if (openAPI == null && !APIConstants.GRAPHQL_API.equals(synCtx.getProperty(APIConstants.API_TYPE))) {
+                    log.error("Swagger is missing in the gateway. " +
+                            "Therefore, Api Key authentication cannot be performed.");
+                    return new AuthenticationResponse(false, isMandatory, true,
+                            APISecurityConstants.API_AUTH_MISSING_OPEN_API_DEF,
+                            APISecurityConstants.API_AUTH_MISSING_OPEN_API_DEF_ERROR_MESSAGE);
+                }
+                String resourceCacheKey = APIUtil.getResourceInfoDTOCacheKey(apiContext, apiVersion,
+                        matchingResource, httpMethod);
+                VerbInfoDTO verbInfoDTO = new VerbInfoDTO();
+                verbInfoDTO.setHttpVerb(httpMethod);
+                //Not doing resource level authentication
+                verbInfoDTO.setAuthType(APIConstants.AUTH_NO_AUTHENTICATION);
+                verbInfoDTO.setRequestKey(resourceCacheKey);
+                verbInfoDTO.setThrottling(OpenAPIUtils.getResourceThrottlingTier(openAPI, synCtx));
+                List<VerbInfoDTO> verbInfoList = new ArrayList<>();
+                verbInfoList.add(verbInfoDTO);
+                synCtx.setProperty(APIConstants.VERB_INFO_DTO, verbInfoList);
+
+                String cacheKey = GatewayUtils.getAccessTokenCacheKey(tokenIdentifier, apiContext, apiVersion,
+                        matchingResource, httpMethod);
+                String tenantDomain = GatewayUtils.getTenantDomain();
+                boolean isVerified = false;
+
+                // Validate from cache
+                if (isGatewayTokenCacheEnabled) {
+                    String cacheToken = (String) getGatewayApiKeyCache().get(tokenIdentifier);
+                    if (cacheToken != null) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Api Key retrieved from the Api Key cache.");
+                        }
+                        if (getGatewayApiKeyDataCache().get(cacheKey) != null) {
+                            // Token is found in the key cache
+                            payloadInfo = (JWTTokenPayloadInfo) getGatewayApiKeyDataCache().get(cacheKey);
+                            String rawPayload = payloadInfo.getRawPayload();
+                            if (!rawPayload.equals(splitToken[1])) {
+                                isVerified = false;
+                            } else {
+                                isVerified = true;
                             }
-                            log.error("Invalid Api Key. Failed to decode the Api Key body.");
+                        }
+                    } else if (getInvalidGatewayApiKeyCache().get(tokenIdentifier) != null) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Api Key retrieved from the invalid Api Key cache. Api Key: " +
+                                    GatewayUtils.getMaskedToken(splitToken[0]));
+                        }
+                        log.error("Invalid Api Key." + GatewayUtils.getMaskedToken(splitToken[0]));
+                        throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
+                                APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE);
+                    } else if (RevokedJWTDataHolder.isJWTTokenSignatureExistsInRevokedMap(tokenIdentifier)) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Token retrieved from the revoked jwt token map. Token: " + GatewayUtils.
+                                    getMaskedToken(splitToken[0]));
+                        }
+                        log.error("Invalid API Key. " + GatewayUtils.getMaskedToken(splitToken[0]));
+                        throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
+                                "Invalid API Key");
+                    }
+                } else {
+                    if (RevokedJWTDataHolder.isJWTTokenSignatureExistsInRevokedMap(tokenIdentifier)) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Token retrieved from the revoked jwt token map. Token: " + GatewayUtils.
+                                    getMaskedToken(splitToken[0]));
+                        }
+                        log.error("Invalid JWT token. " + GatewayUtils.getMaskedToken(splitToken[0]));
+                        throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
+                                "Invalid JWT token");
+                    }
+                }
+
+                // Not found in cache or caching disabled
+                if (!isVerified) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Api Key not found in the cache.");
+                    }
+                    try {
+                        signedJWT = (SignedJWT) JWTParser.parse(apiKey);
+                        payload = signedJWT.getJWTClaimsSet();
+                    } catch (JSONException | IllegalArgumentException | ParseException e) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Invalid Api Key. Api Key: " + GatewayUtils.getMaskedToken(splitToken[0]), e);
+                        }
+                        log.error("Invalid JWT token. Failed to decode the Api Key body.");
+                        throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
+                                APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE, e);
+                    }
+                    try {
+                        isVerified = GatewayUtils.verifyTokenSignature(signedJWT, certAlias);
+                    } catch (APISecurityException e) {
+                        if (e.getErrorCode() == APISecurityConstants.API_AUTH_INVALID_CREDENTIALS) {
                             throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
-                                    APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE, e);
+                                    APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE);
+                        } else {
+                            throw e;
                         }
                     }
-                    if (isJwtTokenExpired(payload)) {
-                        if (isGatewayTokenCacheEnabled) {
-                            getGatewayApiKeyCache().remove(tokenIdentifier);
+                    if (isGatewayTokenCacheEnabled) {
+                        // Add token to tenant token cache
+                        if (isVerified) {
+                            getGatewayApiKeyCache().put(tokenIdentifier, tenantDomain);
+                        } else {
                             getInvalidGatewayApiKeyCache().put(tokenIdentifier, tenantDomain);
                         }
-                        log.error("Api Key is expired");
-                        throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
-                                APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE);
+
+                        if (!MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(tenantDomain)) {
+                            try {
+                                // Start super tenant flow
+                                PrivilegedCarbonContext.startTenantFlow();
+                                PrivilegedCarbonContext.getThreadLocalCarbonContext()
+                                        .setTenantDomain(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME, true);
+                                // Add token to super tenant token cache
+                                if (isVerified) {
+                                    getGatewayApiKeyCache().put(tokenIdentifier, tenantDomain);
+                                } else {
+                                    getInvalidGatewayApiKeyCache().put(tokenIdentifier, tenantDomain);
+                                }
+                            } finally {
+                                PrivilegedCarbonContext.endTenantFlow();
+                            }
+
+                        }
                     }
-                    validateAPIKeyRestrictions(payload, synCtx);
-                    if (isGatewayTokenCacheEnabled) {
-                        JWTTokenPayloadInfo jwtTokenPayloadInfo = new JWTTokenPayloadInfo();
-                        jwtTokenPayloadInfo.setPayload(payload);
-                        jwtTokenPayloadInfo.setRawPayload(splitToken[1]);
-                        getGatewayApiKeyDataCache().put(cacheKey, jwtTokenPayloadInfo);
+                }
+
+                // If Api Key signature is verified
+                if (isVerified) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Api Key signature is verified.");
                     }
+                    if (isGatewayTokenCacheEnabled && payloadInfo != null) {
+                        // Api Key is found in the key cache
+                        payload = payloadInfo.getPayload();
+                        if (isJwtTokenExpired(payload)) {
+                            getGatewayApiKeyCache().remove(tokenIdentifier);
+                            getInvalidGatewayApiKeyCache().put(tokenIdentifier, tenantDomain);
+                            log.error("Api Key is expired");
+                            throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
+                                    APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE);
+                        }
+                        validateAPIKeyRestrictions(payload, synCtx);
+                    } else {
+                        // Retrieve payload from ApiKey
+                        if (log.isDebugEnabled()) {
+                            log.debug("ApiKey payload not found in the cache.");
+                        }
+                        if (payload == null) {
+                            try {
+                                signedJWT = (SignedJWT) JWTParser.parse(apiKey);
+                                payload = signedJWT.getJWTClaimsSet();
+                            } catch (JSONException | IllegalArgumentException|ParseException e) {
+                                if (log.isDebugEnabled()) {
+                                    log.debug("Invalid ApiKey. ApiKey: " + GatewayUtils.getMaskedToken(splitToken[0]));
+                                }
+                                log.error("Invalid Api Key. Failed to decode the Api Key body.");
+                                throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
+                                        APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE, e);
+                            }
+                        }
+                        if (isJwtTokenExpired(payload)) {
+                            if (isGatewayTokenCacheEnabled) {
+                                getGatewayApiKeyCache().remove(tokenIdentifier);
+                                getInvalidGatewayApiKeyCache().put(tokenIdentifier, tenantDomain);
+                            }
+                            log.error("Api Key is expired");
+                            throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
+                                    APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE);
+                        }
+                        validateAPIKeyRestrictions(payload, synCtx);
+                        if (isGatewayTokenCacheEnabled) {
+                            JWTTokenPayloadInfo jwtTokenPayloadInfo = new JWTTokenPayloadInfo();
+                            jwtTokenPayloadInfo.setPayload(payload);
+                            jwtTokenPayloadInfo.setRawPayload(splitToken[1]);
+                            getGatewayApiKeyDataCache().put(cacheKey, jwtTokenPayloadInfo);
+                        }
+                    }
+                    net.minidev.json.JSONObject api = GatewayUtils.validateAPISubscription(apiContext, apiVersion, payload, splitToken, false);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Api Key authentication successful.");
+                    }
+
+                    String endUserToken = null;
+                    String contextHeader = null;
+                    if (jwtGenerationEnabled) {
+                        SignedJWTInfo signedJWTInfo = new SignedJWTInfo(apiKey, signedJWT, payload);
+                        JWTValidationInfo jwtValidationInfo = getJwtValidationInfo(signedJWTInfo);
+                        JWTInfoDto jwtInfoDto = GatewayUtils.generateJWTInfoDto(api, jwtValidationInfo, null, synCtx);
+                        endUserToken = generateAndRetrieveBackendJWTToken(tokenIdentifier, jwtInfoDto);
+                        contextHeader = getContextHeader();
+                    }
+
+                    AuthenticationContext authenticationContext;
+                    authenticationContext = GatewayUtils
+                            .generateAuthenticationContext(tokenIdentifier, payload, api, getApiLevelPolicy(), endUserToken, synCtx);
+                    APISecurityUtils.setAuthenticationContext(synCtx, authenticationContext, contextHeader);
+
+                    if (log.isDebugEnabled()) {
+                        log.debug("User is authorized to access the resource using Api Key.");
+                    }
+                    return new AuthenticationResponse(true, isMandatory, false, 0, null);
                 }
-                net.minidev.json.JSONObject api = GatewayUtils.validateAPISubscription(apiContext, apiVersion, payload, splitToken, false);
+
                 if (log.isDebugEnabled()) {
-                    log.debug("Api Key authentication successful.");
+                    log.debug("Api Key signature verification failure. Api Key: " +
+                            GatewayUtils.getMaskedToken(splitToken[0]));
                 }
-
-                String endUserToken = null;
-                String contextHeader = null;
-                if (jwtGenerationEnabled) {
-                    SignedJWTInfo signedJWTInfo = new SignedJWTInfo(apiKey, signedJWT, payload);
-                    JWTValidationInfo jwtValidationInfo = getJwtValidationInfo(signedJWTInfo);
-                    JWTInfoDto jwtInfoDto = GatewayUtils.generateJWTInfoDto(api, jwtValidationInfo, null, synCtx);
-                    endUserToken = generateAndRetrieveBackendJWTToken(tokenIdentifier, jwtInfoDto);
-                    contextHeader = getContextHeader();
-                }
-
-                AuthenticationContext authenticationContext;
-                authenticationContext = GatewayUtils
-                        .generateAuthenticationContext(tokenIdentifier, payload, api, getApiLevelPolicy(), endUserToken, synCtx);
-                APISecurityUtils.setAuthenticationContext(synCtx, authenticationContext, contextHeader);
-
-                if (log.isDebugEnabled()) {
-                    log.debug("User is authorized to access the resource using Api Key.");
-                }
-                return new AuthenticationResponse(true, isMandatory, false, 0, null);
+                log.error("Invalid Api Key. Signature verification failed.");
+                throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
+                        APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE);
             }
-
-            if (log.isDebugEnabled()) {
-                log.debug("Api Key signature verification failure. Api Key: " +
-                        GatewayUtils.getMaskedToken(splitToken[0]));
-            }
-            log.error("Invalid Api Key. Signature verification failed.");
-            throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
-                    APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE);
-
         } catch (APISecurityException e) {
             return new AuthenticationResponse(false, isMandatory, true, e.getErrorCode(), e.getMessage());
         } catch (ParseException e) {
@@ -597,12 +663,24 @@ public class ApiKeyAuthenticator implements Authenticator {
         return java.util.Base64.getUrlDecoder().decode(payload.getBytes(StandardCharsets.UTF_8));
     }
 
+    public void setSecurityContextHeader(String securityContextHeader) {
+        this.securityContextHeader = securityContextHeader;
+    }
+
+    public String getSecurityContextHeader() {
+        return securityContextHeader;
+    }
+
     protected void initParams () {
         APIManagerConfiguration apimConf = ServiceReferenceHolder.getInstance().getAPIManagerConfiguration();
         JWTConfigurationDto jwtConfigDto = apimConf.getJwtConfigurationDto();
         String header = jwtConfigDto.getJwtHeader();
         if (header != null) {
             setContextHeader(header);
+        }
+        String value = jwtConfigDto.getJwtHeader();
+        if (value != null) {
+            setSecurityContextHeader(value);
         }
     }
 
