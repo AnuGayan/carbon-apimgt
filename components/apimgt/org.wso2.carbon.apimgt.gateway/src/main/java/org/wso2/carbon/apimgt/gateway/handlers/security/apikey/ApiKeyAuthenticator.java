@@ -42,8 +42,13 @@ import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.gateway.APIMgtGatewayConstants;
 import org.wso2.carbon.apimgt.gateway.dto.JWTInfoDto;
 import org.wso2.carbon.apimgt.gateway.dto.JWTTokenPayloadInfo;
-import org.wso2.carbon.apimgt.gateway.handlers.security.*;
-import org.wso2.carbon.apimgt.gateway.handlers.security.jwt.JWTValidator;
+import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityConstants;
+import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityException;
+import org.wso2.carbon.apimgt.gateway.handlers.security.APIKeyValidator;
+import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityUtils;
+import org.wso2.carbon.apimgt.gateway.handlers.security.AuthenticationContext;
+import org.wso2.carbon.apimgt.gateway.handlers.security.AuthenticationResponse;
+import org.wso2.carbon.apimgt.gateway.handlers.security.Authenticator;
 import org.wso2.carbon.apimgt.gateway.handlers.security.jwt.generator.AbstractAPIMgtGatewayJWTGenerator;
 import org.wso2.carbon.apimgt.gateway.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.gateway.jwt.RevokedJWTDataHolder;
@@ -112,7 +117,6 @@ public class ApiKeyAuthenticator implements Authenticator {
         if (keyValidator != null) {
             this.keyValidator.cleanup();
         }
-
     }
 
     protected APIKeyValidator getAPIKeyValidator() {
