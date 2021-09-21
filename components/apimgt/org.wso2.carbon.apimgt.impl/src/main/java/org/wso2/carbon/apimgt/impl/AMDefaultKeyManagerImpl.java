@@ -166,7 +166,7 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
      * @throws JSONException for errors in parsing the OAuthApplicationInfo json string
      */
     private ClientInfo createClientInfo(OAuthApplicationInfo info, String oauthClientName, String applicationName,
-                                        boolean isUpdate) throws JSONException {
+            boolean isUpdate) throws JSONException {
 
         ClientInfo clientInfo = new ClientInfo();
         JSONObject infoJson = new JSONObject(info.getJsonString());
