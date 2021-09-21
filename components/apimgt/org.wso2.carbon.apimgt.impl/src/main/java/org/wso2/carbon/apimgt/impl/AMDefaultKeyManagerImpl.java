@@ -161,6 +161,7 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
      * @param info            The OAuthApplicationInfo object
      * @param oauthClientName The name of the OAuth application to be created
      * @param applicationName Application display name
+     * @param isUpdate        To determine whether the ClientInfo object is related to application update call
      * @return constructed ClientInfo object
      * @throws JSONException for errors in parsing the OAuthApplicationInfo json string
      */
