@@ -135,7 +135,7 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
         String[] tokenScopes = new String[1];
         tokenScopes[0] = tokenScope;
 
-        ClientInfo request = createClientInfo(oAuthApplicationInfo, oauthClientName, applicationName, false);
+        ClientInfo request = createClientInfo(oAuthApplicationInfo, oauthClientName, false);
         ClientInfo createdClient;
 
         try {
@@ -160,13 +160,12 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
      *
      * @param info            The OAuthApplicationInfo object
      * @param oauthClientName The name of the OAuth application to be created
-     * @param applicationName Application display name
      * @param isUpdate        To determine whether the ClientInfo object is related to application update call
      * @return constructed ClientInfo object
      * @throws JSONException for errors in parsing the OAuthApplicationInfo json string
      */
-    private ClientInfo createClientInfo(OAuthApplicationInfo info, String oauthClientName, String applicationName,
-            boolean isUpdate) throws JSONException {
+    private ClientInfo createClientInfo(OAuthApplicationInfo info, String oauthClientName, boolean isUpdate)
+            throws JSONException {
 
         ClientInfo clientInfo = new ClientInfo();
         JSONObject infoJson = new JSONObject(info.getJsonString());
@@ -285,7 +284,7 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
         }
 
         // Set the display name of the application. This name would appear in the consent page of the app.
-        clientInfo.setApplicationDisplayName(applicationName);
+        clientInfo.setApplicationDisplayName(info.getClientName());
 
         return clientInfo;
     }
@@ -324,7 +323,7 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
             log.debug("Client Name : " + oauthClientName);
         }
 
-        ClientInfo request = createClientInfo(oAuthApplicationInfo, oauthClientName, applicationName, true);
+        ClientInfo request = createClientInfo(oAuthApplicationInfo, oauthClientName, true);
         ClientInfo createdClient;
         try {
             createdClient = dcrClient.updateApplication(oAuthApplicationInfo.getClientId(), request);
