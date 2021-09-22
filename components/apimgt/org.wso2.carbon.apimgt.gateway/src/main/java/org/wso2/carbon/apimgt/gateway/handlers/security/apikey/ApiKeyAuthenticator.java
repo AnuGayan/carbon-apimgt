@@ -182,8 +182,7 @@ public class ApiKeyAuthenticator implements Authenticator {
                         APISecurityConstants.API_AUTH_MISSING_OPEN_API_DEF,
                         APISecurityConstants.API_AUTH_MISSING_OPEN_API_DEF_ERROR_MESSAGE);
             }
-            String resourceCacheKey = APIUtil.getResourceInfoDTOCacheKey(apiContext, apiVersion,
-                    matchingResource, httpMethod);
+            String resourceCacheKey = APIUtil.getResourceInfoDTOCacheKey(apiContext, apiVersion,matchingResource, httpMethod);
             VerbInfoDTO verbInfoDTO = new VerbInfoDTO();
             verbInfoDTO.setHttpVerb(httpMethod);
             //Not doing resource level authentication
