@@ -35,23 +35,15 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.wso2.carbon.apimgt.gateway.APIMgtGatewayConstants;
 import org.wso2.carbon.apimgt.gateway.internal.ServiceReferenceHolder;
-import org.wso2.carbon.apimgt.gateway.utils.OpenAPIUtils;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.APIManagerConfiguration;
 import org.wso2.carbon.apimgt.impl.APIManagerConfigurationService;
-import org.wso2.carbon.apimgt.impl.dto.JWTConfigurationDto;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
-import org.wso2.carbon.apimgt.keymgt.service.TokenValidationContext;
-import org.wso2.carbon.apimgt.usage.publisher.DataPublisherUtil;
-import org.wso2.carbon.apimgt.usage.publisher.internal.UsageComponent;
 import org.wso2.carbon.caching.impl.Util;
-import org.wso2.carbon.context.PrivilegedCarbonContext;
-import org.wso2.carbon.databridge.agent.DataPublisher;
 import org.wso2.carbon.metrics.manager.MetricManager;
 import org.wso2.carbon.metrics.manager.Timer;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
-import javax.cache.Caching;
 import java.util.TreeMap;
 
 /*
@@ -71,7 +63,7 @@ public class APIAuthenticationHandlerTestCase {
 
 
     @Before
-    public void setup() throws APISecurityException {
+    public void setup() {
         synapseEnvironment = Mockito.mock(SynapseEnvironment.class);
         messageContext = Mockito.mock(Axis2MessageContext.class);
         axis2MsgCntxt = Mockito.mock(org.apache.axis2.context.MessageContext.class);
@@ -113,7 +105,6 @@ public class APIAuthenticationHandlerTestCase {
         messageContext.setProperty(APIMgtGatewayConstants.APPLICATION_NAME, "abc");
         messageContext.setProperty(APIMgtGatewayConstants.END_USER_NAME, "admin");
         Mockito.when(axis2MsgCntxt.getProperty(org.apache.axis2.context.MessageContext.TRANSPORT_HEADERS)).thenReturn(transportHeaders);
-
         Assert.assertTrue(apiAuthenticationHandler.handleRequest(messageContext));
     }
 

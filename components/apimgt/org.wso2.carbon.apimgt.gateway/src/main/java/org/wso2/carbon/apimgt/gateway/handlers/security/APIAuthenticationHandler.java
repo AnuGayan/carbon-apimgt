@@ -414,7 +414,6 @@ public class APIAuthenticationHandler extends AbstractHandler implements Managed
                 setAPIParametersToMessageContext(messageContext);
                 return true;
             }
-
         } catch (APISecurityException e) {
 
             if (Util.tracingEnabled() && keySpan != null) {
