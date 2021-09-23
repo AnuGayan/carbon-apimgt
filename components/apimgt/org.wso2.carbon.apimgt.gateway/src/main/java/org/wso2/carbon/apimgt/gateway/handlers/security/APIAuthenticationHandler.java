@@ -190,7 +190,7 @@ public class APIAuthenticationHandler extends AbstractHandler implements Managed
         } else {
             keyManagersList.add(APIConstants.KeyManager.API_LEVEL_ALL_KEY_MANAGERS);
         }
-        setKeyValidator();
+        initOAuthParams();
     }
 
     /**
@@ -339,6 +339,7 @@ public class APIAuthenticationHandler extends AbstractHandler implements Managed
     }
 
     protected void initOAuthParams() {
+        setKeyValidator();
         APIManagerConfiguration config = getApiManagerConfiguration();
         String value = config.getFirstProperty(APIConstants.REMOVE_OAUTH_HEADERS_FROM_MESSAGE);
         if (value != null) {
@@ -406,7 +407,6 @@ public class APIAuthenticationHandler extends AbstractHandler implements Managed
                 if(log.isDebugEnabled()){
                     log.debug("Found Authentication Scheme: ".concat(authenticationScheme));
                 }
-                initOAuthParams();
                 handleNoAuthentication(messageContext);
                 return true;
             }
