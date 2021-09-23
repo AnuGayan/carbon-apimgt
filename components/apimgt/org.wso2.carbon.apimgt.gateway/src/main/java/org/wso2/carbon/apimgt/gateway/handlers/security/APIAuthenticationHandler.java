@@ -190,6 +190,7 @@ public class APIAuthenticationHandler extends AbstractHandler implements Managed
         } else {
             keyManagersList.add(APIConstants.KeyManager.API_LEVEL_ALL_KEY_MANAGERS);
         }
+        setKeyValidator();
     }
 
     /**
@@ -241,6 +242,9 @@ public class APIAuthenticationHandler extends AbstractHandler implements Managed
     }
 
     public void destroy() {
+        if (keyValidator != null) {
+            this.keyValidator.cleanup();
+        }
         if (!authenticators.isEmpty()) {
             for (Authenticator authenticator : authenticators) {
                 authenticator.destroy();
@@ -335,14 +339,15 @@ public class APIAuthenticationHandler extends AbstractHandler implements Managed
     }
 
     protected void initOAuthParams() {
-        setKeyValidator();
         APIManagerConfiguration config = getApiManagerConfiguration();
         String value = config.getFirstProperty(APIConstants.REMOVE_OAUTH_HEADERS_FROM_MESSAGE);
         if (value != null) {
             removeOAuthHeadersFromOutMessage = Boolean.parseBoolean(value);
         }
         JWTConfigurationDto jwtConfigurationDto = config.getJwtConfigurationDto();
-        value = jwtConfigurationDto.getJwtHeader();
+        if (jwtConfigurationDto != null) {
+            value = jwtConfigurationDto.getJwtHeader();
+        }
         if (value != null) {
             setSecurityContextHeader(value);
         }
@@ -396,19 +401,18 @@ public class APIAuthenticationHandler extends AbstractHandler implements Managed
             if (!isAuthenticatorsInitialized) {
                 initializeAuthenticators();
             }
-            initOAuthParams();
             String authenticationScheme = getAPIKeyValidator().getResourceAuthenticationScheme(messageContext);
             if(APIConstants.AUTH_NO_AUTHENTICATION.equals(authenticationScheme)) {
                 if(log.isDebugEnabled()){
                     log.debug("Found Authentication Scheme: ".concat(authenticationScheme));
                 }
+                initOAuthParams();
                 handleNoAuthentication(messageContext);
                 return true;
-            } else {
-                if (isAuthenticate(messageContext)) {
-                    setAPIParametersToMessageContext(messageContext);
-                    return true;
-                }
+            }
+            if (isAuthenticate(messageContext)) {
+                setAPIParametersToMessageContext(messageContext);
+                return true;
             }
 
         } catch (APISecurityException e) {
@@ -496,7 +500,7 @@ public class APIAuthenticationHandler extends AbstractHandler implements Managed
         return true;
     }
 
-    private AuthenticationResponse handleNoAuthentication(MessageContext messageContext){
+    private void handleNoAuthentication(MessageContext messageContext){
 
         //Using existing constant in Message context removing the additional constant in API Constants
         String clientIP = null;
@@ -535,7 +539,6 @@ public class APIAuthenticationHandler extends AbstractHandler implements Managed
         authContext.setApplicationId(clientIP); //Set clientIp as application ID in unauthenticated scenario
         authContext.setConsumerKey(null);
         APISecurityUtils.setAuthenticationContext(messageContext, authContext, securityContextHeader);
-        return new AuthenticationResponse(true, false, false, 0, null);
     }
 
     private Pair<Integer, String> getError(List<AuthenticationResponse> authResponses) {
