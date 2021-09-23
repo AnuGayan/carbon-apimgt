@@ -86,7 +86,7 @@ public class APIAuthenticationHandlerTestCase {
     * This method will test handleRequest method for it's happy path
     * */
     @Test
-    public void testHandleRequest() throws Exception {
+    public void testHandleRequest() throws APISecurityException {
 
         APIAuthenticationHandler apiAuthenticationHandler = createAPIAuthenticationHandler();
         Mockito.when(apiAuthenticationHandler.getApiManagerConfiguration()).thenReturn(apiManagerConfiguration);
