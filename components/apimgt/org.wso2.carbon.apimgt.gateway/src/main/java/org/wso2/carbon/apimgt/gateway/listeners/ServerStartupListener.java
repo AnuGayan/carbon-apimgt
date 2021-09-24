@@ -18,8 +18,10 @@
 
 package org.wso2.carbon.apimgt.gateway.listeners;
 
+import org.apache.axis2.context.ConfigurationContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.apimgt.gateway.InMemoryAPIDeployer;
 import org.wso2.carbon.apimgt.gateway.internal.APIHandlerServiceComponent;
 import org.wso2.carbon.apimgt.gateway.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.gateway.service.APIThrottleDataServiceImpl;
@@ -28,9 +30,14 @@ import org.wso2.carbon.apimgt.gateway.service.RevokedTokenDataImpl;
 import org.wso2.carbon.apimgt.gateway.throttling.ThrottleDataHolder;
 import org.wso2.carbon.apimgt.gateway.throttling.publisher.ThrottleDataPublisher;
 import org.wso2.carbon.apimgt.impl.caching.CacheInvalidationService;
+import org.wso2.carbon.apimgt.impl.dto.GatewayArtifactSynchronizerProperties;
+import org.wso2.carbon.apimgt.impl.gatewayartifactsynchronizer.exception.ArtifactSynchronizerException;
+import org.wso2.carbon.apimgt.keymgt.SubscriptionDataHolder;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.core.ServerStartupObserver;
+import org.wso2.carbon.utils.AbstractAxis2ConfigurationContextObserver;
 
-public class ServerStartupListener implements ServerStartupObserver {
+public class ServerStartupListener extends AbstractAxis2ConfigurationContextObserver implements ServerStartupObserver {
 
     private static final Log log = LogFactory.getLog(ServerStartupListener.class);
 
