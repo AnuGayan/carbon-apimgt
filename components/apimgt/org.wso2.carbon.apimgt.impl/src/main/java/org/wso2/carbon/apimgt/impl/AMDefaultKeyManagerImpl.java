@@ -185,12 +185,7 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
             clientInfo.setRedirectUris(Arrays.asList(callbackURLs));
         }
 
-        String overrideSpName = System.getProperty(APIConstants.APPLICATION.OVERRIDE_SP_NAME);
-        if (StringUtils.isNotEmpty(overrideSpName) && !Boolean.parseBoolean(overrideSpName)) {
-            clientInfo.setClientName(info.getClientName());
-        } else {
-            clientInfo.setClientName(oauthClientName);
-        }
+        clientInfo.setClientName(applicationName);
 
         //todo: run tests by commenting the type
         if (StringUtils.isEmpty(info.getTokenType())) {
