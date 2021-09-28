@@ -185,7 +185,7 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
             clientInfo.setRedirectUris(Arrays.asList(callbackURLs));
         }
 
-        clientInfo.setClientName(applicationName);
+        clientInfo.setClientName(oauthClientName);
 
         //todo: run tests by commenting the type
         if (StringUtils.isEmpty(info.getTokenType())) {
