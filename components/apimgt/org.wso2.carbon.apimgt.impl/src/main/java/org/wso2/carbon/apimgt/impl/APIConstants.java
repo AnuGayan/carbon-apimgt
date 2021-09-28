@@ -439,6 +439,7 @@ public final class APIConstants {
     public static final String JWT_CONFIGS = "JWTConfiguration";
     public static final String JWT_HEADER = "JWTHeader";
     public static final String ENABLE_USER_CLAIMS = "EnableUserClaims";
+    public static final String ENABLE_FEDERATED_USER_CLAIMS = "EnableBindingFederatedUserClaims";
     public static final String TOKEN_GENERATOR_IMPL = "JWTGeneratorImpl";
     public static final String ENABLE_JWT_GENERATION = "EnableJWTGeneration";
     public static final String CLAIMS_RETRIEVER_CLASS = "ClaimsRetrieverImplClass";
@@ -2402,7 +2403,9 @@ public final class APIConstants {
         public static final String KEY_MANAGER_OPERATIONS_DCR_ENDPOINT = "/keymanager-operations/dcr/register";
         public static final String KEY_MANAGER_OPERATIONS_USERINFO_ENDPOINT = "/keymanager-operations/user-info";
         public static final String TOKEN_ENDPOINT = "token_endpoint";
+        public static final String DISPLAY_TOKEN_ENDPOINT = "display_token_endpoint";
         public static final String REVOKE_ENDPOINT = "revoke_endpoint";
+        public static final String DISPLAY_REVOKE_ENDPOINT = "display_revoke_endpoint";
         public static final String WELL_KNOWN_ENDPOINT = "well_known_endpoint";
         public static final String SCOPE_MANAGEMENT_ENDPOINT = "scope_endpoint";
         public static final String AVAILABLE_GRANT_TYPE = "grant_types";
@@ -2452,6 +2455,7 @@ public final class APIConstants {
         public static final String ACCESS_TOKEN = "accessToken";
         public static final String AUTH_CODE = "authCode";
         public static final String CLAIM_DIALECT = "dialect";
+        public static final String BINDING_FEDERATED_USER_CLAIMS = "bindFederatedUserClaims";
         public static final String DEFAULT_KEY_MANAGER_OPENID_CONNECT_DISCOVERY_ENDPOINT = "/oauth2/token/.well-known/openid-configuration";
         public static final String DEFAULT_JWKS_ENDPOINT = "/oauth2/jwks";
         public static final String PRODUCTION_TOKEN_ENDPOINT = "production_token_endpoint";

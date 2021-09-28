@@ -1446,6 +1446,14 @@ public class APIManagerConfiguration {
             if (jwtUserClaimsElement != null) {
                 jwtConfigurationDto.setEnableUserClaims(Boolean.parseBoolean(jwtUserClaimsElement.getText()));
             }
+            OMElement isBindFederatedUserClaims =
+                    omElement.getFirstChildWithName(new QName(APIConstants.ENABLE_FEDERATED_USER_CLAIMS));
+            if (isBindFederatedUserClaims != null) {
+                jwtConfigurationDto
+                        .setBindFederatedUserClaims(Boolean.parseBoolean(isBindFederatedUserClaims.getText()));
+            } else {
+                jwtConfigurationDto.setBindFederatedUserClaims(true);
+            }
             OMElement enableTenantBaseSigningElement =
                     omElement.getFirstChildWithName(new QName(APIConstants.ENABLE_TENANT_BASE_SIGNING));
             if (enableTenantBaseSigningElement != null) {

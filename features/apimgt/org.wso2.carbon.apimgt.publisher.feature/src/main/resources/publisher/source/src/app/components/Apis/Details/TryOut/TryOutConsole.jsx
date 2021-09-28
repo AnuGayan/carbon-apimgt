@@ -16,31 +16,37 @@
  * under the License.
  */
 
-import React, {
-    useState, useEffect, useCallback, useReducer, useMemo,
-} from 'react';
-import PropTypes from 'prop-types';
-import Typography from '@material-ui/core/Typography';
-import { FormattedMessage } from 'react-intl';
 import 'swagger-ui-react/swagger-ui.css';
-import MenuItem from '@material-ui/core/MenuItem';
-import cloneDeep from 'lodash.clonedeep';
+
+import React, {
+    useCallback,
+    useEffect,
+    useMemo,
+    useReducer,
+    useState,
+} from 'react';
+
+import Alert from 'AppComponents/Shared/MuiAlert';
 import Api from 'AppData/api';
-import Grid from '@material-ui/core/Grid';
 import Box from '@material-ui/core/Box';
 import Button from '@material-ui/core/Button';
+import CONSTS from 'AppData/Constants';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import Paper from '@material-ui/core/Paper';
-import { Link } from 'react-router-dom';
+import { FormattedMessage } from 'react-intl';
+import Grid from '@material-ui/core/Grid';
 import LaunchIcon from '@material-ui/icons/Launch';
+import { Link } from 'react-router-dom';
+import MenuItem from '@material-ui/core/MenuItem';
+import Paper from '@material-ui/core/Paper';
+import PropTypes from 'prop-types';
 import TextField from '@material-ui/core/TextField';
-import { useAPI } from 'AppComponents/Apis/Details/components/ApiContext';
+import Typography from '@material-ui/core/Typography';
 import Utils from 'AppData/Utils';
-import { usePublisherSettings } from 'AppComponents/Shared/AppContext';
-import Alert from 'AppComponents/Shared/MuiAlert';
+import cloneDeep from 'lodash.clonedeep';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import CONSTS from 'AppData/Constants';
+import { useAPI } from 'AppComponents/Apis/Details/components/ApiContext';
+import { usePublisherSettings } from 'AppComponents/Shared/AppContext';
 import SwaggerUI from './SwaggerUI';
 
 dayjs.extend(relativeTime);
@@ -121,7 +127,8 @@ const TryOutConsole = () => {
                     }
                     const baseURL = `${transport}://${selectedDeployment.vhost}:${transportPort}`;
                     const url = `${baseURL}${pathSeparator}`
-                + `${selectedDeploymentVhost.httpContext}${api.context}/${api.version}`;
+                + `${selectedDeploymentVhost.httpContext}${api.context}/${api.version}`
+                    .replace('{version}', `${api.version}`);
                     return { url };
                 });
                 oasCopy.servers = servers.sort((a, b) => ((a.url > b.url) ? -1 : 1));
@@ -135,7 +142,8 @@ const TryOutConsole = () => {
                     console.warn('HTTPS transport port will be used for all other transports');
                 }
                 const host = `${selectedDeploymentVhost.host}:${transportPort}`;
-                const basePath = `${pathSeparator}${selectedDeploymentVhost.httpContext}${api.context}/${api.version}`;
+                const basePath = `${pathSeparator}${selectedDeploymentVhost.httpContext}${api.context}/${api.version}`
+                    .replace('{version}', `${api.version}`);
                 oasCopy.schemes = api.transport.slice().sort((a, b) => ((a > b) ? -1 : 1));
                 oasCopy.basePath = basePath;
                 oasCopy.host = host;

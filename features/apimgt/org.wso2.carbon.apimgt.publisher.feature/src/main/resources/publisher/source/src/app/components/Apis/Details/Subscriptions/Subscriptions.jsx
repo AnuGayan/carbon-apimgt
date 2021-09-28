@@ -56,10 +56,9 @@ function Subscriptions(props) {
     const { updateAPI } = props;
     const restApi = new API();
     const [tenants, setTenants] = useState(null);
-    const [policies, setPolices] = useState({});
+    const [policies, setPolices] = useState([...api.policies]);
     const [availability, setAvailability] = useState({ subscriptionAvailability: api.subscriptionAvailability });
     const [tenantList, setTenantList] = useState(api.subscriptionAvailableTenants);
-    const [subscriptions, setSubscriptions] = useState(null);
     const [updateInProgress, setUpdateInProgress] = useState(false);
     const { settings } = useAppContext();
 
@@ -91,14 +90,9 @@ function Subscriptions(props) {
             .then((result) => {
                 setTenants(result.body.count);
             });
-        restApi.subscriptions(api.id)
-            .then((result) => {
-                setSubscriptions(result.body.count);
-            });
-        setPolices([...api.policies]);
     }, []);
 
-    if (typeof tenants !== 'number' || typeof subscriptions !== 'number') {
+    if (typeof tenants !== 'number') {
         return (
             <Grid container direction='row' justify='center' alignItems='center'>
                 <Grid item>

@@ -1,3 +1,4 @@
+/* eslint-disable import/no-dynamic-require */
 /**
  * Copyright (c) 2017, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
@@ -19,9 +20,16 @@
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const { clientRoutingBypass, devServerBefore } = require('./source/dev/auth_login.js');
+
+const isWin = process.platform === 'win32';
+const filePathPart = isWin ? '_wrapper' : '';
+const { clientRoutingBypass, devServerBefore } = require(`./source/dev/auth_login${filePathPart}.js`);
 
 module.exports = function (env,args) {
+    if (isWin && env.script === 'start') {
+        console.log('Start command is not supported for windows operating system. Please use "npm run build:dev"');
+        return;
+    }
     const isDevelopmentBuild = args.mode === 'development';
     const config = {
         entry: { index: './source/index.jsx' },
@@ -40,34 +48,6 @@ module.exports = function (env,args) {
             aggregateTimeout: 200,
             poll: true,
             ignored: ['files/**/*.js', 'node_modules/**'],
-        },
-        devServer: {
-            open: true,
-            openPage: 'admin',
-            inline: true,
-            hotOnly: true,
-            hot: true,
-            publicPath: '/site/public/dist/',
-            writeToDisk: false,
-            overlay: true,
-            before: devServerBefore,
-            proxy: {
-                '/services/': {
-                    target: 'https://localhost:9443/admin',
-                    secure: false,
-                },
-                '/api/am': {
-                    target: 'https://localhost:9443',
-                    secure: false,
-                },
-                '/admin/services': {
-                    target: 'https://localhost:9443',
-                    secure: false,
-                },
-                '/admin': {
-                    bypass: clientRoutingBypass,
-                },
-            },
         },
         devtool: 'source-map', // todo: Commented out the source
         // mapping in case need to speed up the build time & reduce size
@@ -147,7 +127,36 @@ module.exports = function (env,args) {
             }),
         ],
     };
-    
+    if (!isWin) {
+        config.devServer = {
+            open: true,
+            openPage: 'admin',
+            inline: true,
+            hotOnly: true,
+            hot: true,
+            publicPath: '/site/public/dist/',
+            writeToDisk: false,
+            overlay: true,
+            before: devServerBefore,
+            proxy: {
+                '/services/': {
+                    target: 'https://localhost:9443/admin',
+                    secure: false,
+                },
+                '/api/am': {
+                    target: 'https://localhost:9443',
+                    secure: false,
+                },
+                '/admin/services': {
+                    target: 'https://localhost:9443',
+                    secure: false,
+                },
+                '/admin': {
+                    bypass: clientRoutingBypass,
+                },
+            },
+        };
+    }
     // Note: for more info about monaco plugin: https://github.com/Microsoft/monaco-editor-webpack-plugin
     if (process.env.NODE_ENV === 'development') {
         config.watch = true;

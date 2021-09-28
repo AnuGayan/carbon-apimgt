@@ -42,6 +42,7 @@ import org.wso2.carbon.apimgt.keymgt.model.exception.DataLoadingException;
 import org.wso2.carbon.apimgt.keymgt.model.util.SubscriptionDataStoreUtil;
 import org.wso2.carbon.base.MultitenantConstants;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,22 +56,15 @@ import java.util.stream.Collectors;
 
 public class SubscriptionDataStoreImpl implements SubscriptionDataStore {
 
+    public static final String DELEM_PERIOD = ":";
+    public static final int LOADING_POOL_SIZE = 7;
     private static final Log log = LogFactory.getLog(SubscriptionDataStoreImpl.class);
     private boolean scopesInitialized;
-
-    public enum POLICY_TYPE {
-        SUBSCRIPTION,
-        APPLICATION,
-        API
-    }
-
-    public static final String DELEM_PERIOD = ":";
-
     // Maps for keeping Subscription related details.
     private Map<ApplicationKeyMappingCacheKey, ApplicationKeyMapping> applicationKeyMappingMap;
     private Map<Integer, Application> applicationMap;
     private Map<String, API> apiMap;
-    private Map<String,API> apiNameVersionMap;
+    private Map<String, API> apiNameVersionMap;
     private Map<String, API> apiByUUIDMap;
     private Map<String, ApiPolicy> apiPolicyMap;
     private Map<String, SubscriptionPolicy> subscriptionPolicyMap;
@@ -84,7 +78,6 @@ public class SubscriptionDataStoreImpl implements SubscriptionDataStore {
     private boolean applicationPoliciesInitialized;
     private boolean subscriptionPoliciesInitialized;
     private boolean apiPoliciesInitialized;
-    public static final int LOADING_POOL_SIZE = 7;
     private String tenantDomain = MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
     private ScheduledExecutorService executorService = Executors.newScheduledThreadPool(LOADING_POOL_SIZE);
 
@@ -116,6 +109,7 @@ public class SubscriptionDataStoreImpl implements SubscriptionDataStore {
 
     @Override
     public Application getApplicationById(int appId) {
+
         String synchronizeKey = "SubscriptionDataStoreImpl-Application-" + appId;
         Application application = applicationMap.get(appId);
         if (application == null) {
@@ -135,7 +129,7 @@ public class SubscriptionDataStoreImpl implements SubscriptionDataStore {
                 log.debug("Loading Application to the in-memory datastore. applicationId = " + application.getId());
                 addOrUpdateApplication(application);
             } else {
-                log.debug("Application not found. applicationId = " + application.getId());
+                log.debug("Application not found. applicationId = " + appId);
             }
         }
 
@@ -151,7 +145,8 @@ public class SubscriptionDataStoreImpl implements SubscriptionDataStore {
     }
 
     @Override
-    public ApplicationKeyMapping getKeyMappingByKeyAndKeyManager(String key, String keyManager)  {
+    public ApplicationKeyMapping getKeyMappingByKeyAndKeyManager(String key, String keyManager) {
+
         ApplicationKeyMappingCacheKey applicationKeyMappingCacheKey = new ApplicationKeyMappingCacheKey(key,
                 keyManager);
         String synchronizeKey = "SubscriptionDataStoreImpl-KeyMapping-" + applicationKeyMappingCacheKey;
@@ -227,6 +222,7 @@ public class SubscriptionDataStoreImpl implements SubscriptionDataStore {
 
     @Override
     public API getApiByNameAndVersion(String name, String version) {
+
         String key = name + DELEM_PERIOD + version;
         return apiNameVersionMap.get(key);
     }
@@ -255,6 +251,7 @@ public class SubscriptionDataStoreImpl implements SubscriptionDataStore {
 
     @Override
     public Subscription getSubscriptionById(int appId, int apiId) {
+
         String subscriptionCacheKey = SubscriptionDataStoreUtil.getSubscriptionCacheKey(appId, apiId);
         String synchronizeKey = "SubscriptionDataStoreImpl-Subscription-" + subscriptionCacheKey;
         Subscription subscription = subscriptionMap.get(subscriptionCacheKey);
@@ -444,43 +441,6 @@ public class SubscriptionDataStoreImpl implements SubscriptionDataStore {
         return policyMap.get(SubscriptionDataStoreUtil.getPolicyCacheKey(policyName, tenantId));
     }
 
-    private class PopulateTask<K, V extends CacheableEntity<K>> implements Runnable {
-
-        private Map<K, V> entityMap;
-        private Supplier<List<V>> supplier;
-
-        PopulateTask(Map<K, V> entityMap, Supplier<List<V>> supplier) {
-
-            this.entityMap = entityMap;
-            this.supplier = supplier;
-        }
-
-        public void run() {
-
-            List<V> list = supplier.get();
-            HashMap<K, V> tempMap = new HashMap<>();
-
-            if (list != null) {
-                for (V v : list) {
-                    tempMap.put(v.getCacheKey(), v);
-                    if (log.isDebugEnabled()) {
-                        log.debug(String.format("Adding entry Key : %s Value : %s", v.getCacheKey(), v));
-                    }
-
-                    if (!tempMap.isEmpty()) {
-                        entityMap.clear();
-                        entityMap.putAll(tempMap);
-                    }
-                }
-
-            } else {
-                if (log.isDebugEnabled()) {
-                    log.debug("List is null for " + supplier.getClass());
-                }
-            }
-        }
-    }
-
     public boolean isApisInitialized() {
 
         return apisInitialized;
@@ -569,8 +529,9 @@ public class SubscriptionDataStoreImpl implements SubscriptionDataStore {
 
     @Override
     public void addOrUpdateAPI(API api) {
+
         String key = api.getApiName().concat(":").concat(api.getApiVersion());
-        apiByUUIDMap.put(api.getUuid(),api);
+        apiByUUIDMap.put(api.getUuid(), api);
         apiNameVersionMap.put(key, api);
         apiMap.put(api.getCacheKey(), api);
     }
@@ -594,6 +555,7 @@ public class SubscriptionDataStoreImpl implements SubscriptionDataStore {
 
     @Override
     public void removeAPI(API api) {
+
         String key = api.getApiName().concat(":").concat(api.getApiVersion());
         apiByUUIDMap.remove(api.getUuid());
         apiNameVersionMap.remove(key);
@@ -693,6 +655,80 @@ public class SubscriptionDataStoreImpl implements SubscriptionDataStore {
     }
 
     @Override
+    public List<Application> getApplicationsByName(String name) {
+
+        List<Application> applicationList = new ArrayList<>();
+        if (applicationMap != null) {
+            for (Application application : applicationMap.values()) {
+                if (application.getName().equals(name)) {
+                    applicationList.add(application);
+                }
+            }
+        }
+        return applicationList;
+    }
+
+    @Override
+    public Application getApplicationByUUID(String uuid) {
+
+        if (applicationMap != null) {
+            for (Application application : applicationMap.values()) {
+                if (application.getUUID().equals(uuid)) {
+                    return application;
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public List<Subscription> getSubscriptionsByAPIId(int apiId) {
+
+        List<Subscription> subscriptionList = new ArrayList<>();
+        if (subscriptionMap != null) {
+            for (Subscription subscription : subscriptionMap.values()) {
+                if (subscription.getApiId() == apiId) {
+                    subscriptionList.add(subscription);
+                }
+            }
+        }
+        return subscriptionList;
+    }
+
+    @Override
+    public List<API> getAPIs() {
+
+        return new ArrayList<>(apiMap.values());
+    }
+
+    @Override
+    public Subscription getSubscriptionByUUID(String apiUUID, String appUUID) {
+
+        if (subscriptionMap != null) {
+            for (Subscription subscription : subscriptionMap.values()) {
+                if (subscription.getApiUUId().equals(apiUUID) && subscription.getAppUUID().equals(appUUID)) {
+                    return subscription;
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public List<ApplicationKeyMapping> getKeyMappingByApplicationId(int applicationId) {
+
+        List<ApplicationKeyMapping> applicationKeyMappings = new ArrayList<>();
+        if (applicationKeyMappingMap != null) {
+            for (ApplicationKeyMapping applicationKeyMapping : applicationKeyMappingMap.values()) {
+                if (applicationKeyMapping.getApplicationId() == applicationId) {
+                    applicationKeyMappings.add(applicationKeyMapping);
+                }
+            }
+        }
+        return applicationKeyMappings;
+    }
+
+    @Override
     public void addOrUpdateScope(Scope scope) {
 
         scopesMap.put(scope.getCacheKey(), scope);
@@ -712,6 +748,7 @@ public class SubscriptionDataStoreImpl implements SubscriptionDataStore {
 
     @Override
     public Map<String, API> getAllAPIsByContextList() {
+
         Map<String, API> apiContextAPIMap = new HashMap<>();
         for (API api : apiMap.values()) {
             apiContextAPIMap.put(api.getContext(), api);
@@ -732,7 +769,7 @@ public class SubscriptionDataStoreImpl implements SubscriptionDataStore {
                 clearResourceCache(api, event.getTenantDomain());
             }
             if (APIConstants.EventType.REMOVE_API_FROM_GATEWAY.name().equals(event.getType())) {
-                if (api != null){
+                if (api != null) {
                     removeAPI(api);
                 }
             } else {
@@ -763,5 +800,48 @@ public class SubscriptionDataStoreImpl implements SubscriptionDataStore {
             return Boolean.parseBoolean(serviceURL);
         }
         return true;
+    }
+
+    public enum POLICY_TYPE {
+        SUBSCRIPTION,
+        APPLICATION,
+        API
+    }
+
+    private class PopulateTask<K, V extends CacheableEntity<K>> implements Runnable {
+
+        private Map<K, V> entityMap;
+        private Supplier<List<V>> supplier;
+
+        PopulateTask(Map<K, V> entityMap, Supplier<List<V>> supplier) {
+
+            this.entityMap = entityMap;
+            this.supplier = supplier;
+        }
+
+        public void run() {
+
+            List<V> list = supplier.get();
+            HashMap<K, V> tempMap = new HashMap<>();
+
+            if (list != null) {
+                for (V v : list) {
+                    tempMap.put(v.getCacheKey(), v);
+                    if (log.isDebugEnabled()) {
+                        log.debug(String.format("Adding entry Key : %s Value : %s", v.getCacheKey(), v));
+                    }
+
+                    if (!tempMap.isEmpty()) {
+                        entityMap.clear();
+                        entityMap.putAll(tempMap);
+                    }
+                }
+
+            } else {
+                if (log.isDebugEnabled()) {
+                    log.debug("List is null for " + supplier.getClass());
+                }
+            }
+        }
     }
 }
