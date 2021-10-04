@@ -191,7 +191,6 @@ public class APIAuthenticationHandler extends AbstractHandler implements Managed
         } else {
             keyManagersList.add(APIConstants.KeyManager.API_LEVEL_ALL_KEY_MANAGERS);
         }
-
     }
 
     /**
