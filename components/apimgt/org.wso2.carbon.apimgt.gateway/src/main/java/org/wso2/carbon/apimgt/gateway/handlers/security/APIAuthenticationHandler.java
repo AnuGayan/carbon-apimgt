@@ -89,7 +89,6 @@ public class APIAuthenticationHandler extends AbstractHandler implements Managed
     protected ArrayList<Authenticator> authenticators = new ArrayList<>();
     protected boolean isAuthenticatorsInitialized = false;
     protected boolean isOauthParamsInitialized = false;
-
     private SynapseEnvironment synapseEnvironment;
 
     private String authorizationHeader;
