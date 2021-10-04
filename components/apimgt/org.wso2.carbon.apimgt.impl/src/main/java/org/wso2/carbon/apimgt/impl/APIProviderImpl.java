@@ -8240,6 +8240,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                 }
             }
         }
+        invalidateResourceCache(product.getContext(), product.getId().getVersion(), Collections.EMPTY_SET);
 
         //todo : check whether permissions need to be updated and pass it along
         updateApiProductArtifact(product, true, true);
