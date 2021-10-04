@@ -88,6 +88,8 @@ public class APIAuthenticationHandler extends AbstractHandler implements Managed
 
     protected ArrayList<Authenticator> authenticators = new ArrayList<>();
     protected boolean isAuthenticatorsInitialized = false;
+    protected boolean iskeyvalidatorInitialized = false;
+
     private SynapseEnvironment synapseEnvironment;
 
     private String authorizationHeader;
@@ -184,14 +186,13 @@ public class APIAuthenticationHandler extends AbstractHandler implements Managed
         }
         if (getApiManagerConfigurationService() != null) {
             initializeAuthenticators();
-            setKeyValidator();
+            initOAuthParams();
         }
         if (StringUtils.isNotEmpty(keyManagers)) {
             Collections.addAll(keyManagersList, keyManagers.split(","));
         } else {
             keyManagersList.add(APIConstants.KeyManager.API_LEVEL_ALL_KEY_MANAGERS);
         }
-        initOAuthParams();
     }
 
     /**
@@ -340,6 +341,7 @@ public class APIAuthenticationHandler extends AbstractHandler implements Managed
     }
 
     protected void initOAuthParams() {
+        setKeyValidator();
         APIManagerConfiguration config = getApiManagerConfiguration();
         String value = config.getFirstProperty(APIConstants.REMOVE_OAUTH_HEADERS_FROM_MESSAGE);
         if (value != null) {
@@ -352,6 +354,7 @@ public class APIAuthenticationHandler extends AbstractHandler implements Managed
         if (value != null) {
             setSecurityContextHeader(value);
         }
+        iskeyvalidatorInitialized = true;
     }
 
     public void setSecurityContextHeader(String securityContextHeader) {
@@ -401,6 +404,9 @@ public class APIAuthenticationHandler extends AbstractHandler implements Managed
 
             if (!isAuthenticatorsInitialized) {
                 initializeAuthenticators();
+            }
+            if (!iskeyvalidatorInitialized) {
+                initOAuthParams();
             }
             String authenticationScheme = getAPIKeyValidator().getResourceAuthenticationScheme(messageContext);
             if(APIConstants.AUTH_NO_AUTHENTICATION.equals(authenticationScheme)) {
