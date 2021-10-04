@@ -184,13 +184,14 @@ public class APIAuthenticationHandler extends AbstractHandler implements Managed
         }
         if (getApiManagerConfigurationService() != null) {
             initializeAuthenticators();
-            initOAuthParams();
+            setKeyValidator();
         }
         if (StringUtils.isNotEmpty(keyManagers)) {
             Collections.addAll(keyManagersList, keyManagers.split(","));
         } else {
             keyManagersList.add(APIConstants.KeyManager.API_LEVEL_ALL_KEY_MANAGERS);
         }
+        initOAuthParams();
     }
 
     /**
@@ -339,7 +340,6 @@ public class APIAuthenticationHandler extends AbstractHandler implements Managed
     }
 
     protected void initOAuthParams() {
-        setKeyValidator();
         APIManagerConfiguration config = getApiManagerConfiguration();
         String value = config.getFirstProperty(APIConstants.REMOVE_OAUTH_HEADERS_FROM_MESSAGE);
         if (value != null) {
