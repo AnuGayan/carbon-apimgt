@@ -8255,8 +8255,8 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
 
         APIEvent apiEvent = new APIEvent(UUID.randomUUID().toString(), System.currentTimeMillis(),
                 APIConstants.EventType.API_UPDATE.name(), tenantId, tenantDomain, product.getId().getName(), productId,
-                product.getId().getUUID(),product.getId().getVersion(), product.getType(), product.getContext(), product.getId().getProviderName(),
-                APIConstants.LC_PUBLISH_LC_STATE);
+                product.getId().getUUID(), product.getId().getVersion(), product.getType(), product.getContext(),
+                product.getId().getProviderName(), APIConstants.LC_PUBLISH_LC_STATE);
         APIUtil.sendNotification(apiEvent, APIConstants.NotifierType.API.name());
 
         return apiToProductResourceMapping;
