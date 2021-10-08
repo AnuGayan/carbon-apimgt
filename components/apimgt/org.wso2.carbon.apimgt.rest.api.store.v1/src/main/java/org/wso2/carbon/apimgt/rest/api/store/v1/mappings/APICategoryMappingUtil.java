@@ -46,6 +46,7 @@ public class APICategoryMappingUtil {
      */
     private static List<APICategoryDTO> fromCategoryListToCategoryDTOList(List<APICategory> categories) {
         List<APICategoryDTO> categoryDTOs = new ArrayList<>();
+        
         for (APICategory category : categories) {
             APICategoryDTO categoryDTO = new APICategoryDTO();
             categoryDTO.setId(category.getId());
