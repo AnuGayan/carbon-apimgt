@@ -89,6 +89,9 @@ public class InMemoryAPIDeployer {
                     String msg = "Error deploying"  + apiId +  "in Gateway";
                     log.error(msg, e);
                     throw new ArtifactSynchronizerException(msg, e);
+                } finally {
+                    MessageContext.destroyCurrentMessageContext();
+                    PrivilegedCarbonContext.endTenantFlow();
                 }
             } else {
                 String msg = "Artifact retriever not found";
@@ -141,6 +144,9 @@ public class InMemoryAPIDeployer {
                     String msg = "Error  deploying APIs to the Gateway ";
                     log.error(msg, e);
                     throw new ArtifactSynchronizerException(msg, e);
+                } finally {
+                    MessageContext.destroyCurrentMessageContext();
+                    PrivilegedCarbonContext.endTenantFlow();
                 }
             } else {
                 String msg = "Artifact retriever not found";
