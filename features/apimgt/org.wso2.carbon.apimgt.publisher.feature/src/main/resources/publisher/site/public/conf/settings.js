@@ -30,6 +30,10 @@ const AppConfig = {
         mediationPolicyCount: 50,
         propertyDisplaySuffix: '__display',
         loadDefaultLocales: true, // If false, Default en.json file will not be used/loaded in app.
+        supportedDocTypes: 'application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document,'
+                            + ' application/pdf, text/plain, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,'
+                            + ' application/vnd.oasis.opendocument.text, application/vnd.oasis.opendocument.spreadsheet,'
+                            + ' application/json, application/x-yaml, .md',
         // loadDefaultLocales = false is good for performance but text overrides using the locale file will not work
     },
     serviceCatalogDefinitionTypes: {
