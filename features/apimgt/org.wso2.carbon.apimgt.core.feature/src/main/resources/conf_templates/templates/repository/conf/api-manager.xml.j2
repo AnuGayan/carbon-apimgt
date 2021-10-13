@@ -479,6 +479,9 @@
         <EnableAccessControl>true</EnableAccessControl>
         <!-- This property is to add the claims that needs to be displayed in Publisher -->
         <SubscriberClaims>{{apim.publisher.subscriber_claims}}</SubscriberClaims>
+        {% if apim.publisher.supported_document_types is defined %}
+        <SupportedDocumentTypes>{{apim.publisher.supported_document_types}}</SupportedDocumentTypes>
+        {% endif %}
          <!--This parameter specifies the alias value of the internal Api Key which will be used for Api Key Authentication-->
         <InternalKeyAlias>{{apim.publisher.key_alias}}</InternalKeyAlias>
     </APIPublisher>
