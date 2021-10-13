@@ -537,12 +537,6 @@
         "summary" : "Get all synapse artifacts for a given gateway label",
         "description" : "This will provide access to the synapse artifacts in database.\n",
         "parameters" : [ {
-          "name" : "tenantDomain",
-          "in" : "query",
-          "description" : "**Search condition**.\n tenantDomain associated with the API\n",
-          "required" : false,
-          "type" : "string"
-        }, {
           "name" : "gatewayLabel",
           "in" : "query",
           "description" : "**Search condition**.\n label associated with the API\n",
@@ -574,6 +568,12 @@
           "name" : "apiName",
           "in" : "query",
           "description" : "**Search condition**.\n  API Name\n",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "tenantDomain",
+          "in" : "query",
+          "description" : "**Search condition**.\n tenantDomain associated with the API\n",
           "required" : false,
           "type" : "string"
         }, {
