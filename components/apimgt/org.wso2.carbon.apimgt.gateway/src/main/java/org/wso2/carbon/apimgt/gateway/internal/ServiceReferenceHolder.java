@@ -41,8 +41,6 @@ import org.wso2.carbon.utils.ConfigurationContextService;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentSkipListSet;
 
 public class ServiceReferenceHolder {
 
@@ -66,7 +64,6 @@ public class ServiceReferenceHolder {
     private CacheInvalidationService cacheInvalidationService;
     private RevokedTokenService revokedTokenService;
     private APIThrottleDataService throttleDataService;
-    private Set<String> activeTenants = new ConcurrentSkipListSet<>();
 
     private JWTValidationService jwtValidationService;
     private KeyManagerDataService keyManagerDataService;
@@ -187,21 +184,6 @@ public class ServiceReferenceHolder {
     public EndpointAdmin getEndpointAdmin() {
 
         return endpointAdmin;
-    }
-
-    public void addLoadedTenant(String tenantDomain) {
-
-        activeTenants.add(tenantDomain);
-    }
-
-    public void removeUnloadedTenant(String tenantDomain) {
-
-        activeTenants.remove(tenantDomain);
-    }
-
-    public boolean isTenantLoaded(String tenantDomain) {
-
-        return activeTenants.contains(tenantDomain);
     }
 
     public void setEndpointAdmin(EndpointAdmin endpointAdmin) {

@@ -421,12 +421,6 @@ paths:
       description: |
         This will provide access to the synapse artifacts in database.
       parameters:
-        - name: tenantDomain
-          in: query
-          description: |
-            **Search condition**.
-             tenantDomain associated with the API
-          type: string
         - name: gatewayLabel
           in: query
           description: |
