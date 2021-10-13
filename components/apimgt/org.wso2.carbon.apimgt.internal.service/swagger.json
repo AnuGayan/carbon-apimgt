@@ -577,12 +577,6 @@
           "required" : false,
           "type" : "string"
         }, {
-          "name" : "tenantDomain",
-          "in" : "query",
-          "description" : "**Search condition**.\n tenantDomain associated with the API\n",
-          "required" : false,
-          "type" : "string"
-        }, {
           "name" : "version",
           "in" : "query",
           "description" : "**Search condition**.\nversion of the API\n",
@@ -811,9 +805,6 @@
     },
     "API" : {
       "properties" : {
-        "uuid" : {
-          "type" : "string"
-        },
         "apiId" : {
           "type" : "integer"
         },
