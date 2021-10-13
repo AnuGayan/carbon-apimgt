@@ -17,7 +17,6 @@
 
 package org.wso2.carbon.apimgt.gateway.listeners;
 
-import org.apache.axis2.context.ConfigurationContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.apimgt.gateway.InMemoryAPIDeployer;
@@ -31,17 +30,14 @@ import org.wso2.carbon.apimgt.impl.dto.GatewayArtifactSynchronizerProperties;
 import org.wso2.carbon.apimgt.impl.dto.ThrottleProperties;
 import org.wso2.carbon.apimgt.impl.gatewayartifactsynchronizer.exception.ArtifactSynchronizerException;
 import org.wso2.carbon.apimgt.jms.listener.utils.JMSTransportHandler;
-import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.core.ServerShutdownHandler;
 import org.wso2.carbon.core.ServerStartupObserver;
-import org.wso2.carbon.utils.AbstractAxis2ConfigurationContextObserver;
-import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 /**
  * Class for loading synapse artifacts to memory on initial server startup
  */
 
-public class GatewayStartupListener extends AbstractAxis2ConfigurationContextObserver implements ServerStartupObserver, Runnable, ServerShutdownHandler {
+public class GatewayStartupListener implements ServerStartupObserver, Runnable, ServerShutdownHandler {
     private static final Log log = LogFactory.getLog(GatewayStartupListener.class);
     private boolean debugEnabled = log.isDebugEnabled();
     private JMSTransportHandler jmsTransportHandlerForTrafficManager;
@@ -74,7 +70,7 @@ public class GatewayStartupListener extends AbstractAxis2ConfigurationContextObs
     public void completingServerStartup() {
     }
 
-    private boolean deployArtifactsAtStartup(String tenantDomain) throws ArtifactSynchronizerException {
+    private boolean deployArtifactsAtStartup() throws ArtifactSynchronizerException {
         GatewayArtifactSynchronizerProperties gatewayArtifactSynchronizerProperties =
                 ServiceReferenceHolder.getInstance()
                         .getAPIManagerConfiguration().getGatewayArtifactSynchronizerProperties();
@@ -82,39 +78,9 @@ public class GatewayStartupListener extends AbstractAxis2ConfigurationContextObs
         if (gatewayArtifactSynchronizerProperties.isRetrieveFromStorageEnabled()) {
             InMemoryAPIDeployer inMemoryAPIDeployer = new InMemoryAPIDeployer();
             flag = inMemoryAPIDeployer.deployAllAPIsAtGatewayStartup(gatewayArtifactSynchronizerProperties
-                    .getGatewayLabels(), tenantDomain);
+                    .getGatewayLabels());
         }
         return flag;
-    }
-
-    @Override
-    public void createdConfigurationContext(ConfigurationContext configContext) {
-
-        String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
-        retrieveAndDeployArtifacts(tenantDomain);
-        ServiceReferenceHolder.getInstance().addLoadedTenant(tenantDomain);
-    }
-
-    private void retrieveAndDeployArtifacts(String tenantDomain) {
-
-        if (gatewayArtifactSynchronizerProperties.isRetrieveFromStorageEnabled()) {
-            if (APIConstants.GatewayArtifactSynchronizer.GATEWAY_STARTUP_SYNC
-                    .equals(gatewayArtifactSynchronizerProperties.getGatewayStartup())) {
-                try {
-                    deployAPIsInSyncMode(tenantDomain);
-                } catch (ArtifactSynchronizerException e) {
-                    log.error("Error in Deploying APIs to gateway", e);
-                }
-            } else {
-                deployAPIsInAsyncMode(tenantDomain);
-            }
-        }
-    }
-
-    @Override
-    public void terminatedConfigurationContext(ConfigurationContext configCtx) {
-        String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
-        ServiceReferenceHolder.getInstance().removeUnloadedTenant(tenantDomain);
     }
 
     @Override
@@ -123,12 +89,12 @@ public class GatewayStartupListener extends AbstractAxis2ConfigurationContextObs
             if (APIConstants.GatewayArtifactSynchronizer.GATEWAY_STARTUP_SYNC
                     .equals(gatewayArtifactSynchronizerProperties.getGatewayStartup())) {
                 try {
-                    deployAPIsInSyncMode(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME);
+                    deployAPIsInSyncMode();
                 } catch (ArtifactSynchronizerException e) {
-                    log.error("Error in Deploying APIs to gateway");
+                    log.error("Error in Deploying APIs togateway");
                 }
             } else {
-                deployAPIsInAsyncMode(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME);
+                deployAPIsInAsyncMode();
             }
         }
         retrieveBlockConditionsAndKeyTemplates();
@@ -142,16 +108,16 @@ public class GatewayStartupListener extends AbstractAxis2ConfigurationContextObs
                 .subscribeForJmsEvents(APIConstants.TopicNames.TOPIC_NOTIFICATION, new GatewayJMSMessageListener());
     }
 
-    private void deployAPIsInSyncMode(String tenantDomain) throws ArtifactSynchronizerException {
+    private void deployAPIsInSyncMode() throws ArtifactSynchronizerException {
         if (debugEnabled) {
             log.debug("Deploying Artifacts in synchronous mode");
         }
         syncModeDeploymentCount ++;
-        isAPIsDeployedInSyncMode = deployArtifactsAtStartup(tenantDomain);
+        isAPIsDeployedInSyncMode = deployArtifactsAtStartup();
         if (!isAPIsDeployedInSyncMode) {
             log.error("Deployment attempt : " + syncModeDeploymentCount + " was unsuccessful") ;
             if (!(syncModeDeploymentCount > retryCount)) {
-                deployAPIsInSyncMode(tenantDomain);
+                deployAPIsInSyncMode();
             } else {
                 log.error("Maximum retry limit exceeded. Server is starting without deploying all synapse artifacts");
             }
@@ -159,6 +125,7 @@ public class GatewayStartupListener extends AbstractAxis2ConfigurationContextObs
             log.info("Deployment attempt : " + syncModeDeploymentCount + " was successful");
         }
     }
+
 
     @Override
     public void invoke() {
@@ -175,11 +142,20 @@ public class GatewayStartupListener extends AbstractAxis2ConfigurationContextObs
     }
 
 
-    public void deployAPIsInAsyncMode(String tenantDomain) {
-        new Thread(new AsyncAPIDeployment(tenantDomain)).start();
+    public void deployAPIsInAsyncMode() {
+        new Thread(this).start();
     }
 
-    private void deployArtifactsInGateway(String tenantDomain) throws ArtifactSynchronizerException {
+    @Override
+    public void run() {
+        try {
+            deployArtifactsInGateway();
+        } catch (ArtifactSynchronizerException e) {
+            log.error("Error in Deploying APIs togateway");
+        }
+    }
+
+    private void deployArtifactsInGateway() throws ArtifactSynchronizerException {
 
         if (debugEnabled) {
             log.debug("Deploying Artifacts in asynchronous mode");
@@ -190,7 +166,7 @@ public class GatewayStartupListener extends AbstractAxis2ConfigurationContextObs
         long maxReconnectDuration = 1000 * 60 * 60; // 1 hour
 
         while (true) {
-            boolean isArtifactsDeployed = deployArtifactsAtStartup(tenantDomain);
+            boolean isArtifactsDeployed = deployArtifactsAtStartup();
             if (isArtifactsDeployed) {
                 log.info("Synapse Artifacts deployed Successfully in the Gateway");
                 break;
@@ -222,30 +198,5 @@ public class GatewayStartupListener extends AbstractAxis2ConfigurationContextObs
             webServiceRevokedJWTTokensRetriever.startRevokedJWTTokensRetriever();
         }
 
-    }
-
-    @Override
-    public void run() {
-
-    }
-
-    class AsyncAPIDeployment implements Runnable {
-
-        private String tenantDomain;
-
-        public AsyncAPIDeployment(String tenantDomain) {
-
-            this.tenantDomain = tenantDomain;
-        }
-
-        @Override
-        public void run() {
-
-            try {
-                deployArtifactsInGateway(tenantDomain);
-            } catch (ArtifactSynchronizerException e) {
-                log.error("Error in Deploying APIs to gateway", e);
-            }
-        }
     }
 }
