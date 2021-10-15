@@ -30,6 +30,7 @@ import org.apache.synapse.core.axis2.Axis2MessageContext;
 import org.apache.synapse.transport.passthru.ServerWorker;
 import org.apache.synapse.transport.passthru.util.RelayUtils;
 import org.wso2.carbon.apimgt.gateway.APIMgtGatewayConstants;
+import org.wso2.carbon.apimgt.gateway.utils.GatewayUtils;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 
 import java.io.IOException;
@@ -49,6 +50,7 @@ public class LogsHandler extends AbstractSynapseHandler {
     private final String KEY_CORRELATION_ID = "CorrelationId: ";
     private final String KEY_DIRECTION = "Direction: ";
     private final String KEY_DESTINATION = "Destination: ";
+    private final String KEY_SOURCE_IP = "SourceIp: ";
     private final String KEY_ORIGIN = "Origin: ";
     private final String KEY_HTTP_METHOD = "HTTPMethod: ";
     private final String KEY_HTTP_SC = "HTTPStatusCode: ";
@@ -122,6 +124,7 @@ public class LogsHandler extends AbstractSynapseHandler {
                 logMessage += SEPARATOR + KEY_DIRECTION + "RequestIn";
                 logMessage += SEPARATOR + KEY_HTTP_METHOD + axis2MessageContext.getProperty(HTTP_METHOD);
                 logMessage += SEPARATOR + KEY_DESTINATION + messageContext.getTo().getAddress();
+                logMessage += SEPARATOR + KEY_SOURCE_IP + GatewayUtils.getClientIp(messageContext);
                 messageTrackLog.info(logMessage);
             } catch (Exception e) {
                 messageTrackLog.error(MESSAGE_TRACK_BUILD_MESSAGE_ERROR + e.getMessage(), e);
