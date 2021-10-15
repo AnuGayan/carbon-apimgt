@@ -176,7 +176,7 @@ public class LogsHandler extends AbstractSynapseHandler {
                         ((Axis2MessageContext) messageContext).getAxis2MessageContext();
                 String logMessage = KEY_CORRELATION_ID + axis2MessageContext.getProperty(CORRELATION_ID);
                 logMessage += SEPARATOR + KEY_DIRECTION + "RequestOut";
-                logMeshttps://github.com/wso2-support/carbon-apimgt/pull/3887sage += SEPARATOR + KEY_HTTP_METHOD + axis2MessageContext.getProperty(HTTP_METHOD);
+                logMessage += SEPARATOR + KEY_HTTP_METHOD + axis2MessageContext.getProperty(HTTP_METHOD);
                 logMessage += SEPARATOR + KEY_DESTINATION + messageContext.getTo().getAddress();
                 messageTrackLog.info(logMessage);
             } catch (Exception e) {
