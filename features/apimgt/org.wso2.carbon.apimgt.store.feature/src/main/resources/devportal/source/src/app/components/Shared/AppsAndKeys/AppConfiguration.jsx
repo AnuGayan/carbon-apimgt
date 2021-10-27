@@ -19,6 +19,7 @@
 import React, { useState, useEffect } from 'react';
 import InputLabel from '@material-ui/core/InputLabel';
 import FormControl from '@material-ui/core/FormControl';
+import FormHelperText from '@material-ui/core/FormHelperText';
 import ListItemText from '@material-ui/core/ListItemText';
 import Checkbox from '@material-ui/core/Checkbox';
 import Chip from '@material-ui/core/Chip';
@@ -33,6 +34,7 @@ import { injectIntl } from 'react-intl';
 import Select from '@material-ui/core/Select';
 import Input from '@material-ui/core/Input';
 import Box from '@material-ui/core/Box';
+import { useIntl } from 'react-intl';
 
 
 const styles = theme => ({
@@ -66,7 +68,7 @@ const styles = theme => ({
         '& p': {
             margin: '8px 0px',
         },
-    },
+    }
 });
 
 /**
@@ -82,6 +84,7 @@ const AppConfiguration = (props) => {
     } = props;
 
     const [selectedValue, setSelectedValue] = useState(previousValue);
+    const intl = useIntl();
 
     /**
      * This method is used to handle the updating of key generation
@@ -93,6 +96,17 @@ const AppConfiguration = (props) => {
         const { target: currentTarget } = event;
         setSelectedValue(currentTarget.value);
         handleChange('additionalProperties', event);
+    }
+
+    const hasMandatoryError = (fieldValue) => {
+        let error = false;
+        if (fieldValue === '' || (Array.isArray(fieldValue) && !fieldValue.length)) {
+            error = intl.formatMessage({
+                defaultMessage: 'Required field is empty',
+                id: 'Shared.AppsAndKeys.KeyConfCiguration.required.empty.error',
+            });
+        }
+        return error;
     }
     /**
      * Update the state when new props are available
@@ -120,14 +134,12 @@ const AppConfiguration = (props) => {
                             value={selectedValue}
                             name={config.name}
                             onChange={e => handleAppRequestChange(e)}
-                            helperText={
-                                <Typography variant='caption'>
-                                    {config.tooltip}
-                                </Typography>
-                            }
+                            helperText={(config.required && hasMandatoryError(selectedValue)) || config.tooltip}
                             margin='dense'
                             variant='outlined'
                             disabled={!isUserOwner}
+                            required={config.required}
+                            error={config.required && hasMandatoryError(selectedValue)}                            
                         >
                             {config.values.map(key => (
                                 <MenuItem key={key} value={key}>
@@ -137,7 +149,13 @@ const AppConfiguration = (props) => {
                         </TextField>
                     ) : (config.type === 'select' && config.multiple === true && Array.isArray(selectedValue)) ? (
                         <>
-                            <FormControl variant="outlined" className={classes.formControl} fullWidth>
+                            <FormControl 
+                            variant="outlined" 
+                            className={classes.formControl} 
+                            fullWidth 
+                            error={config.required && hasMandatoryError(selectedValue)}
+                            required={config.required}
+                            >
                                 <InputLabel id="multi-select-label">{config.label}</InputLabel>
                                 <Select
                                     labelId="multi-select-label"
@@ -156,11 +174,6 @@ const AppConfiguration = (props) => {
                                             ))}
                                         </div>
                                     )}
-                                    helperText={
-                                        <Typography variant='caption'>
-                                            {config.tooltip}
-                                        </Typography>
-                                    }
                                     label={config.label}
                                 >
                                     {config.values.map(key => (
@@ -170,12 +183,8 @@ const AppConfiguration = (props) => {
                                         </MenuItem>
                                     ))}
                                 </Select>
+                                <FormHelperText>{(config.required && hasMandatoryError(selectedValue)) || config.tooltip}</FormHelperText>                               
                             </FormControl>
-
-
-                            <Typography variant='caption'>
-                                {config.tooltip}
-                            </Typography>
                         </>
                     ) : (config.type === 'input') ? (
                         <TextField
@@ -188,14 +197,12 @@ const AppConfiguration = (props) => {
                             value={selectedValue}
                             name={config.name}
                             onChange={e => handleAppRequestChange(e)}
-                            helperText={
-                                <Typography variant='caption'>
-                                    {config.tooltip}
-                                </Typography>
-                            }
+                            helperText={(config.required && hasMandatoryError(selectedValue)) || config.tooltip}
                             margin='dense'
                             variant='outlined'
                             disabled={!isUserOwner}
+                            required={config.required}
+                            error={config.required && hasMandatoryError(selectedValue)}
                         />
                     ) : (
                                     <TextField

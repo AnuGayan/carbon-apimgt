@@ -54,6 +54,9 @@ const styles = (theme) => ({
             backgroundColor: theme.palette.grey[100],
             color: theme.palette.grey[500],
         },
+        '& label>span:nth-child(1)': {
+            color: 'red',
+        },
         position: 'relative',
     },
     button: {
@@ -256,7 +259,11 @@ class TokenManager extends React.Component {
         const additionalProperties = {};
 
         applicationConfiguration.forEach((confItem) => {
-            additionalProperties[confItem.name] = confItem.default || '';
+            if (confItem.type === 'select' && confItem.multiple) {
+                additionalProperties[confItem.name] = (confItem.default && confItem.default.split(",")) || [];
+            } else {
+                additionalProperties[confItem.name] = confItem.default || '';
+            }
         });
         return additionalProperties;
     }
