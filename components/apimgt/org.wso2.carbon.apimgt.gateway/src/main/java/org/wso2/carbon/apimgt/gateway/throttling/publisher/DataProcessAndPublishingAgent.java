@@ -147,19 +147,9 @@ public class DataProcessAndPublishingAgent implements Runnable {
                     .getAxis2MessageContext();
             TreeMap<String, String> transportHeaderMap = (TreeMap<String, String>) axis2MessageContext
                     .getProperty(org.apache.axis2.context.MessageContext.TRANSPORT_HEADERS);
-
-            if (messageContext.getProperty(APIThrottleConstants.CUSTOM_PROPERTY) != null) {
-                HashMap<String, Object> propertyFromMsgCtx = (HashMap<String, Object>) messageContext.getProperty(
-                        APIThrottleConstants.CUSTOM_PROPERTY);
-
-                if (propertyFromMsgCtx != null) {
-                    this.customPropertyMap = (Map<String, Object>) propertyFromMsgCtx.clone();
-                }
-            }
-
             Object contentLength = transportHeaderMap.get(APIThrottleConstants.CONTENT_LENGTH);
             if (contentLength != null) {
-                log.debug("Content lenght found in the request. Using it as the message size..");
+                log.debug("Content length found in the request. Using it as the message size..");
                 messageSizeInBytes  = Long.parseLong(contentLength.toString());
             } else {
                 log.debug("Building the message to get the message size..");
@@ -193,6 +183,15 @@ public class DataProcessAndPublishingAgent implements Runnable {
             // map is used.
             if (transportHeaderMap != null) {
                 this.headersMap = (Map<String, String>) transportHeaderMap.clone();
+            }
+        }
+
+        if (messageContext.getProperty(APIThrottleConstants.CUSTOM_PROPERTY) != null) {
+            HashMap<String, Object> propertyFromMsgCtx = (HashMap<String, Object>) messageContext.getProperty(
+                    APIThrottleConstants.CUSTOM_PROPERTY);
+
+            if (propertyFromMsgCtx != null) {
+                this.customPropertyMap = (Map<String, Object>) propertyFromMsgCtx.clone();
             }
         }
     }
