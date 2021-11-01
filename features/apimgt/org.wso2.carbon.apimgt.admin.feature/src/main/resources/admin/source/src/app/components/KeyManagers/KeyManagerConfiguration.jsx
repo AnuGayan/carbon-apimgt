@@ -51,7 +51,7 @@ export default function KeyManagerConfiguration(props) {
             if (e.target.checked) {
                 finalValue.push(value);
             } else {
-                const newValue = value.filter((v) => v !== e.target.value);
+                const newValue = finalValue.filter((v) => v !== e.target.value);
                 finalValue = newValue;
             }
         } else {
@@ -63,6 +63,15 @@ export default function KeyManagerConfiguration(props) {
         let value = '';
         if (additionalProperties[keymanagerConnectorConfiguration.name]) {
             value = additionalProperties[keymanagerConnectorConfiguration.name];
+        } else if (additionalProperties[keymanagerConnectorConfiguration.name] === undefined) {
+            let defaultValue;
+            value = keymanagerConnectorConfiguration.default;
+            if (keymanagerConnectorConfiguration.type === 'select') {
+                defaultValue = value.split(',');
+            } else {
+                defaultValue = value;
+            }
+            setAdditionalProperties(keymanagerConnectorConfiguration.name, defaultValue);
         }
         if (keymanagerConnectorConfiguration.type === 'input') {
             if (keymanagerConnectorConfiguration.mask) {
@@ -81,7 +90,7 @@ export default function KeyManagerConfiguration(props) {
                             validating={validating}
                         />
                         <FormHelperText>
-                            {hasErrors('keyconfig', value, validating) || keymanagerConnectorConfiguration.tooltip}
+                            {hasErrors('keyconfig', value, true) || keymanagerConnectorConfiguration.tooltip}
                         </FormHelperText>
                     </FormControl>
                 );
@@ -97,8 +106,8 @@ export default function KeyManagerConfiguration(props) {
                         </span>
                     )}
                     fullWidth
-                    error={keymanagerConnectorConfiguration.required && hasErrors('keyconfig', value, validating)}
-                    helperText={hasErrors('keyconfig', value, validating) || keymanagerConnectorConfiguration.tooltip}
+                    error={keymanagerConnectorConfiguration.required && hasErrors('keyconfig', value, true)}
+                    helperText={hasErrors('keyconfig', value, true) || keymanagerConnectorConfiguration.tooltip}
                     variant='outlined'
                     value={value}
                     defaultValue={keymanagerConnectorConfiguration.default}
@@ -107,8 +116,20 @@ export default function KeyManagerConfiguration(props) {
             );
         } else if (keymanagerConnectorConfiguration.type === 'select') {
             return (
-                <FormControl component='fieldset'>
-                    <FormLabel component='legend'>{keymanagerConnectorConfiguration.label}</FormLabel>
+                <FormControl
+                    component='fieldset'
+                    error={
+                        keymanagerConnectorConfiguration.required
+                        && (additionalProperties[keymanagerConnectorConfiguration.name] !== undefined)
+                        && (additionalProperties[keymanagerConnectorConfiguration.name].length === 0)
+                    }
+                >
+                    <FormLabel component='legend'>
+                        <span>
+                            {keymanagerConnectorConfiguration.label}
+                            {keymanagerConnectorConfiguration.required && (<span className={classes.error}>*</span>)}
+                        </span>
+                    </FormLabel>
                     <FormGroup>
                         {keymanagerConnectorConfiguration.values.map((selection) => (
                             <FormControlLabel
@@ -125,12 +146,27 @@ export default function KeyManagerConfiguration(props) {
                             />
                         ))}
                     </FormGroup>
+                    <FormHelperText>
+                        {hasErrors('keyconfig', value, true) || keymanagerConnectorConfiguration.tooltip}
+                    </FormHelperText>
                 </FormControl>
             );
         } else if (keymanagerConnectorConfiguration.type === 'options') {
             return (
-                <FormControl component='fieldset'>
-                    <FormLabel component='legend'>{keymanagerConnectorConfiguration.label}</FormLabel>
+                <FormControl
+                    component='fieldset'
+                    error={
+                        keymanagerConnectorConfiguration.required
+                        && (additionalProperties[keymanagerConnectorConfiguration.name] !== undefined)
+                        && (additionalProperties[keymanagerConnectorConfiguration.name].length === 0)
+                    }
+                >
+                    <FormLabel component='legend'>
+                        <span>
+                            {keymanagerConnectorConfiguration.label}
+                            {keymanagerConnectorConfiguration.required && (<span className={classes.error}>*</span>)}
+                        </span>
+                    </FormLabel>
                     <RadioGroup
                         aria-label={keymanagerConnectorConfiguration.label}
                         name={keymanagerConnectorConfiguration.name}
@@ -141,6 +177,9 @@ export default function KeyManagerConfiguration(props) {
                             <FormControlLabel value={selection} control={<Radio />} label={selection} />
                         ))}
                     </RadioGroup>
+                    <FormHelperText>
+                        {hasErrors('keyconfig', value, true) || keymanagerConnectorConfiguration.tooltip}
+                    </FormHelperText>
                 </FormControl>
             );
         } else {

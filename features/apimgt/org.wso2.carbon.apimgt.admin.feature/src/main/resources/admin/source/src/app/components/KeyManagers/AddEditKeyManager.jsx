@@ -306,6 +306,13 @@ function AddEditKeyManager(props) {
                 }
                 break;
             case 'keyconfig':
+                if (fieldValue === '' || (Array.isArray(fieldValue) && !fieldValue.length)) {
+                    error = intl.formatMessage({
+                        id: 'KeyManagers.AddEditKeyManager.is.empty.error.key.config',
+                        defaultMessage: 'Required field is empty.',
+                    });
+                }
+                break;
             case 'displayName':
             case 'issuer':
             case 'clientRegistrationEndpoint':
@@ -344,7 +351,9 @@ function AddEditKeyManager(props) {
         let connectorConfigHasErrors = false;
         keymanagerConnectorConfigurations.forEach((connector) => {
             if (connector.required && (!additionalProperties[connector.name]
-                || additionalProperties[connector.name] === '')) {
+                || additionalProperties[connector.name] === ''
+                || (Array.isArray(additionalProperties[connector.name])
+                && !additionalProperties[connector.name].length))) {
                 connectorConfigHasErrors = true;
             }
         });

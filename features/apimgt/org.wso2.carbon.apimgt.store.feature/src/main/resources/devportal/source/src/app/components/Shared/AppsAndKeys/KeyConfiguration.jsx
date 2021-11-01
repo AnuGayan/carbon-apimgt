@@ -185,10 +185,21 @@ const KeyConfiguration = (props) => {
                 }
                 newRequest.selectedGrantTypes = newGrantTypes;
                 break;
-            case 'additionalProperties':
+            case 'additionalProperties':  
                 const clonedAdditionalProperties = newRequest.additionalProperties;
                 clonedAdditionalProperties[currentTarget.name] = currentTarget.value;
                 newRequest.additionalProperties = clonedAdditionalProperties;
+                let hasMandatoryError = false;
+                keyManagerConfig.applicationConfiguration.forEach((config) => {
+                    let prop = newRequest.additionalProperties[config.name];
+                    if (config.required) {
+                        console.log(prop);
+                        if (prop === '' || (Array.isArray(prop) && !prop.length)) {
+                            hasMandatoryError = true;
+                        }
+                    }
+                });
+                updateHasError(hasMandatoryError);
                 break;
             default:
                 break;
