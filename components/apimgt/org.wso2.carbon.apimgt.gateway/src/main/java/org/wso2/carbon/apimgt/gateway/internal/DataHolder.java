@@ -27,6 +27,7 @@ public class DataHolder {
 
     private static final DataHolder Instance = new DataHolder();
     private Map<String, List<String>> apiToCertificatesMap = new HashMap();
+    private boolean isAllApisDeployed = false;
 
     private DataHolder() {
 
@@ -57,4 +58,11 @@ public class DataHolder {
         return apiToCertificatesMap.getOrDefault(apiId, Collections.emptyList());
     }
 
+    public boolean isAllApisDeployed() {
+        return isAllApisDeployed;
+    }
+
+    public void setAllApisDeployed(boolean allApisDeployed) {
+        isAllApisDeployed = allApisDeployed;
+    }
 }

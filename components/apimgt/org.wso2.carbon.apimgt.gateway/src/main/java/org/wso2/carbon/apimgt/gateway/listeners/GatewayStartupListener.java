@@ -26,6 +26,7 @@ import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.gateway.EndpointCertificateDeployer;
 import org.wso2.carbon.apimgt.gateway.GoogleAnalyticsConfigDeployer;
 import org.wso2.carbon.apimgt.gateway.InMemoryAPIDeployer;
+import org.wso2.carbon.apimgt.gateway.internal.DataHolder;
 import org.wso2.carbon.apimgt.gateway.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.gateway.jwt.RevokedJWTTokensRetriever;
 import org.wso2.carbon.apimgt.gateway.throttling.util.BlockingConditionRetriever;
@@ -209,6 +210,7 @@ public class GatewayStartupListener extends AbstractAxis2ConfigurationContextObs
         }
         syncModeDeploymentCount++;
         isAPIsDeployedInSyncMode = deployArtifactsAtStartup(tenantDomain);
+        DataHolder.getInstance().setAllApisDeployed(isAPIsDeployedInSyncMode);
         if (!isAPIsDeployedInSyncMode) {
             log.error("Deployment attempt : " + syncModeDeploymentCount + " was unsuccessful");
             if (!(syncModeDeploymentCount > retryCount)) {
@@ -253,6 +255,7 @@ public class GatewayStartupListener extends AbstractAxis2ConfigurationContextObs
 
         while (true) {
             boolean isArtifactsDeployed = deployArtifactsAtStartup(tenantDomain);
+            DataHolder.getInstance().setAllApisDeployed(isArtifactsDeployed);
             if (isArtifactsDeployed) {
                 log.info("Synapse Artifacts deployed Successfully in the Gateway");
                 break;
