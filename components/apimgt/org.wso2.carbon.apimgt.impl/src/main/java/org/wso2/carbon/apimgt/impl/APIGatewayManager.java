@@ -27,6 +27,8 @@ import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.dto.ClientCertificateDTO;
 import org.wso2.carbon.apimgt.api.gateway.CredentialDto;
@@ -231,6 +233,13 @@ public class APIGatewayManager {
                         }
                     }
                 }
+                if (StringUtils.equalsIgnoreCase(APIConstants.GRAPHQL_API, api.getType())) {
+                    GraphQLSchemaDefinition graphql = new GraphQLSchemaDefinition();
+                    if (graphql.isSubscriptionAvailable(api.getGraphQLSchema())) {
+                        client = new APIGatewayAdminClient(environment);
+                        deployWebsocketAPI(api, client, isGatewayDefinedAsALabel, publishedGateways, environment);
+                    }
+                }
             } else {
                 client = new APIGatewayAdminClient(environment);
                 deployWebsocketAPI(api, client, isGatewayDefinedAsALabel, publishedGateways, environment);
@@ -305,6 +314,7 @@ public class APIGatewayManager {
                     definition + "]]>" + "</localEntry>");
             gatewayAPIDTO.setLocalEntriesToBeAdd(addGatewayContentToList(graphqlLocalEntry,
                     gatewayAPIDTO.getLocalEntriesToBeAdd()));
+            gatewayAPIDTO.setGraphQLSchema(api.getGraphQLSchema());
             Set<URITemplate> uriTemplates = new HashSet<>();
             URITemplate template = new URITemplate();
             template.setAuthType("Any");
@@ -992,10 +1002,10 @@ public class APIGatewayManager {
             String sandbox_endpoint = null;
             JSONObject obj = new JSONObject(api.getEndpointConfig());
             if (obj.has(APIConstants.API_DATA_PRODUCTION_ENDPOINTS)) {
-                production_endpoint = obj.getJSONObject(APIConstants.API_DATA_PRODUCTION_ENDPOINTS).getString("url");
+                production_endpoint = retrieveWSEndpoint(obj, api, APIConstants.API_DATA_PRODUCTION_ENDPOINTS);
             }
             if (obj.has(APIConstants.API_DATA_SANDBOX_ENDPOINTS)) {
-                sandbox_endpoint = obj.getJSONObject(APIConstants.API_DATA_SANDBOX_ENDPOINTS).getString("url");
+                sandbox_endpoint = retrieveWSEndpoint(obj, api, APIConstants.API_DATA_SANDBOX_ENDPOINTS);
             }
             OMElement element;
             try {
@@ -1118,10 +1128,10 @@ public class APIGatewayManager {
                 markForSuspension +
                 "\t</markForSuspension>\n" +
                 "</default>";
-        String seq = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                "<sequence xmlns=\"http://ws.apache.org/ns/synapse\" name=\"" +
-                context.replace('/', '-') + "\">\n" +
-                "   <property name=\"OUT_ONLY\" value=\"true\"/>\n" +
+        String seqStart = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<sequence xmlns=\"http://ws.apache.org/ns/synapse\" name=\""+
+                context.replace('/', '-') + "\">\n";
+        String seqBody = "   <property name=\"OUT_ONLY\" value=\"true\"/>\n" +
                 "   <script language=\"js\">var sub_path = mc.getProperty(\"websocket.subscriber.path\");\t    \n" +
                 "        \tvar queryParamString = sub_path.split(\"\\\\?\")[1];\n" +
                 "                if(queryParamString != undefined) {\t    \n" +
@@ -1149,6 +1159,15 @@ public class APIGatewayManager {
                 "      </endpoint>\n" +
                 "   </send>\n" +
                 "</sequence>";
+        String webSocketSubProtocol =
+                "   <property name=\"websocket.subprotocol\" value=\"graphql-ws\" scope=\"axis2\"/>\n";
+
+        String seq;
+        if (StringUtils.equalsIgnoreCase(APIConstants.GRAPHQL_API, api.getType())) {
+            seq = seqStart +webSocketSubProtocol + seqBody;
+        } else {
+            seq = seqStart + seqBody;
+        }
         return seq;
     }
 
@@ -1719,4 +1738,16 @@ public class APIGatewayManager {
                 , gatewayAPIDTO.getEndpointEntriesToBeRemove()));
     }
 
+    private String retrieveWSEndpoint(JSONObject obj, API api, String type) {
+        String endpoint = obj.getJSONObject(type).getString("url");
+        if (StringUtils.equalsIgnoreCase(APIConstants.GRAPHQL_API, api.getType())) {
+            if (endpoint.indexOf(APIConstants.HTTP_PROTOCOL_URL_PREFIX) == 0) {
+                endpoint = endpoint.replace(APIConstants.HTTP_PROTOCOL_URL_PREFIX, APIConstants.WS_PROTOCOL_URL_PREFIX);
+            } else if (endpoint.indexOf(APIConstants.HTTPS_PROTOCOL_URL_PREFIX) == 0) {
+                endpoint = endpoint.replace(APIConstants.HTTPS_PROTOCOL_URL_PREFIX,
+                        APIConstants.WSS_PROTOCOL_URL_PREFIX);
+            }
+        }
+        return endpoint;
+    }
 }

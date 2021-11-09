@@ -22,6 +22,7 @@ import io.netty.channel.ChannelPromise;
 import io.netty.channel.CombinedChannelDuplexHandler;
 import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -52,6 +53,7 @@ public class WebsocketHandler extends CombinedChannelDuplexHandler<WebsocketInbo
                     inboundHandler().publishRequestEvent(clientIp, true);
                 }
             } else {
+                ctx.writeAndFlush(new TextWebSocketFrame("Websocket frame throttled out"));
                 if (log.isDebugEnabled()){
                     log.debug("Outbound Websocket frame is throttled. " + ctx.channel().toString());
                 }

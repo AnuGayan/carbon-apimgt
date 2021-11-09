@@ -35,6 +35,7 @@ public class GatewayAPIDTO implements Serializable {
     private String tenantDomain;
     private String apiId;
     private String apiDefinition;
+    private String graphQLSchema;
     private String defaultAPIDefinition;
     private boolean override;
     private GatewayContentDTO[] sequenceToBeAdd;
@@ -226,5 +227,13 @@ public class GatewayAPIDTO implements Serializable {
     public void setCredentialsToBeRemove(String[] credentialsToBeRemove) {
 
         this.credentialsToBeRemove = credentialsToBeRemove;
+    }
+
+    public String getGraphQLSchema() {
+        return graphQLSchema;
+    }
+
+    public void setGraphQLSchema(String graphQLSchema) {
+        this.graphQLSchema = graphQLSchema;
     }
 }
