@@ -27,6 +27,8 @@ import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.dto.ClientCertificateDTO;
 import org.wso2.carbon.apimgt.api.gateway.CredentialDto;
@@ -214,8 +216,11 @@ public class APIGatewayManager {
                 gatewayAPIDTO = createAPIGatewayDTOtoPublishAPI(environment, api, builder, tenantDomain);
 
                 if (StringUtils.equalsIgnoreCase(APIConstants.GRAPHQL_API, api.getType())) {
+                    String endpointConfig = api.getEndpointConfig();
                     // This is for the GraphQL subscriptions to work
                     setWsSpecificInfo(api, gatewayAPIDTO);
+                    // Restore the original endpoint config after the Web Socket information have been processed
+                    api.setEndpointConfig(endpointConfig);
                 }
 
                 if (gatewayAPIDTO == null) {
@@ -1034,6 +1039,7 @@ public class APIGatewayManager {
      * @throws APIManagementException If an error occurs while setting the Web Socket information
      */
     private void setWsSpecificInfo(API api, GatewayAPIDTO gatewayAPIDTO) throws APIManagementException {
+        convertLoadBalancedEndpointConfigs(api);
         String production_endpoint = null;
         String sandbox_endpoint = null;
         JSONObject obj = new JSONObject(api.getEndpointConfig());
@@ -1756,6 +1762,48 @@ public class APIGatewayManager {
     }
 
     /**
+     * Convert the endpoint configs if load balanced type provided
+     *
+     * @param api API to be added
+     * @throws APIManagementException If an error occurs while parsing the endpoint config
+     */
+    private void convertLoadBalancedEndpointConfigs(API api) throws APIManagementException {
+        String endpointConfigString = api.getEndpointConfig();
+        org.json.simple.JSONObject endpointConfig = null;
+
+        try {
+            endpointConfig = (org.json.simple.JSONObject) new JSONParser().parse(endpointConfigString);
+        } catch (ParseException e) {
+            throw new APIManagementException(
+                    "Error while deriving web socket endpoint from GraphQL API load balanced endpoint config: "
+                            + endpointConfig, e);
+        }
+
+        // If load_balanced endpoints get the first prod endpoint url from the list
+        if (APIConstants.ENDPOINT_TYPE_LOADBALANCE.equals(
+                endpointConfig.get(APIConstants.API_ENDPOINT_CONFIG_PROTOCOL_TYPE))) {
+            // Get the first load balanced endpoint
+            if (endpointConfig.get(APIConstants.ENDPOINT_PRODUCTION_ENDPOINTS) != null) {
+                String productionEndpoint =
+                        (String) ((org.json.simple.JSONObject) ((org.json.simple.JSONArray) endpointConfig.get(
+                        APIConstants.ENDPOINT_PRODUCTION_ENDPOINTS)).get(0)).get(APIConstants.ENDPOINT_URL);
+                org.json.simple.JSONObject jsonObject = new org.json.simple.JSONObject();
+                jsonObject.put(APIConstants.ENDPOINT_URL, productionEndpoint);
+                endpointConfig.put(APIConstants.API_DATA_PRODUCTION_ENDPOINTS, jsonObject);
+            }
+            if (endpointConfig.get(APIConstants.ENDPOINT_SANDBOX_ENDPOINTS) != null) {
+                String sandboxEndpoint =
+                        (String) ((org.json.simple.JSONObject) ((org.json.simple.JSONArray) endpointConfig.get(
+                        APIConstants.ENDPOINT_SANDBOX_ENDPOINTS)).get(0)).get(APIConstants.ENDPOINT_URL);
+                org.json.simple.JSONObject jsonObject = new org.json.simple.JSONObject();
+                jsonObject.put(APIConstants.ENDPOINT_URL, sandboxEndpoint);
+                endpointConfig.put(APIConstants.API_DATA_SANDBOX_ENDPOINTS, jsonObject);
+            }
+            api.setEndpointConfig(endpointConfig.toJSONString());
+        }
+    }
+
+    /**
      * Retrieve the correct Web Socket endpoint
      *
      * @param endpointConfig Endpoint config
@@ -1763,7 +1811,7 @@ public class APIGatewayManager {
      * @param type           Production or Sandbox endpoint type
      */
     private String retrieveWSEndpoint(JSONObject endpointConfig, API api, String type) {
-        String endpoint = endpointConfig.getJSONObject(type).getString("url");
+        String endpoint = endpointConfig.getJSONObject(type).getString(APIConstants.ENDPOINT_URL);
         if (StringUtils.equalsIgnoreCase(APIConstants.GRAPHQL_API, api.getType())) {
             if (endpoint.indexOf(APIConstants.HTTP_PROTOCOL_URL_PREFIX) == 0) {
                 endpoint = endpoint.replace(APIConstants.HTTP_PROTOCOL_URL_PREFIX, APIConstants.WS_PROTOCOL_URL_PREFIX);
