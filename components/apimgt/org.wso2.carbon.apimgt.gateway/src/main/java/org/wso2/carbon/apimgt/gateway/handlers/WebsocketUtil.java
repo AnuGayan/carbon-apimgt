@@ -29,6 +29,7 @@ import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import javax.cache.Cache;
+import java.util.TreeMap;
 
 public class WebsocketUtil {
 	private static Logger log = LoggerFactory.getLogger(WebsocketUtil.class);
@@ -158,5 +159,23 @@ public class WebsocketUtil {
 
 	public static String getAccessTokenCacheKey(String accessToken, String apiContext) {
 		return accessToken + ':' + apiContext;
+	}
+
+	/**
+	 * Get the name of the matching api for the request path.
+	 *
+	 * @param requestPath  The request path
+	 * @param tenantDomain Tenant domain
+	 * @return The selected API
+	 */
+	public static org.wso2.carbon.apimgt.keymgt.model.entity.API getApi(String requestPath, String tenantDomain) {
+		TreeMap<String, org.wso2.carbon.apimgt.keymgt.model.entity.API> selectedAPIS = Utils.getSelectedAPIList(
+				requestPath, tenantDomain);
+		if (selectedAPIS.size() > 0) {
+			String selectedPath = selectedAPIS.firstKey();
+			org.wso2.carbon.apimgt.keymgt.model.entity.API selectedAPI = selectedAPIS.get(selectedPath);
+			return selectedAPI;
+		}
+		return null;
 	}
 }

@@ -58,6 +58,7 @@ import org.wso2.carbon.apimgt.impl.dto.APIKeyValidationInfoDTO;
 import org.wso2.carbon.apimgt.impl.dto.JWTConfigurationDto;
 import org.wso2.carbon.apimgt.impl.jwt.SignedJWTInfo;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
+import org.wso2.carbon.apimgt.keymgt.model.entity.API;
 import org.wso2.carbon.apimgt.usage.publisher.APIMgtUsageDataPublisher;
 import org.wso2.carbon.apimgt.usage.publisher.DataPublisherUtil;
 import org.wso2.carbon.apimgt.usage.publisher.dto.ExecutionTimeDTO;
@@ -95,6 +96,7 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
 	private APIKeyValidationInfoDTO infoDTO = new APIKeyValidationInfoDTO();
 	private io.netty.handler.codec.http.HttpHeaders headers = new DefaultHttpHeaders();
 	private String token;
+    private org.wso2.carbon.apimgt.keymgt.model.entity.API electedAPI = new API();
 
 	public WebsocketInboundHandler() {
         initializeDataPublisher();
@@ -180,6 +182,8 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
             } else {
                 tenantDomain = MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
             }
+
+            electedAPI = WebsocketUtil.getApi(req.uri(), tenantDomain);
 
             String useragent = req.headers().get(HttpHeaders.USER_AGENT);
 
@@ -454,6 +458,7 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
     public boolean doThrottle(ChannelHandlerContext ctx, WebSocketFrame msg) {
 
         String applicationLevelTier = infoDTO.getApplicationTier();
+        // debug and see apileveltier
         String apiLevelTier = infoDTO.getApiTier();
         String subscriptionLevelTier = infoDTO.getTier();
         String resourceLevelTier = apiLevelTier;
