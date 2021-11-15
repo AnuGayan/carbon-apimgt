@@ -167,7 +167,7 @@ public class GraphQLAPIHandler extends AbstractHandler {
         ArrayList<String> operationArray = new ArrayList<>();
 
         List<URITemplate> list = graphql.extractGraphQLOperationList(schemaDefinition,
-                operation.getOperation().toString());
+                operation.getOperation().toString(), null);
         ArrayList<String> supportedFields = getSupportedFields(list);
 
         getNestedLevelOperations(operation.getSelectionSet().getSelections(), supportedFields, operationArray);

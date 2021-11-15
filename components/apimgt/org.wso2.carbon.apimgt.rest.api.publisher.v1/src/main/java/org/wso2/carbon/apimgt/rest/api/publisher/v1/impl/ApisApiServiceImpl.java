@@ -4174,7 +4174,7 @@ public class ApisApiServiceImpl implements ApisApiService {
                     isValid = true;
                     validationResponse.setIsValid(isValid);
                     GraphQLValidationResponseGraphQLInfoDTO graphQLInfo = new GraphQLValidationResponseGraphQLInfoDTO();
-                    List<URITemplate> operationList = graphql.extractGraphQLOperationList(schema, null);
+                    List<URITemplate> operationList = graphql.extractGraphQLOperationList(schema, null, null);
                     List<APIOperationsDTO> operationArray = APIMappingUtil.fromURITemplateListToOprationList(operationList);
                     graphQLInfo.setOperations(operationArray);
                     GraphQLSchemaDTO schemaObj = new GraphQLSchemaDTO();
