@@ -41,7 +41,9 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpHeaders;
 import org.json.JSONObject;
 import org.wso2.carbon.apimgt.api.APIManagementException;
+import org.wso2.carbon.apimgt.api.model.subscription.URLMapping;
 import org.wso2.carbon.apimgt.gateway.APIMgtGatewayConstants;
+import org.wso2.carbon.apimgt.gateway.handlers.graphQL.GraphQLRequestProcessor;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APIKeyValidator;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityConstants;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityException;
@@ -55,6 +57,8 @@ import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.APIManagerAnalyticsConfiguration;
 import org.wso2.carbon.apimgt.impl.caching.CacheProvider;
 import org.wso2.carbon.apimgt.impl.dto.APIKeyValidationInfoDTO;
+import org.wso2.carbon.apimgt.impl.dto.ResourceInfoDTO;
+import org.wso2.carbon.apimgt.impl.dto.VerbInfoDTO;
 import org.wso2.carbon.apimgt.impl.jwt.SignedJWTInfo;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.keymgt.model.entity.API;
@@ -75,6 +79,8 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.text.ParseException;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -95,7 +101,9 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
 	private APIKeyValidationInfoDTO infoDTO = new APIKeyValidationInfoDTO();
 	private io.netty.handler.codec.http.HttpHeaders headers = new DefaultHttpHeaders();
 	private String token;
-    private org.wso2.carbon.apimgt.keymgt.model.entity.API electedAPI = new API();
+    private API electedAPI = new API();
+    private Map<String, ResourceInfoDTO> electedAPIResourcesMap = new HashMap<>(); // elected API resources
+    private String matchingResource; // invoking API resource
     private SignedJWTInfo signedJWTInfo;
 
 	public WebsocketInboundHandler() {
@@ -184,6 +192,7 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
             }
 
             electedAPI = WebsocketUtil.getApi(req.uri(), tenantDomain);
+            setResourcesMap();
 
             String useragent = req.headers().get(HttpHeaders.USER_AGENT);
 
@@ -228,7 +237,8 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
             //if the inbound frame is a closed frame, throttling, analytics will not be published.
             ctx.fireChannelRead(msg);
         } else if (msg instanceof WebSocketFrame) {
-            if (APIConstants.APITransportType.GRAPHQL.toString().equals(electedAPI.getApiType())) {
+            if (APIConstants.APITransportType.GRAPHQL.toString().equals(electedAPI.getApiType())
+                    && msg instanceof TextWebSocketFrame) {
                 // Authenticate GraphQL subscription responses
                 try {
                     PrivilegedCarbonContext.startTenantFlow();
@@ -239,6 +249,10 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                     if (!validateAuthenticationContext(authenticationContext, electedAPI.isDefaultVersion())) {
                         sendInvalidCredentialsMessage(ctx);
                     }
+                    GraphQLRequestProcessor graphQLRequestProcessor = new GraphQLRequestProcessor();
+                    String msgText = ((TextWebSocketFrame) msg).text();
+                    graphQLRequestProcessor.handleRequest(msgText, electedAPI, signedJWTInfo, authenticationContext,
+                            electedAPIResourcesMap);
                 } finally {
                     PrivilegedCarbonContext.endTenantFlow();
                 }
@@ -704,5 +718,32 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
 
         infoDTO = info;
         return authenticationContext.isAuthenticated();
+    }
+
+    /**
+     * Set the resource map with VerbInfoDTOs.
+     *
+     */
+    public void setResourcesMap() {
+
+        List<URLMapping> urlMappings = electedAPI.getResources();
+        Map<String, ResourceInfoDTO> resourcesMap = electedAPIResourcesMap;
+
+        ResourceInfoDTO resourceInfoDTO;
+        VerbInfoDTO verbInfoDTO;
+        for (URLMapping urlMapping : urlMappings) {
+            resourceInfoDTO = resourcesMap.get(urlMapping.getUrlPattern());
+            if (resourceInfoDTO == null) {
+                resourceInfoDTO = new ResourceInfoDTO();
+                resourceInfoDTO.setUrlPattern(urlMapping.getUrlPattern());
+                resourceInfoDTO.setHttpVerbs(new LinkedHashSet<>());
+                resourcesMap.put(urlMapping.getUrlPattern(), resourceInfoDTO);
+            }
+            verbInfoDTO = new VerbInfoDTO();
+            verbInfoDTO.setHttpVerb(urlMapping.getHttpMethod());
+            verbInfoDTO.setAuthType(urlMapping.getAuthScheme());
+            verbInfoDTO.setThrottling(urlMapping.getThrottlingPolicy());
+            resourceInfoDTO.getHttpVerbs().add(verbInfoDTO);
+        }
     }
 }

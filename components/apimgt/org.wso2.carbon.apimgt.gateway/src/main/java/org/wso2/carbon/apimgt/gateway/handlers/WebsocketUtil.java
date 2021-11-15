@@ -26,6 +26,7 @@ import org.wso2.carbon.apimgt.impl.APIManagerConfiguration;
 import org.wso2.carbon.apimgt.impl.caching.CacheProvider;
 import org.wso2.carbon.apimgt.impl.dto.APIKeyValidationInfoDTO;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
+import org.wso2.carbon.apimgt.keymgt.model.entity.API;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
@@ -169,12 +170,12 @@ public class WebsocketUtil {
 	 * @param tenantDomain Tenant domain
 	 * @return The selected API
 	 */
-	public static org.wso2.carbon.apimgt.keymgt.model.entity.API getApi(String requestPath, String tenantDomain) {
-		TreeMap<String, org.wso2.carbon.apimgt.keymgt.model.entity.API> selectedAPIS = Utils.getSelectedAPIList(
+	public static API getApi(String requestPath, String tenantDomain) {
+		TreeMap<String, API> selectedAPIS = Utils.getSelectedAPIList(
 				requestPath, tenantDomain);
 		if (selectedAPIS.size() > 0) {
 			String selectedPath = selectedAPIS.firstKey();
-			org.wso2.carbon.apimgt.keymgt.model.entity.API selectedAPI = selectedAPIS.get(selectedPath);
+			API selectedAPI = selectedAPIS.get(selectedPath);
 			return selectedAPI;
 		}
 		return null;
