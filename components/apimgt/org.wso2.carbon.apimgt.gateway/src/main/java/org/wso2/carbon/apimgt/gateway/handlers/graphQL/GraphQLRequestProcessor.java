@@ -26,12 +26,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONObject;
-import org.wso2.carbon.apimgt.gateway.handlers.graphQL.utils.GraphQLProcessorUtil;
+import org.wso2.carbon.apimgt.api.APIManagementException;
+import org.wso2.carbon.apimgt.gateway.dto.QueryAnalyzerResponseDTO;
+import org.wso2.carbon.apimgt.gateway.handlers.graphQL.analyzer.SubscriptionAnalyzer;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APIKeyValidator;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityException;
 import org.wso2.carbon.apimgt.gateway.handlers.security.AuthenticationContext;
 import org.wso2.carbon.apimgt.gateway.handlers.security.jwt.JWTValidator;
 import org.wso2.carbon.apimgt.impl.APIConstants;
+import org.wso2.carbon.apimgt.impl.dto.APIKeyValidationInfoDTO;
 import org.wso2.carbon.apimgt.impl.dto.ResourceInfoDTO;
 import org.wso2.carbon.apimgt.impl.dto.VerbInfoDTO;
 import org.wso2.carbon.apimgt.impl.internal.DataHolder;
@@ -39,6 +42,7 @@ import org.wso2.carbon.apimgt.impl.jwt.SignedJWTInfo;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.keymgt.model.entity.API;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -46,11 +50,11 @@ public class GraphQLRequestProcessor {
 
     private static final Log log = LogFactory.getLog(GraphQLRequestProcessor.class);
 
-    public GraphQLProcessorResponseDTO handleRequest(String msgText, API electedAPI,
-            SignedJWTInfo signedJWTInfo, AuthenticationContext authenticationContext,
-            Map<String, ResourceInfoDTO> electedAPIResourcesMap) {
+    public GraphQLProcessorResponseDTO handleRequest(String msgText, API electedAPI, SignedJWTInfo signedJWTInfo,
+            AuthenticationContext authenticationContext, Map<String, ResourceInfoDTO> electedAPIResourcesMap,
+            APIKeyValidationInfoDTO infoDTO) {
 
-        GraphQLProcessorResponseDTO responseDTO = null;
+        GraphQLProcessorResponseDTO responseDTO = new GraphQLProcessorResponseDTO();
         JSONObject graphQLMsg = new JSONObject(msgText);
         Parser parser = new Parser();
 
@@ -68,8 +72,7 @@ public class GraphQLRequestProcessor {
                         responseDTO = validateQueryPayload(electedAPI, document, operationId);
                         if (!responseDTO.isError()) {
                             // subscription operation name
-
-                            String subscriptionOperation = GraphQLProcessorUtil.getOperationList(operation,
+                            String subscriptionOperation = GraphQLAPIHandler.getOperationList(operation,
                                     DataHolder.getInstance().getGraphQLSchemaDTOForAPI(electedAPI.getUuid())
                                             .getTypeDefinitionRegistry());
                             // validate scopes based on subscription payload
@@ -79,22 +82,21 @@ public class GraphQLRequestProcessor {
                                 // extract verb info dto with throttle policy for matching verb
                                 VerbInfoDTO verbInfoDTO = findMatchingVerb(subscriptionOperation,
                                         electedAPIResourcesMap, electedAPI);
-                                //                                SubscriptionAnalyzer subscriptionAnalyzer =
-                                //                                        new SubscriptionAnalyzer(inboundMessageContext.getGraphQLSchemaDTO()
-                                //                                                .getGraphQLSchema());
-                                //                                // analyze query depth and complexity
-                                //                                responseDTO = validateQueryDepthAndComplexity(subscriptionAnalyzer,
-                                //                                        inboundMessageContext, graphQLSubscriptionPayload, operationId);
-                                //                                if (!responseDTO.isError()) {
-                                //                                    //throttle for matching resource
-                                //                                    responseDTO = InboundWebsocketProcessorUtil.doThrottleForGraphQL(msgSize, verbInfoDTO,
-                                //                                            inboundMessageContext, operationId);
-                                //                                    // add verb info dto for the successful invoking subscription operation request
-                                //                                    inboundMessageContext.addVerbInfoForGraphQLMsgId(
-                                //                                            graphQLMsg.getString(
-                                //                                                    GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_ID),
-                                //                                            new GraphQLOperationDTO(verbInfoDTO, subscriptionOperation));
-                                //                                }
+                                SubscriptionAnalyzer subscriptionAnalyzer = new SubscriptionAnalyzer(
+                                        DataHolder.getInstance().getGraphQLSchemaDTOForAPI(electedAPI.getUuid())
+                                                .getGraphQLSchema());
+                                // analyze query depth and complexity
+                                responseDTO = validateQueryDepthAndComplexity(subscriptionAnalyzer,
+                                        infoDTO, graphQLSubscriptionPayload, operationId);
+                                if (!responseDTO.isError()) {
+//                                    // throttle for matching resource
+//                                    responseDTO = InboundWebsocketProcessorUtil.doThrottleForGraphQL(msgSize,
+//                                            verbInfoDTO, inboundMessageContext, operationId);
+//                                    // add verb info dto for the successful invoking subscription operation request
+//                                    inboundMessageContext.addVerbInfoForGraphQLMsgId(graphQLMsg.getString(
+//                                                    GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_ID),
+//                                            new GraphQLOperationDTO(verbInfoDTO, subscriptionOperation));
+                                }
                             }
 
                         }
@@ -121,7 +123,8 @@ public class GraphQLRequestProcessor {
      * @return true if valid payload fields present
      */
     private boolean validatePayloadFields(JSONObject graphQLMsg) {
-        return graphQLMsg.get(GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_PAYLOAD) != null &&
+        return graphQLMsg.has(GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_PAYLOAD)
+                && graphQLMsg.get(GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_PAYLOAD) != null &&
                 ((JSONObject) graphQLMsg.get(GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_PAYLOAD)).get(
                         GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_QUERY) != null;
     }
@@ -291,7 +294,6 @@ public class GraphQLRequestProcessor {
         return graphQLProcessorResponseDTO;
     }
 
-
     /**
      * Get bad request (error code 4010) error frame DTO for GraphQL subscriptions. The closeConnection parameter is
      * false.
@@ -353,5 +355,89 @@ public class GraphQLRequestProcessor {
         String resource = resourceString.trim();
         String urlPattern = resourceInfoDTO.getUrlPattern().trim();
         return resource.equalsIgnoreCase(urlPattern);
+    }
+
+    /**
+     * Validate query depth and complexity of graphql subscription payload.
+     *
+     * @param subscriptionAnalyzer Query complexity and depth analyzer for subscription operations
+     * @param infoDTO              APIKeyValidationInfoDTO
+     * @param payload              GraphQL payload
+     * @param operationId          Graphql message id
+     * @return GraphQLProcessorResponseDTO
+     */
+    private GraphQLProcessorResponseDTO validateQueryDepthAndComplexity(SubscriptionAnalyzer subscriptionAnalyzer,
+            APIKeyValidationInfoDTO infoDTO, String payload, String operationId) {
+
+        GraphQLProcessorResponseDTO responseDTO = validateQueryDepth(subscriptionAnalyzer, infoDTO, payload,
+                operationId);
+        if (!responseDTO.isError()) {
+            return validateQueryComplexity(subscriptionAnalyzer, infoDTO, payload, operationId);
+        }
+        return responseDTO;
+    }
+
+    /**
+     * Validate query complexity of graphql subscription payload.
+     *
+     * @param subscriptionAnalyzer Query complexity and depth analyzer for subscription operations
+     * @param infoDTO              APIKeyValidationInfoDTO
+     * @param payload              GraphQL payload
+     * @param operationId          Graphql message id
+     * @return GraphQLProcessorResponseDTO
+     */
+    private GraphQLProcessorResponseDTO validateQueryComplexity(SubscriptionAnalyzer subscriptionAnalyzer,
+            APIKeyValidationInfoDTO infoDTO, String payload, String operationId) {
+
+        GraphQLProcessorResponseDTO responseDTO = new GraphQLProcessorResponseDTO();
+        responseDTO.setId(operationId);
+        try {
+            QueryAnalyzerResponseDTO queryAnalyzerResponseDTO = subscriptionAnalyzer.analyseSubscriptionQueryComplexity(
+                    payload, infoDTO.getGraphQLMaxComplexity());
+            if (!queryAnalyzerResponseDTO.isSuccess() && !queryAnalyzerResponseDTO.getErrorList().isEmpty()) {
+                List<String> errorList = queryAnalyzerResponseDTO.getErrorList();
+                log.error("Query complexity validation failed for: " + payload + " errors: " + errorList.toString());
+                responseDTO.setError(true);
+                responseDTO.setErrorCode(GraphQLConstants.FrameErrorConstants.GRAPHQL_QUERY_TOO_COMPLEX);
+                responseDTO.setErrorMessage(
+                        GraphQLConstants.FrameErrorConstants.GRAPHQL_QUERY_TOO_COMPLEX_MESSAGE + " : "
+                                + queryAnalyzerResponseDTO.getErrorList().toString());
+                return responseDTO;
+            }
+        } catch (APIManagementException e) {
+            log.error("Error while validating query complexity for: " + payload, e);
+            responseDTO.setError(true);
+            responseDTO.setErrorMessage(e.getMessage());
+            responseDTO.setErrorCode(GraphQLConstants.FrameErrorConstants.INTERNAL_SERVER_ERROR);
+        }
+        return responseDTO;
+    }
+
+    /**
+     * Validate query depth of graphql subscription payload.
+     *
+     * @param subscriptionAnalyzer Query complexity and depth analyzer for subscription operations
+     * @param infoDTO              APIKeyValidationInfoDTO
+     * @param payload              GraphQL payload
+     * @param operationId          GraphQL message Id
+     * @return GraphQLProcessorResponseDTO
+     */
+    private GraphQLProcessorResponseDTO validateQueryDepth(SubscriptionAnalyzer subscriptionAnalyzer,
+            APIKeyValidationInfoDTO infoDTO, String payload, String operationId) {
+
+        GraphQLProcessorResponseDTO responseDTO = new GraphQLProcessorResponseDTO();
+        responseDTO.setId(operationId);
+        QueryAnalyzerResponseDTO queryAnalyzerResponseDTO = subscriptionAnalyzer.analyseSubscriptionQueryDepth(
+                infoDTO.getGraphQLMaxDepth(), payload);
+        if (!queryAnalyzerResponseDTO.isSuccess() && !queryAnalyzerResponseDTO.getErrorList().isEmpty()) {
+            List<String> errorList = queryAnalyzerResponseDTO.getErrorList();
+            log.error("Query depth validation failed for: " + payload + " errors: " + errorList.toString());
+            responseDTO.setError(true);
+            responseDTO.setErrorCode(GraphQLConstants.FrameErrorConstants.GRAPHQL_QUERY_TOO_DEEP);
+            responseDTO.setErrorMessage(GraphQLConstants.FrameErrorConstants.GRAPHQL_QUERY_TOO_DEEP_MESSAGE + " : "
+                    + queryAnalyzerResponseDTO.getErrorList().toString());
+            return responseDTO;
+        }
+        return responseDTO;
     }
 }

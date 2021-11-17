@@ -30,6 +30,10 @@ import com.google.gson.reflect.TypeToken;
 import feign.Feign;
 import feign.gson.GsonDecoder;
 import feign.gson.GsonEncoder;
+import graphql.schema.GraphQLSchema;
+import graphql.schema.idl.SchemaParser;
+import graphql.schema.idl.TypeDefinitionRegistry;
+import graphql.schema.idl.UnExecutableSchemaGenerator;
 import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.impl.builder.StAXOMBuilder;
 import org.apache.axiom.om.util.AXIOMUtil;
@@ -103,6 +107,8 @@ import org.wso2.carbon.apimgt.api.doc.model.APIResource;
 import org.wso2.carbon.apimgt.api.doc.model.Operation;
 import org.wso2.carbon.apimgt.api.doc.model.Parameter;
 import org.wso2.carbon.apimgt.api.dto.KeyManagerConfigurationDTO;
+import org.wso2.carbon.apimgt.api.gateway.GatewayAPIDTO;
+import org.wso2.carbon.apimgt.api.gateway.GraphQLSchemaDTO;
 import org.wso2.carbon.apimgt.api.model.API;
 import org.wso2.carbon.apimgt.api.model.APICategory;
 import org.wso2.carbon.apimgt.api.model.APIIdentifier;
@@ -166,6 +172,7 @@ import org.wso2.carbon.apimgt.impl.dto.UserRegistrationConfigDTO;
 import org.wso2.carbon.apimgt.impl.dto.WorkflowDTO;
 import org.wso2.carbon.apimgt.impl.gatewayartifactsynchronizer.exception.ArtifactSynchronizerException;
 import org.wso2.carbon.apimgt.impl.internal.APIManagerComponent;
+import org.wso2.carbon.apimgt.impl.internal.DataHolder;
 import org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.impl.kmclient.ApacheFeignHttpClient;
 import org.wso2.carbon.apimgt.impl.kmclient.model.OpenIDConnectDiscoveryClient;
@@ -12122,6 +12129,23 @@ public final class APIUtil {
             list = Arrays.asList(defaultType);
         }
         return list.contains(fileType.toLowerCase());
+    }
+
+    /**
+     * Add GraphQLSchemaDTO of deployed GraphQL API to Gateway internal data holder.
+     *
+     * @param gatewayAPIDTO GatewayAPIDTO
+     */
+    public static void addDeployedGraphqlQLToAPI(GatewayAPIDTO gatewayAPIDTO) {
+
+        if (gatewayAPIDTO != null && gatewayAPIDTO.getGraphQLSchema() != null) {
+            String apiId = gatewayAPIDTO.getApiId();
+            SchemaParser schemaParser = new SchemaParser();
+            TypeDefinitionRegistry registry = schemaParser.parse(gatewayAPIDTO.getGraphQLSchema());
+            GraphQLSchema schema = UnExecutableSchemaGenerator.makeUnExecutableSchema(registry);
+            GraphQLSchemaDTO schemaDTO = new GraphQLSchemaDTO(schema, registry);
+            DataHolder.getInstance().addApiToGraphQLSchemaDTO(apiId, schemaDTO);
+        }
     }
 }
 

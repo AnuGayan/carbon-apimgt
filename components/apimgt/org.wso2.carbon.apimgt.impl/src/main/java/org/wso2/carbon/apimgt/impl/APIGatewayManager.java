@@ -17,10 +17,6 @@
 package org.wso2.carbon.apimgt.impl;
 
 import com.google.gson.Gson;
-import graphql.schema.GraphQLSchema;
-import graphql.schema.idl.SchemaParser;
-import graphql.schema.idl.TypeDefinitionRegistry;
-import graphql.schema.idl.UnExecutableSchemaGenerator;
 import org.apache.axiom.om.OMAttribute;
 import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.util.AXIOMUtil;
@@ -38,7 +34,6 @@ import org.wso2.carbon.apimgt.api.dto.ClientCertificateDTO;
 import org.wso2.carbon.apimgt.api.gateway.CredentialDto;
 import org.wso2.carbon.apimgt.api.gateway.GatewayAPIDTO;
 import org.wso2.carbon.apimgt.api.gateway.GatewayContentDTO;
-import org.wso2.carbon.apimgt.api.gateway.GraphQLSchemaDTO;
 import org.wso2.carbon.apimgt.api.model.API;
 import org.wso2.carbon.apimgt.api.model.APIIdentifier;
 import org.wso2.carbon.apimgt.api.model.APIProduct;
@@ -236,7 +231,7 @@ public class APIGatewayManager {
                         if (!isGatewayDefinedAsALabel) {
                             client = new APIGatewayAdminClient(environment);
                             client.deployAPI(gatewayAPIDTO);
-                            addDeployedGraphqlQLToAPI(gatewayAPIDTO);
+                            APIUtil.addDeployedGraphqlQLToAPI(gatewayAPIDTO);
                         }
                     }
 
@@ -323,7 +318,7 @@ public class APIGatewayManager {
                     definition + "]]>" + "</localEntry>");
             gatewayAPIDTO.setLocalEntriesToBeAdd(addGatewayContentToList(graphqlLocalEntry,
                     gatewayAPIDTO.getLocalEntriesToBeAdd()));
-            gatewayAPIDTO.setGraphQLSchema(api.getGraphQLSchema());
+            gatewayAPIDTO.setGraphQLSchema(definition);
             Set<URITemplate> uriTemplates = new HashSet<>();
             URITemplate template = new URITemplate();
             template.setAuthType("Any");
@@ -1828,22 +1823,5 @@ public class APIGatewayManager {
             }
         }
         return endpoint;
-    }
-
-    /**
-     * Add GraphQLSchemaDTO of deployed GraphQL API to Gateway internal data holder.
-     *
-     * @param gatewayAPIDTO GatewayAPIDTO
-     */
-    private void addDeployedGraphqlQLToAPI(GatewayAPIDTO gatewayAPIDTO) {
-
-        if (gatewayAPIDTO != null && gatewayAPIDTO.getGraphQLSchema() != null) {
-            String apiId = gatewayAPIDTO.getApiId();
-            SchemaParser schemaParser = new SchemaParser();
-            TypeDefinitionRegistry registry = schemaParser.parse(gatewayAPIDTO.getGraphQLSchema());
-            GraphQLSchema schema = UnExecutableSchemaGenerator.makeUnExecutableSchema(registry);
-            GraphQLSchemaDTO schemaDTO = new GraphQLSchemaDTO(schema, registry);
-            DataHolder.getInstance().addApiToGraphQLSchemaDTO(apiId, schemaDTO);
-        }
     }
 }

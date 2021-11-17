@@ -40,11 +40,13 @@ import org.apache.synapse.config.Entry;
 import org.apache.synapse.core.axis2.Axis2MessageContext;
 import org.apache.synapse.rest.AbstractHandler;
 import org.apache.synapse.transport.passthru.util.RelayUtils;
+import org.wso2.carbon.apimgt.api.gateway.GraphQLSchemaDTO;
 import org.wso2.carbon.apimgt.api.model.URITemplate;
 import org.wso2.carbon.apimgt.gateway.handlers.Utils;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityConstants;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.definitions.GraphQLSchemaDefinition;
+import org.wso2.carbon.apimgt.impl.internal.DataHolder;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamException;
@@ -68,7 +70,7 @@ public class GraphQLAPIHandler extends AbstractHandler {
     private GraphQLSchema schema = null;
     private static Validator validator;
     private String apiUUID;
-    private String schemaDefinition;
+    private static String schemaDefinition;
 
     public GraphQLAPIHandler() {
 
@@ -132,7 +134,7 @@ public class GraphQLAPIHandler extends AbstractHandler {
                             messageContext.setProperty(HTTP_VERB, httpVerb);
                             ((Axis2MessageContext) messageContext).getAxis2MessageContext().setProperty(HTTP_METHOD,
                                     operation.getOperation().toString());
-                            String operationList = getOperationList(messageContext, operation);
+                            String operationList = getOperationList(operation, null);
                             messageContext.setProperty(APIConstants.API_ELECTED_RESOURCE, operationList);
                             if (log.isDebugEnabled()) {
                                 log.debug("Operation list has been successfully added to elected property");
@@ -157,17 +159,25 @@ public class GraphQLAPIHandler extends AbstractHandler {
     /**
      * This method used to extract operation List
      *
-     * @param messageContext messageContext
-     * @param operation      operation
+     * @param operation              operation
+     * @param typeDefinitionRegistry TypeDefinitionRegistry
      * @return operationList
      */
-    private String getOperationList(MessageContext messageContext, OperationDefinition operation) {
+    public static String getOperationList(OperationDefinition operation, TypeDefinitionRegistry typeDefinitionRegistry) {
         String operationList;
         GraphQLSchemaDefinition graphql = new GraphQLSchemaDefinition();
         ArrayList<String> operationArray = new ArrayList<>();
+        TypeDefinitionRegistry typeRegistry;
 
-        List<URITemplate> list = graphql.extractGraphQLOperationList(schemaDefinition,
-                operation.getOperation().toString(), null);
+        if (typeDefinitionRegistry != null) {
+            typeRegistry = typeDefinitionRegistry;
+        } else {
+            SchemaParser schemaParser = new SchemaParser();
+            typeRegistry = schemaParser.parse(schemaDefinition);
+        }
+
+        List<URITemplate> list = graphql.extractGraphQLOperationList(typeRegistry,
+                operation.getOperation().toString());
         ArrayList<String> supportedFields = getSupportedFields(list);
 
         getNestedLevelOperations(operation.getSelectionSet().getSelections(), supportedFields, operationArray);
@@ -182,8 +192,8 @@ public class GraphQLAPIHandler extends AbstractHandler {
      * @param supportedFields supportedFields
      * @param operationArray  operationArray
      */
-    public void getNestedLevelOperations(List<Selection> selectionList, ArrayList<String> supportedFields,
-                                         ArrayList<String> operationArray) {
+    public static void getNestedLevelOperations(List<Selection> selectionList, ArrayList<String> supportedFields,
+            ArrayList<String> operationArray) {
         for (Selection selection : selectionList) {
             if (!(selection instanceof Field)) {
                 continue;
@@ -208,7 +218,7 @@ public class GraphQLAPIHandler extends AbstractHandler {
      * @param list URITemplates
      * @return supported Fields
      */
-    private ArrayList<String> getSupportedFields(List<URITemplate> list) {
+    private static ArrayList<String> getSupportedFields(List<URITemplate> list) {
         ArrayList<String> supportedFields = new ArrayList<>();
         for (URITemplate template : list) {
             supportedFields.add(template.getUriTemplate());
@@ -360,7 +370,7 @@ public class GraphQLAPIHandler extends AbstractHandler {
      * @param description description of the error
      * @return the OMElement
      */
-    private OMElement getFaultPayload(String description) {
+    public OMElement getFaultPayload(String description) {
         OMFactory fac = OMAbstractFactory.getOMFactory();
         OMNamespace ns = fac.createOMNamespace(APISecurityConstants.API_SECURITY_NS,
                 APISecurityConstants.API_SECURITY_NS_PREFIX);

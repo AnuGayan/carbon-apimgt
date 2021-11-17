@@ -63,20 +63,12 @@ public class GraphQLSchemaDefinition {
     /**
      * Extract GraphQL Operations from given schema
      *
-     * @param schema                 graphQL Schema
-     * @param type                   operation type
-     * @param typeDefinitionRegistry TypeDefinitionRegistry
+     * @param typeRegistry TypeDefinitionRegistry
+     * @param type         operation type
      * @return the arrayList of APIOperationsDTOextractGraphQLOperationList
      */
-    public List<URITemplate> extractGraphQLOperationList(String schema, String type, TypeDefinitionRegistry typeDefinitionRegistry) {
+    public List<URITemplate> extractGraphQLOperationList(TypeDefinitionRegistry typeRegistry, String type) {
         List<URITemplate> operationArray = new ArrayList<>();
-        TypeDefinitionRegistry typeRegistry;
-        if (typeDefinitionRegistry != null) {
-            typeRegistry = typeDefinitionRegistry;
-        } else {
-            SchemaParser schemaParser = new SchemaParser();
-            typeRegistry = schemaParser.parse(schema);
-        }
         Map<java.lang.String, TypeDefinition> operationList = typeRegistry.types();
         for (Map.Entry<String, TypeDefinition> entry : operationList.entrySet()) {
             Optional<SchemaDefinition> schemaDefinition = typeRegistry.schemaDefinition();

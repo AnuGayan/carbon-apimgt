@@ -43,6 +43,8 @@ import org.json.JSONObject;
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.model.subscription.URLMapping;
 import org.wso2.carbon.apimgt.gateway.APIMgtGatewayConstants;
+import org.wso2.carbon.apimgt.gateway.handlers.graphQL.GraphQLConstants;
+import org.wso2.carbon.apimgt.gateway.handlers.graphQL.GraphQLProcessorResponseDTO;
 import org.wso2.carbon.apimgt.gateway.handlers.graphQL.GraphQLRequestProcessor;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APIKeyValidator;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityConstants;
@@ -251,8 +253,31 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                     }
                     GraphQLRequestProcessor graphQLRequestProcessor = new GraphQLRequestProcessor();
                     String msgText = ((TextWebSocketFrame) msg).text();
-                    graphQLRequestProcessor.handleRequest(msgText, electedAPI, signedJWTInfo, authenticationContext,
-                            electedAPIResourcesMap);
+                    GraphQLProcessorResponseDTO responseDTO = graphQLRequestProcessor.handleRequest(msgText, electedAPI, signedJWTInfo, authenticationContext,
+                            electedAPIResourcesMap, infoDTO);
+                    if (responseDTO.isError()) {
+                        if (responseDTO.isCloseConnection()) {
+                            //remove inbound message context from data holder
+                            if (log.isDebugEnabled()) {
+                                log.debug("Error while handling Outbound Websocket frame. Closing connection for "
+                                        + ctx.channel().toString());
+                            }
+                            ctx.writeAndFlush(new CloseWebSocketFrame(responseDTO.getErrorCode(),
+                                    responseDTO.getErrorMessage() + StringUtils.SPACE + "Connection closed" + "!"));
+                            ctx.close();
+                        } else {
+                            String errorMessage = responseDTO.getErrorResponseString();
+                            ctx.writeAndFlush(new TextWebSocketFrame(errorMessage));
+                            if (responseDTO.getErrorCode() == GraphQLConstants.FrameErrorConstants.THROTTLED_OUT_ERROR) {
+                                if (log.isDebugEnabled()) {
+                                    log.debug("Inbound Websocket frame is throttled. " + ctx.channel().toString());
+                                }
+                               // publishPublishThrottledEvent(ctx);
+                            }
+                        }
+                    } else {
+
+                    }
                 } finally {
                     PrivilegedCarbonContext.endTenantFlow();
                 }
@@ -697,6 +722,8 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
         info.setConsumerKey(authenticationContext.getConsumerKey());
         info.setEndUserName(authenticationContext.getUsername());
         info.setApiTier(authenticationContext.getApiTier());
+        info.setGraphQLMaxDepth(authenticationContext.getGraphQLMaxDepth());
+        info.setGraphQLMaxComplexity(authenticationContext.getGraphQLMaxComplexity());
 
         //This prefix is added for synapse to dispatch this request to the specific sequence
         if (APIConstants.API_KEY_TYPE_PRODUCTION.equals(info.getType())) {

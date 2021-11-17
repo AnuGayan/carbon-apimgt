@@ -20,7 +20,7 @@ package org.wso2.carbon.apimgt.gateway.handlers.graphQL;
 import org.json.JSONObject;
 
 /**
- * Extended DTO class to hold response information during execution of GraphQL subscription Inbound processors.
+ * DTO class to hold response information during execution of GraphQL subscription Inbound processors.
  */
 public class GraphQLProcessorResponseDTO {
 
@@ -29,6 +29,9 @@ public class GraphQLProcessorResponseDTO {
     int errorCode;
     String errorMessage;
     boolean closeConnection = false; // whether to close the connection if during frame validation
+
+    public GraphQLProcessorResponseDTO() {
+    }
 
     public boolean isError() {
         return isError;
@@ -64,6 +67,10 @@ public class GraphQLProcessorResponseDTO {
 
     public void setCloseConnection(boolean closeConnection) {
         this.closeConnection = closeConnection;
+    }
+
+    public boolean isCloseConnection() {
+        return closeConnection;
     }
 
     public String getErrorResponseString() {
