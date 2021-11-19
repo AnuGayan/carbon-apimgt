@@ -182,7 +182,7 @@ public class WebsocketInboundHandlerTestCase {
         //test when the request is a handshake
         WebsocketInboundHandler websocketInboundHandler = new WebsocketInboundHandler() {
             @Override
-            protected String getRemoteIP(ChannelHandlerContext ctx) {
+            public String getRemoteIP(ChannelHandlerContext ctx) {
                 return "192.168.0.100";
             }
         };
@@ -202,7 +202,7 @@ public class WebsocketInboundHandlerTestCase {
         Mockito.when(fullHttpRequest.headers()).thenReturn(headers);
         WebsocketInboundHandler websocketInboundHandler1 = new WebsocketInboundHandler() {
             @Override
-            protected String getRemoteIP(ChannelHandlerContext ctx) {
+            public String getRemoteIP(ChannelHandlerContext ctx) {
                 return "192.168.0.100";
             }
         };
@@ -294,7 +294,7 @@ public class WebsocketInboundHandlerTestCase {
         //test when the request is a handshake
         WebsocketInboundHandler websocketInboundHandler = new WebsocketInboundHandler() {
             @Override
-            protected String getRemoteIP(ChannelHandlerContext ctx) {
+            public String getRemoteIP(ChannelHandlerContext ctx) {
                 return "192.168.0.100";
             }
         };
@@ -327,7 +327,7 @@ public class WebsocketInboundHandlerTestCase {
         //test when the request is a handshake
         WebsocketInboundHandler websocketInboundHandler = new WebsocketInboundHandler() {
             @Override
-            protected String getRemoteIP(ChannelHandlerContext ctx) {
+            public String getRemoteIP(ChannelHandlerContext ctx) {
                 return "192.168.0.100";
             }
         };
@@ -341,7 +341,7 @@ public class WebsocketInboundHandlerTestCase {
 
         WebsocketInboundHandler websocketInboundHandler1 = new WebsocketInboundHandler() {
             @Override
-            protected String getRemoteIP(ChannelHandlerContext ctx) {
+            public String getRemoteIP(ChannelHandlerContext ctx) {
                 return "192.168.0.100";
             }
         };
@@ -436,7 +436,7 @@ public class WebsocketInboundHandlerTestCase {
             }
 
             @Override
-            protected String getRemoteIP(ChannelHandlerContext ctx) {
+            public String getRemoteIP(ChannelHandlerContext ctx) {
                 return "192.168.0.100";
             }
         };
@@ -499,14 +499,14 @@ public class WebsocketInboundHandlerTestCase {
         WebSocketFrame webSocketFrame = Mockito.mock(WebSocketFrame.class);
         WebsocketInboundHandler websocketInboundHandler = new WebsocketInboundHandler() {
             @Override
-            protected String getRemoteIP(ChannelHandlerContext ctx) {
+            public String getRemoteIP(ChannelHandlerContext ctx) {
                 return "192.168.0.100";
             }
         };
         ByteBuf content = Mockito.mock(ByteBuf.class);
         Mockito.when(webSocketFrame.content()).thenReturn(content);
 
-        websocketInboundHandler.doThrottle(channelHandlerContext, webSocketFrame);
+        websocketInboundHandler.doThrottle(channelHandlerContext, webSocketFrame, null);
     }
 
 
@@ -526,12 +526,12 @@ public class WebsocketInboundHandlerTestCase {
         WebSocketFrame webSocketFrame = Mockito.mock(WebSocketFrame.class);
         WebsocketInboundHandler websocketInboundHandler = new WebsocketInboundHandler() {
             @Override
-            protected String getRemoteIP(ChannelHandlerContext ctx) {
+            public String getRemoteIP(ChannelHandlerContext ctx) {
                 return "localhost";
             }
         };
         try {
-            websocketInboundHandler.doThrottle(channelHandlerContext, webSocketFrame);
+            websocketInboundHandler.doThrottle(channelHandlerContext, webSocketFrame, null);
             fail("Expected NumberFormatException is not thrown.");
         } catch (Exception e) {
             Assert.assertTrue(e instanceof NumberFormatException);

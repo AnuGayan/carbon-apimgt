@@ -88,7 +88,8 @@ public class WebsocketHandlerTestCase {
         Mockito.when(msg.content()).thenReturn(content);
         WebsocketHandler websocketHandler = new WebsocketHandler() {
             @Override
-            protected boolean isAllowed(ChannelHandlerContext ctx, WebSocketFrame msg) throws APIManagementException {
+            protected boolean isAllowed(ChannelHandlerContext ctx, WebSocketFrame msg,
+                    InboundMessageContext inboundMessageContext) {
                 return true;
             }
 
@@ -98,7 +99,7 @@ public class WebsocketHandlerTestCase {
             }
         };
         WebsocketInboundHandler websocketInboundHandler = Mockito.mock(WebsocketInboundHandler.class);
-        Mockito.when(websocketInboundHandler.doThrottle(channelHandlerContext, msg)).thenReturn(true);
+        Mockito.when(websocketInboundHandler.doThrottle(channelHandlerContext, msg, null, null)).thenReturn(true);
         websocketHandler.write(channelHandlerContext, msg, channelPromise);
         Assert.assertTrue(true);  // No error has occurred. hence test passes.
     }

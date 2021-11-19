@@ -17,8 +17,17 @@
  */
 package org.wso2.carbon.apimgt.gateway.handlers;
 
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
+import io.netty.util.CharsetUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityConstants;
+import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityException;
 import org.wso2.carbon.apimgt.gateway.handlers.security.AuthenticationContext;
 import org.wso2.carbon.apimgt.gateway.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.impl.APIConstants;
@@ -179,5 +188,84 @@ public class WebsocketUtil {
 			return selectedAPI;
 		}
 		return null;
+	}
+
+	/**
+	 * Validates AuthenticationContext and set APIKeyValidationInfoDTO to InboundMessageContext.
+	 *
+	 * @param inboundMessageContext InboundMessageContext
+	 * @return true if authenticated
+	 */
+	public static boolean validateAuthenticationContext(InboundMessageContext inboundMessageContext,
+			Boolean isDefaultVersion) {
+
+		String uri = inboundMessageContext.getUri();
+		AuthenticationContext authenticationContext = inboundMessageContext.getAuthContext();
+		if (authenticationContext == null || !authenticationContext.isAuthenticated()) {
+			return false;
+		}
+		// The information given by the AuthenticationContext is set to an APIKeyValidationInfoDTO object
+		// so to feed information analytics and throttle data publishing
+		APIKeyValidationInfoDTO info = new APIKeyValidationInfoDTO();
+		info.setAuthorized(authenticationContext.isAuthenticated());
+		info.setApplicationTier(authenticationContext.getApplicationTier());
+		info.setTier(authenticationContext.getTier());
+		info.setSubscriberTenantDomain(authenticationContext.getSubscriberTenantDomain());
+		info.setSubscriber(authenticationContext.getSubscriber());
+		info.setStopOnQuotaReach(authenticationContext.isStopOnQuotaReach());
+		info.setApiName(authenticationContext.getApiName());
+		info.setApplicationId(authenticationContext.getApplicationId());
+		info.setType(authenticationContext.getKeyType());
+		info.setApiPublisher(authenticationContext.getApiPublisher());
+		info.setApplicationName(authenticationContext.getApplicationName());
+		info.setConsumerKey(authenticationContext.getConsumerKey());
+		info.setEndUserName(authenticationContext.getUsername());
+		info.setApiTier(authenticationContext.getApiTier());
+		info.setGraphQLMaxDepth(authenticationContext.getGraphQLMaxDepth());
+		info.setGraphQLMaxComplexity(authenticationContext.getGraphQLMaxComplexity());
+
+		//This prefix is added for synapse to dispatch this request to the specific sequence
+		if (APIConstants.API_KEY_TYPE_PRODUCTION.equals(info.getType())) {
+			if (isDefaultVersion) {
+				uri = "/_PRODUCTION_" + uri + "/" + authenticationContext.getApiVersion();
+			} else {
+				uri = "/_PRODUCTION_" + uri;
+			}
+		} else if (APIConstants.API_KEY_TYPE_SANDBOX.equals(info.getType())) {
+			if (isDefaultVersion) {
+				uri = "/_SANDBOX_" + uri + "/" + authenticationContext.getApiVersion();
+			} else {
+				uri = "/_SANDBOX_" + uri;
+			}
+		}
+		inboundMessageContext.setUri(uri);
+		if (isDefaultVersion) {
+			inboundMessageContext.setVersion(authenticationContext.getApiVersion());
+		}
+
+		inboundMessageContext.setInfoDTO(info);
+		return authenticationContext.isAuthenticated();
+	}
+
+	/**
+	 * Send authentication failure message
+	 *
+	 * @param ctx                   Channel handler context
+	 * @param inboundMessageContext InboundMessageContext
+	 * @throws APISecurityException
+	 */
+	public static void sendInvalidCredentialsMessage(ChannelHandlerContext ctx,
+			InboundMessageContext inboundMessageContext) throws APISecurityException {
+		String errorMessage = APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE;
+		FullHttpResponse httpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+				HttpResponseStatus.UNAUTHORIZED, Unpooled.copiedBuffer(errorMessage, CharsetUtil.UTF_8));
+		httpResponse.headers().set("content-type", "text/plain; charset=UTF-8");
+		httpResponse.headers().set("content-length", httpResponse.content().readableBytes());
+		ctx.writeAndFlush(httpResponse);
+		if (log.isDebugEnabled()) {
+			log.debug("Authentication Failure for the websocket context: " + inboundMessageContext.getApiContextUri());
+		}
+		throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
+				APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE);
 	}
 }

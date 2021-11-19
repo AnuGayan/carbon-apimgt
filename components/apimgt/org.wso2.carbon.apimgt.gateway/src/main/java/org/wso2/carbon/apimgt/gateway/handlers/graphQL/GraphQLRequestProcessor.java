@@ -22,12 +22,19 @@ import graphql.language.Document;
 import graphql.language.OperationDefinition;
 import graphql.parser.Parser;
 import graphql.validation.Validator;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONObject;
 import org.wso2.carbon.apimgt.api.APIManagementException;
+import org.wso2.carbon.apimgt.gateway.dto.GraphQLOperationDTO;
 import org.wso2.carbon.apimgt.gateway.dto.QueryAnalyzerResponseDTO;
+import org.wso2.carbon.apimgt.gateway.handlers.InboundMessageContext;
+import org.wso2.carbon.apimgt.gateway.handlers.WebsocketInboundHandler;
+import org.wso2.carbon.apimgt.gateway.handlers.WebsocketUtil;
 import org.wso2.carbon.apimgt.gateway.handlers.graphQL.analyzer.SubscriptionAnalyzer;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APIKeyValidator;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityException;
@@ -38,81 +45,108 @@ import org.wso2.carbon.apimgt.impl.dto.APIKeyValidationInfoDTO;
 import org.wso2.carbon.apimgt.impl.dto.ResourceInfoDTO;
 import org.wso2.carbon.apimgt.impl.dto.VerbInfoDTO;
 import org.wso2.carbon.apimgt.impl.internal.DataHolder;
-import org.wso2.carbon.apimgt.impl.jwt.SignedJWTInfo;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
-import org.wso2.carbon.apimgt.keymgt.model.entity.API;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
+/**
+ * A GraphQL subscriptions specific extension of RequestProcessor. This class intercepts the inbound websocket
+ * execution path of graphQL subscription requests.
+ */
 public class GraphQLRequestProcessor {
 
     private static final Log log = LogFactory.getLog(GraphQLRequestProcessor.class);
 
-    public GraphQLProcessorResponseDTO handleRequest(String msgText, API electedAPI, SignedJWTInfo signedJWTInfo,
-            AuthenticationContext authenticationContext, Map<String, ResourceInfoDTO> electedAPIResourcesMap,
-            APIKeyValidationInfoDTO infoDTO) {
+    /**
+     * This method process websocket request messages (publish messages) and
+     * hand over the processing to relevant request intercepting processor for authentication, scope validation,
+     * throttling etc.
+     *
+     * @param msg                   Websocket request message frame
+     * @param ctx                   ChannelHandlerContext
+     * @param inboundMessageContext InboundMessageContext
+     * @return InboundProcessorResponseDTO with handshake processing response
+     */
+    public GraphQLProcessorResponseDTO handleRequest(WebSocketFrame msg, ChannelHandlerContext ctx,
+            InboundMessageContext inboundMessageContext) throws APISecurityException {
 
-        GraphQLProcessorResponseDTO responseDTO = new GraphQLProcessorResponseDTO();
-        JSONObject graphQLMsg = new JSONObject(msgText);
-        Parser parser = new Parser();
+        try {
+            PrivilegedCarbonContext.startTenantFlow();
+            PrivilegedCarbonContext.getThreadLocalCarbonContext()
+                    .setTenantDomain(inboundMessageContext.getTenantDomain(), true);
+            AuthenticationContext authenticationContext = new JWTValidator(
+                    new APIKeyValidator()).authenticateForWebSocket(inboundMessageContext);
+            inboundMessageContext.setAuthContext(authenticationContext);
+            if (!WebsocketUtil.validateAuthenticationContext(inboundMessageContext,
+                    inboundMessageContext.getElectedAPI().isDefaultVersion())) {
+                WebsocketUtil.sendInvalidCredentialsMessage(ctx, inboundMessageContext);
+            }
 
-        if (checkIfSubscribeMessage(graphQLMsg)) {
-            String operationId = graphQLMsg.getString(GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_ID);
-            if (validatePayloadFields(graphQLMsg)) {
-                String graphQLSubscriptionPayload = ((JSONObject) graphQLMsg.get(
-                        GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_PAYLOAD)).getString(
-                        GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_QUERY);
-                Document document = parser.parseDocument(graphQLSubscriptionPayload);
-                // Extract the operation type and operations from the payload
-                OperationDefinition operation = getOperationFromPayload(document);
-                if (operation != null) {
-                    if (checkIfValidSubscribeOperation(operation)) {
-                        responseDTO = validateQueryPayload(electedAPI, document, operationId);
-                        if (!responseDTO.isError()) {
-                            // subscription operation name
-                            String subscriptionOperation = GraphQLAPIHandler.getOperationList(operation,
-                                    DataHolder.getInstance().getGraphQLSchemaDTOForAPI(electedAPI.getUuid())
-                                            .getTypeDefinitionRegistry());
-                            // validate scopes based on subscription payload
-                            responseDTO = validateScopes(subscriptionOperation, operationId, electedAPI, signedJWTInfo,
-                                    authenticationContext);
+            GraphQLProcessorResponseDTO responseDTO = new GraphQLProcessorResponseDTO();
+            String msgText = ((TextWebSocketFrame) msg).text();
+            JSONObject graphQLMsg = new JSONObject(msgText);
+            Parser parser = new Parser();
+
+            if (checkIfSubscribeMessage(graphQLMsg)) {
+                String operationId = graphQLMsg.getString(GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_ID);
+                if (validatePayloadFields(graphQLMsg)) {
+                    String graphQLSubscriptionPayload = ((JSONObject) graphQLMsg.get(
+                            GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_PAYLOAD)).getString(
+                            GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_QUERY);
+                    Document document = parser.parseDocument(graphQLSubscriptionPayload);
+                    // Extract the operation type and operations from the payload
+                    OperationDefinition operation = getOperationFromPayload(document);
+                    if (operation != null) {
+                        if (checkIfValidSubscribeOperation(operation)) {
+                            responseDTO = validateQueryPayload(inboundMessageContext, document, operationId);
                             if (!responseDTO.isError()) {
-                                // extract verb info dto with throttle policy for matching verb
-                                VerbInfoDTO verbInfoDTO = findMatchingVerb(subscriptionOperation,
-                                        electedAPIResourcesMap, electedAPI);
-                                SubscriptionAnalyzer subscriptionAnalyzer = new SubscriptionAnalyzer(
-                                        DataHolder.getInstance().getGraphQLSchemaDTOForAPI(electedAPI.getUuid())
-                                                .getGraphQLSchema());
-                                // analyze query depth and complexity
-                                responseDTO = validateQueryDepthAndComplexity(subscriptionAnalyzer,
-                                        infoDTO, graphQLSubscriptionPayload, operationId);
+                                // subscription operation name
+                                String subscriptionOperation = GraphQLAPIHandler.getOperationList(operation,
+                                        DataHolder.getInstance().getGraphQLSchemaDTOForAPI(
+                                                        inboundMessageContext.getElectedAPI().getUuid())
+                                                .getTypeDefinitionRegistry());
+                                // validate scopes based on subscription payload
+                                responseDTO = validateScopes(inboundMessageContext, subscriptionOperation, operationId);
                                 if (!responseDTO.isError()) {
-//                                    // throttle for matching resource
-//                                    responseDTO = InboundWebsocketProcessorUtil.doThrottleForGraphQL(msgSize,
-//                                            verbInfoDTO, inboundMessageContext, operationId);
-//                                    // add verb info dto for the successful invoking subscription operation request
-//                                    inboundMessageContext.addVerbInfoForGraphQLMsgId(graphQLMsg.getString(
-//                                                    GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_ID),
-//                                            new GraphQLOperationDTO(verbInfoDTO, subscriptionOperation));
+                                    // extract verb info dto with throttle policy for matching verb
+                                    VerbInfoDTO verbInfoDTO = findMatchingVerb(inboundMessageContext,
+                                            subscriptionOperation);
+                                    SubscriptionAnalyzer subscriptionAnalyzer = new SubscriptionAnalyzer(
+                                            DataHolder.getInstance().getGraphQLSchemaDTOForAPI(
+                                                            inboundMessageContext.getElectedAPI().getUuid())
+                                                    .getGraphQLSchema());
+                                    // analyze query depth and complexity
+                                    responseDTO = validateQueryDepthAndComplexity(subscriptionAnalyzer,
+                                            inboundMessageContext, graphQLSubscriptionPayload, operationId);
+                                    if (!responseDTO.isError()) {
+                                        // throttle for matching resource
+                                        responseDTO = doThrottleForGraphQL(msg, ctx, verbInfoDTO, inboundMessageContext,
+                                                operationId);
+                                        inboundMessageContext.addVerbInfoForGraphQLMsgId(graphQLMsg.getString(
+                                                        GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_ID),
+                                                new GraphQLOperationDTO(verbInfoDTO, subscriptionOperation));
+                                    }
                                 }
-                            }
 
+                            }
+                        } else {
+                            responseDTO = getBadRequestGraphQLFrameErrorDTO(
+                                    "Invalid operation. Only allowed Subscription type operations", operationId);
                         }
                     } else {
-                        responseDTO = getBadRequestGraphQLFrameErrorDTO(
-                                "Invalid operation. Only allowed Subscription type operations", operationId);
+                        responseDTO = getBadRequestGraphQLFrameErrorDTO("Operation definition cannot be empty",
+                                operationId);
                     }
                 } else {
-                    responseDTO = getBadRequestGraphQLFrameErrorDTO("Operation definition cannot be empty",
-                            operationId);
+                    responseDTO = getBadRequestGraphQLFrameErrorDTO("Invalid operation payload", operationId);
                 }
-            } else {
-                responseDTO = getBadRequestGraphQLFrameErrorDTO("Invalid operation payload", operationId);
             }
+            return responseDTO;
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
         }
-        return responseDTO;
     }
 
     /**
@@ -177,19 +211,21 @@ public class GraphQLRequestProcessor {
     /**
      * Validates GraphQL query payload using QueryValidator and graphql schema of the invoking API.
      *
-     * @param electedAPI  Elected API
-     * @param document    Graphql payload
-     * @param operationId Graphql message id
+     * @param inboundMessageContext InboundMessageContext
+     * @param document              Graphql payload
+     * @param operationId           Graphql message id
      * @return InboundProcessorResponseDTO
      */
-    protected GraphQLProcessorResponseDTO validateQueryPayload(API electedAPI, Document document, String operationId) {
+    protected GraphQLProcessorResponseDTO validateQueryPayload(InboundMessageContext inboundMessageContext,
+            Document document, String operationId) {
 
         GraphQLProcessorResponseDTO responseDTO = new GraphQLProcessorResponseDTO();
         responseDTO.setId(operationId);
         QueryValidator queryValidator = new QueryValidator(new Validator());
         // payload validation
         String validationErrorMessage = queryValidator.validatePayload(
-                DataHolder.getInstance().getGraphQLSchemaDTOForAPI(electedAPI.getUuid()).getGraphQLSchema(), document);
+                DataHolder.getInstance().getGraphQLSchemaDTOForAPI(inboundMessageContext.getElectedAPI().getUuid())
+                        .getGraphQLSchema(), document);
         if (validationErrorMessage != null) {
             String error =
                     GraphQLConstants.FrameErrorConstants.GRAPHQL_INVALID_QUERY_MESSAGE + " : " + validationErrorMessage;
@@ -205,21 +241,17 @@ public class GraphQLRequestProcessor {
     /**
      * Validates scopes for subscription operations.
      *
+     * @param inboundMessageContext InboundMessageContext
      * @param subscriptionOperation Subscription operation
      * @param operationId           GraphQL message Id
-     * @param electedAPI            Elected API
-     * @param signedJWTInfo         Signed JWT Info during the handshake
-     * @param authenticationContext Authentication context
      * @return GraphQLProcessorResponseDTO
      */
-    public static GraphQLProcessorResponseDTO validateScopes(String subscriptionOperation, String operationId,
-            API electedAPI, SignedJWTInfo signedJWTInfo, AuthenticationContext authenticationContext) {
+    public static GraphQLProcessorResponseDTO validateScopes(InboundMessageContext inboundMessageContext, String subscriptionOperation, String operationId) {
 
         GraphQLProcessorResponseDTO responseDTO = new GraphQLProcessorResponseDTO();
         // validate scopes based on subscription payload
         try {
-            if (!authorizeGraphQLSubscriptionEvents(subscriptionOperation, electedAPI, signedJWTInfo,
-                    authenticationContext)) {
+            if (!authorizeGraphQLSubscriptionEvents(inboundMessageContext, subscriptionOperation)) {
                 String errorMessage =
                         GraphQLConstants.FrameErrorConstants.RESOURCE_FORBIDDEN_ERROR_MESSAGE + StringUtils.SPACE
                                 + subscriptionOperation;
@@ -238,19 +270,16 @@ public class GraphQLRequestProcessor {
     /**
      * Validate scopes of JWT token for incoming GraphQL subscription messages.
      *
+     * @param inboundMessageContext InboundMessageContext
      * @param matchingResource      Invoking GraphQL subscription operation
-     * @param electedAPI            Elected API
-     * @param signedJWTInfo         Signed JWT Info during the handshake
-     * @param authenticationContext Authentication context
      * @return true if authorized
      * @throws APISecurityException If authorization fails
      */
-    public static boolean authorizeGraphQLSubscriptionEvents(String matchingResource, API electedAPI,
-            SignedJWTInfo signedJWTInfo, AuthenticationContext authenticationContext) throws APISecurityException {
+    public static boolean authorizeGraphQLSubscriptionEvents(InboundMessageContext inboundMessageContext,
+            String matchingResource) throws APISecurityException {
 
         JWTValidator jwtValidator = new JWTValidator(new APIKeyValidator());
-        jwtValidator.validateScopesForGraphQLSubscriptions(electedAPI.getContext(), electedAPI.getApiVersion(),
-                matchingResource, signedJWTInfo, authenticationContext);
+        jwtValidator.validateScopesForGraphQLSubscriptions(inboundMessageContext, matchingResource);
         return true;
     }
 
@@ -316,24 +345,23 @@ public class GraphQLRequestProcessor {
     /**
      * Finds matching VerbInfoDTO for the subscription operation.
      *
-     * @param operation              subscription operation name
-     * @param electedAPIResourcesMap Resource map of the elected API
-     * @param electedAPI             Elected API
+     * @param inboundMessageContext InboundMessageContext
+     * @param operation             subscription operation name
      * @return VerbInfoDTO
      */
-    public static VerbInfoDTO findMatchingVerb(String operation, Map<String, ResourceInfoDTO> electedAPIResourcesMap,
-            API electedAPI) {
+    public static VerbInfoDTO findMatchingVerb(InboundMessageContext inboundMessageContext, String operation) {
         String resourceCacheKey;
         VerbInfoDTO verbInfoDTO = null;
-        if (electedAPIResourcesMap != null) {
-            ResourceInfoDTO resourceInfoDTO = electedAPIResourcesMap.get(operation);
+        if (inboundMessageContext.getResourcesMap() != null) {
+            ResourceInfoDTO resourceInfoDTO = inboundMessageContext.getResourcesMap().get(operation);
             Set<VerbInfoDTO> verbDTOList = resourceInfoDTO.getHttpVerbs();
             for (VerbInfoDTO verb : verbDTOList) {
                 if (verb.getHttpVerb().equals(GraphQLConstants.SubscriptionConstants.HTTP_METHOD_NAME)) {
                     if (isResourcePathMatching(operation, resourceInfoDTO)) {
                         verbInfoDTO = verb;
-                        resourceCacheKey = APIUtil.getResourceInfoDTOCacheKey(electedAPI.getContext(),
-                                electedAPI.getApiVersion(), operation,
+                        resourceCacheKey = APIUtil.getResourceInfoDTOCacheKey(
+                                inboundMessageContext.getElectedAPI().getContext(),
+                                inboundMessageContext.getElectedAPI().getApiVersion(), operation,
                                 GraphQLConstants.SubscriptionConstants.HTTP_METHOD_NAME);
                         verb.setRequestKey(resourceCacheKey);
                         break;
@@ -360,19 +388,20 @@ public class GraphQLRequestProcessor {
     /**
      * Validate query depth and complexity of graphql subscription payload.
      *
-     * @param subscriptionAnalyzer Query complexity and depth analyzer for subscription operations
-     * @param infoDTO              APIKeyValidationInfoDTO
-     * @param payload              GraphQL payload
-     * @param operationId          Graphql message id
+     * @param subscriptionAnalyzer  Query complexity and depth analyzer for subscription operations
+     * @param inboundMessageContext InboundMessageContext
+     * @param payload               GraphQL payload
+     * @param operationId           Graphql message id
      * @return GraphQLProcessorResponseDTO
      */
     private GraphQLProcessorResponseDTO validateQueryDepthAndComplexity(SubscriptionAnalyzer subscriptionAnalyzer,
-            APIKeyValidationInfoDTO infoDTO, String payload, String operationId) {
+            InboundMessageContext inboundMessageContext, String payload, String operationId) {
 
-        GraphQLProcessorResponseDTO responseDTO = validateQueryDepth(subscriptionAnalyzer, infoDTO, payload,
-                operationId);
+        GraphQLProcessorResponseDTO responseDTO = validateQueryDepth(subscriptionAnalyzer,
+                inboundMessageContext.getInfoDTO(), payload, operationId);
         if (!responseDTO.isError()) {
-            return validateQueryComplexity(subscriptionAnalyzer, infoDTO, payload, operationId);
+            return validateQueryComplexity(subscriptionAnalyzer, inboundMessageContext.getInfoDTO(), payload,
+                    operationId);
         }
         return responseDTO;
     }
@@ -437,6 +466,35 @@ public class GraphQLRequestProcessor {
             responseDTO.setErrorMessage(GraphQLConstants.FrameErrorConstants.GRAPHQL_QUERY_TOO_DEEP_MESSAGE + " : "
                     + queryAnalyzerResponseDTO.getErrorList().toString());
             return responseDTO;
+        }
+        return responseDTO;
+    }
+
+    /**
+     * Checks if the request is throttled for GraphQL subscriptions.
+     *
+     * @param msg                   Websocket frame
+     * @param ctx                   Channel handler context
+     * @param verbInfoDTO           InboundMessageContext
+     * @param inboundMessageContext VerbInfoDTO for invoking operation
+     * @param operationId           Operation ID
+     * @return InboundProcessorResponseDTO
+     */
+    public static GraphQLProcessorResponseDTO doThrottleForGraphQL(WebSocketFrame msg, ChannelHandlerContext ctx,
+            VerbInfoDTO verbInfoDTO, InboundMessageContext inboundMessageContext, String operationId) {
+
+        GraphQLProcessorResponseDTO responseDTO = new GraphQLProcessorResponseDTO();
+        responseDTO.setId(operationId);
+        WebsocketInboundHandler websocketInboundHandler = new WebsocketInboundHandler();
+
+        boolean isAllowed = websocketInboundHandler.doThrottle(ctx, msg, verbInfoDTO, inboundMessageContext);
+
+        if (isAllowed) {
+            return responseDTO;
+        } else {
+            responseDTO.setError(true);
+            responseDTO.setErrorCode(GraphQLConstants.FrameErrorConstants.THROTTLED_OUT_ERROR);
+            responseDTO.setErrorMessage(GraphQLConstants.FrameErrorConstants.THROTTLED_OUT_ERROR_MESSAGE);
         }
         return responseDTO;
     }
