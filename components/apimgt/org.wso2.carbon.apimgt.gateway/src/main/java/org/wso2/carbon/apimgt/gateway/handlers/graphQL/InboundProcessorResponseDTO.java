@@ -20,17 +20,17 @@ package org.wso2.carbon.apimgt.gateway.handlers.graphQL;
 import org.json.JSONObject;
 
 /**
- * DTO class to hold response information during execution of GraphQL subscription Inbound processors.
+ * DTO class to hold response information during execution of Inbound processors.
  */
-public class GraphQLProcessorResponseDTO {
+public class InboundProcessorResponseDTO {
 
     boolean isError = false;
-    String id; // operation ID
+    String id; // operation ID for GraphQL APIs
     int errorCode;
     String errorMessage;
     boolean closeConnection = false; // whether to close the connection if during frame validation
 
-    public GraphQLProcessorResponseDTO() {
+    public InboundProcessorResponseDTO() {
     }
 
     public boolean isError() {

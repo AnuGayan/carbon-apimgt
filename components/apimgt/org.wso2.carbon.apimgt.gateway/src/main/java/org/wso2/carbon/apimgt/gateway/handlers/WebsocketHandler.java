@@ -29,7 +29,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.apimgt.gateway.InboundMessageContextDataHolder;
 import org.wso2.carbon.apimgt.gateway.handlers.graphQL.GraphQLConstants;
-import org.wso2.carbon.apimgt.gateway.handlers.graphQL.GraphQLProcessorResponseDTO;
+import org.wso2.carbon.apimgt.gateway.handlers.graphQL.InboundProcessorResponseDTO;
 import org.wso2.carbon.apimgt.gateway.handlers.graphQL.GraphQLResponseProcessor;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
@@ -68,7 +68,7 @@ public class WebsocketHandler extends CombinedChannelDuplexHandler<WebsocketInbo
                     .equals(inboundMessageContext.getElectedAPI().getApiType()) && msg instanceof TextWebSocketFrame) {
                 // Authenticate and handle GraphQL subscription responses
                 GraphQLResponseProcessor graphQLResponseProcessor = new GraphQLResponseProcessor();
-                GraphQLProcessorResponseDTO responseDTO = graphQLResponseProcessor.handleResponse((WebSocketFrame) msg,
+                InboundProcessorResponseDTO responseDTO = graphQLResponseProcessor.handleResponse((WebSocketFrame) msg,
                         ctx, inboundMessageContext);
                 if (responseDTO.isError()) {
                     if (responseDTO.isCloseConnection()) {
@@ -95,22 +95,12 @@ public class WebsocketHandler extends CombinedChannelDuplexHandler<WebsocketInbo
                     if (log.isDebugEnabled()) {
                         log.debug("Sending Outbound Websocket frame." + ctx.channel().toString());
                     }
-                    outboundHandler().write(ctx, msg, promise);
-                    // publish analytics events if analytics is enabled
-                    if (APIUtil.isAnalyticsEnabled()) {
-                        String clientIp = getClientIp(ctx);
-                        inboundHandler().publishRequestEvent(clientIp, true, inboundMessageContext);
-                    }
+                    handleSWResponseSuccess(ctx, msg, promise, inboundMessageContext);
                 }
             } else {
                 // If not a GraphQL API (Only a WebSocket API)
                 if (isAllowed(ctx, (WebSocketFrame) msg, inboundMessageContext)) {
-                    outboundHandler().write(ctx, msg, promise);
-                    // publish analytics events if analytics is enabled
-                    if (APIUtil.isAnalyticsEnabled()) {
-                        String clientIp = getClientIp(ctx);
-                        inboundHandler().publishRequestEvent(clientIp, true, inboundMessageContext);
-                    }
+                    handleSWResponseSuccess(ctx, msg, promise, inboundMessageContext);
                 } else {
                     ctx.writeAndFlush(new TextWebSocketFrame("Websocket frame throttled out"));
                     if (log.isDebugEnabled()) {
@@ -120,6 +110,23 @@ public class WebsocketHandler extends CombinedChannelDuplexHandler<WebsocketInbo
             }
         } else {
             outboundHandler().write(ctx, msg, promise);
+        }
+    }
+
+    /**
+     * @param ctx                   ChannelHandlerContext
+     * @param msg                   Message
+     * @param promise               ChannelPromise
+     * @param inboundMessageContext InboundMessageContext
+     * @throws Exception
+     */
+    private void handleSWResponseSuccess(ChannelHandlerContext ctx, Object msg, ChannelPromise promise,
+            InboundMessageContext inboundMessageContext) throws Exception {
+        outboundHandler().write(ctx, msg, promise);
+        // publish analytics events if analytics is enabled
+        if (APIUtil.isAnalyticsEnabled()) {
+            String clientIp = getClientIp(ctx);
+            inboundHandler().publishRequestEvent(clientIp, true, inboundMessageContext);
         }
     }
 

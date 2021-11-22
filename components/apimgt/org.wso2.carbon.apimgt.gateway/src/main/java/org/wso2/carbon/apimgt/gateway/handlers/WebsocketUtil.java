@@ -21,11 +21,13 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.CharsetUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.wso2.carbon.apimgt.gateway.handlers.graphQL.InboundProcessorResponseDTO;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityConstants;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityException;
 import org.wso2.carbon.apimgt.gateway.handlers.security.AuthenticationContext;
@@ -255,12 +257,14 @@ public class WebsocketUtil {
 	 * @throws APISecurityException
 	 */
 	public static void sendInvalidCredentialsMessage(ChannelHandlerContext ctx,
-			InboundMessageContext inboundMessageContext) throws APISecurityException {
+			InboundMessageContext inboundMessageContext, InboundProcessorResponseDTO responseDTO) throws APISecurityException {
+
 		String errorMessage = APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE;
 		FullHttpResponse httpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
-				HttpResponseStatus.UNAUTHORIZED, Unpooled.copiedBuffer(errorMessage, CharsetUtil.UTF_8));
-		httpResponse.headers().set("content-type", "text/plain; charset=UTF-8");
-		httpResponse.headers().set("content-length", httpResponse.content().readableBytes());
+				HttpResponseStatus.valueOf(responseDTO.getErrorCode()),
+				Unpooled.copiedBuffer(errorMessage, CharsetUtil.UTF_8));
+		httpResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=UTF-8");
+		httpResponse.headers().set(HttpHeaderNames.CONTENT_LENGTH, httpResponse.content().readableBytes());
 		ctx.writeAndFlush(httpResponse);
 		if (log.isDebugEnabled()) {
 			log.debug("Authentication Failure for the websocket context: " + inboundMessageContext.getApiContextUri());

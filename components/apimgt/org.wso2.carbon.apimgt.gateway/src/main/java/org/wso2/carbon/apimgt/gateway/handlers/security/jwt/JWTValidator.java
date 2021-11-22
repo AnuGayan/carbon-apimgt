@@ -41,7 +41,6 @@ import org.wso2.carbon.apimgt.gateway.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.gateway.jwt.RevokedJWTDataHolder;
 import org.wso2.carbon.apimgt.gateway.utils.GatewayUtils;
 import org.wso2.carbon.apimgt.impl.APIConstants;
-import org.wso2.carbon.apimgt.impl.APIManagerConfiguration;
 import org.wso2.carbon.apimgt.impl.caching.CacheProvider;
 import org.wso2.carbon.apimgt.impl.dto.APIKeyValidationInfoDTO;
 import org.wso2.carbon.apimgt.impl.dto.JWTConfigurationDto;
@@ -271,7 +270,8 @@ public class JWTValidator {
      * @throws APISecurityException in case of authentication failure
      */
     @MethodStats
-    public AuthenticationContext authenticateForWebSocket(InboundMessageContext inboundMessageContext) throws APISecurityException {
+    public AuthenticationContext authenticateForWSAndGraphQL(InboundMessageContext inboundMessageContext)
+            throws APISecurityException {
 
         SignedJWTInfo signedJWTInfo = inboundMessageContext.getSignedJWTInfo();
         String tokenSignature = signedJWTInfo.getSignedJWT().getSignature().toString();

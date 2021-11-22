@@ -70,9 +70,9 @@ public class GraphQLRequestProcessor {
      * @param inboundMessageContext InboundMessageContext
      * @return InboundProcessorResponseDTO with handshake processing response
      */
-    public GraphQLProcessorResponseDTO handleRequest(WebSocketFrame msg, ChannelHandlerContext ctx,
+    public InboundProcessorResponseDTO handleRequest(WebSocketFrame msg, ChannelHandlerContext ctx,
             InboundMessageContext inboundMessageContext) throws APISecurityException {
-        GraphQLProcessorResponseDTO responseDTO = new GraphQLProcessorResponseDTO();
+        InboundProcessorResponseDTO responseDTO;
 
         try {
             PrivilegedCarbonContext.startTenantFlow();
@@ -149,15 +149,15 @@ public class GraphQLRequestProcessor {
      * Authenticates JWT token in incoming GraphQL subscription requests.
      *
      * @param inboundMessageContext InboundMessageContext
-     * @return GraphQLProcessorResponseDTO
+     * @return InboundProcessorResponseDTO
      */
-    public static GraphQLProcessorResponseDTO authenticateGraphQLJWTToken(InboundMessageContext inboundMessageContext) {
+    public static InboundProcessorResponseDTO authenticateGraphQLJWTToken(InboundMessageContext inboundMessageContext) {
 
-        GraphQLProcessorResponseDTO responseDTO = new GraphQLProcessorResponseDTO();
+        InboundProcessorResponseDTO responseDTO = new InboundProcessorResponseDTO();
         AuthenticationContext authenticationContext;
         JWTValidator jwtValidator = new JWTValidator(new APIKeyValidator());
         try {
-            authenticationContext = jwtValidator.authenticateForWebSocket(inboundMessageContext);
+            authenticationContext = jwtValidator.authenticateForWSAndGraphQL(inboundMessageContext);
             inboundMessageContext.setAuthContext(authenticationContext);
             if (!WebsocketUtil.validateAuthenticationContext(inboundMessageContext,
                     inboundMessageContext.getElectedAPI().isDefaultVersion())) {
@@ -239,10 +239,10 @@ public class GraphQLRequestProcessor {
      * @param operationId           Graphql message id
      * @return InboundProcessorResponseDTO
      */
-    protected GraphQLProcessorResponseDTO validateQueryPayload(InboundMessageContext inboundMessageContext,
+    protected InboundProcessorResponseDTO validateQueryPayload(InboundMessageContext inboundMessageContext,
             Document document, String operationId) {
 
-        GraphQLProcessorResponseDTO responseDTO = new GraphQLProcessorResponseDTO();
+        InboundProcessorResponseDTO responseDTO = new InboundProcessorResponseDTO();
         responseDTO.setId(operationId);
         QueryValidator queryValidator = new QueryValidator(new Validator());
         // payload validation
@@ -267,11 +267,11 @@ public class GraphQLRequestProcessor {
      * @param inboundMessageContext InboundMessageContext
      * @param subscriptionOperation Subscription operation
      * @param operationId           GraphQL message Id
-     * @return GraphQLProcessorResponseDTO
+     * @return InboundProcessorResponseDTO
      */
-    public static GraphQLProcessorResponseDTO validateScopes(InboundMessageContext inboundMessageContext, String subscriptionOperation, String operationId) {
+    public static InboundProcessorResponseDTO validateScopes(InboundMessageContext inboundMessageContext, String subscriptionOperation, String operationId) {
 
-        GraphQLProcessorResponseDTO responseDTO = new GraphQLProcessorResponseDTO();
+        InboundProcessorResponseDTO responseDTO = new InboundProcessorResponseDTO();
         // validate scopes based on subscription payload
         try {
             if (!authorizeGraphQLSubscriptionEvents(inboundMessageContext, subscriptionOperation)) {
@@ -312,17 +312,17 @@ public class GraphQLRequestProcessor {
      * @param errorCode       Error code
      * @param errorMessage    Error message
      * @param closeConnection Whether to close connection after throwing the error frame
-     * @return GraphQLProcessorResponseDTO
+     * @return InboundProcessorResponseDTO
      */
-    public static GraphQLProcessorResponseDTO getFrameErrorDTO(int errorCode, String errorMessage,
+    public static InboundProcessorResponseDTO getFrameErrorDTO(int errorCode, String errorMessage,
             boolean closeConnection) {
 
-        GraphQLProcessorResponseDTO graphQLProcessorResponseDTO = new GraphQLProcessorResponseDTO();
-        graphQLProcessorResponseDTO.setError(true);
-        graphQLProcessorResponseDTO.setErrorCode(errorCode);
-        graphQLProcessorResponseDTO.setErrorMessage(errorMessage);
-        graphQLProcessorResponseDTO.setCloseConnection(closeConnection);
-        return graphQLProcessorResponseDTO;
+        InboundProcessorResponseDTO inboundProcessorResponseDTO = new InboundProcessorResponseDTO();
+        inboundProcessorResponseDTO.setError(true);
+        inboundProcessorResponseDTO.setErrorCode(errorCode);
+        inboundProcessorResponseDTO.setErrorMessage(errorMessage);
+        inboundProcessorResponseDTO.setCloseConnection(closeConnection);
+        return inboundProcessorResponseDTO;
     }
 
     /**
@@ -334,16 +334,16 @@ public class GraphQLRequestProcessor {
      * @param operationId     Operation ID
      * @return InboundProcessorResponseDTO
      */
-    public static GraphQLProcessorResponseDTO getGraphQLFrameErrorDTO(int errorCode, String errorMessage,
+    public static InboundProcessorResponseDTO getGraphQLFrameErrorDTO(int errorCode, String errorMessage,
             boolean closeConnection, String operationId) {
 
-        GraphQLProcessorResponseDTO graphQLProcessorResponseDTO = new GraphQLProcessorResponseDTO();
-        graphQLProcessorResponseDTO.setError(true);
-        graphQLProcessorResponseDTO.setErrorCode(errorCode);
-        graphQLProcessorResponseDTO.setErrorMessage(errorMessage);
-        graphQLProcessorResponseDTO.setCloseConnection(closeConnection);
-        graphQLProcessorResponseDTO.setId(operationId);
-        return graphQLProcessorResponseDTO;
+        InboundProcessorResponseDTO inboundProcessorResponseDTO = new InboundProcessorResponseDTO();
+        inboundProcessorResponseDTO.setError(true);
+        inboundProcessorResponseDTO.setErrorCode(errorCode);
+        inboundProcessorResponseDTO.setErrorMessage(errorMessage);
+        inboundProcessorResponseDTO.setCloseConnection(closeConnection);
+        inboundProcessorResponseDTO.setId(operationId);
+        return inboundProcessorResponseDTO;
     }
 
     /**
@@ -354,15 +354,31 @@ public class GraphQLRequestProcessor {
      * @param operationId  Operation ID
      * @return InboundProcessorResponseDTO
      */
-    public static GraphQLProcessorResponseDTO getBadRequestGraphQLFrameErrorDTO(String errorMessage,
+    public static InboundProcessorResponseDTO getBadRequestGraphQLFrameErrorDTO(String errorMessage,
             String operationId) {
 
-        GraphQLProcessorResponseDTO graphQLProcessorResponseDTO = new GraphQLProcessorResponseDTO();
-        graphQLProcessorResponseDTO.setError(true);
-        graphQLProcessorResponseDTO.setErrorCode(GraphQLConstants.FrameErrorConstants.BAD_REQUEST);
-        graphQLProcessorResponseDTO.setErrorMessage(errorMessage);
-        graphQLProcessorResponseDTO.setId(operationId);
-        return graphQLProcessorResponseDTO;
+        InboundProcessorResponseDTO inboundProcessorResponseDTO = new InboundProcessorResponseDTO();
+        inboundProcessorResponseDTO.setError(true);
+        inboundProcessorResponseDTO.setErrorCode(GraphQLConstants.FrameErrorConstants.BAD_REQUEST);
+        inboundProcessorResponseDTO.setErrorMessage(errorMessage);
+        inboundProcessorResponseDTO.setId(operationId);
+        return inboundProcessorResponseDTO;
+    }
+
+    /**
+     * Get GraphQL Subscriptions handshake error DTO for error code and message. The closeConnection parameter is false.
+     *
+     * @param errorCode    Error code
+     * @param errorMessage Error message
+     * @return InboundProcessorResponseDTO
+     */
+    public static InboundProcessorResponseDTO getHandshakeErrorDTO(int errorCode, String errorMessage) {
+
+        InboundProcessorResponseDTO inboundProcessorResponseDTO = new InboundProcessorResponseDTO();
+        inboundProcessorResponseDTO.setError(true);
+        inboundProcessorResponseDTO.setErrorCode(errorCode);
+        inboundProcessorResponseDTO.setErrorMessage(errorMessage);
+        return inboundProcessorResponseDTO;
     }
 
     /**
@@ -415,12 +431,12 @@ public class GraphQLRequestProcessor {
      * @param inboundMessageContext InboundMessageContext
      * @param payload               GraphQL payload
      * @param operationId           Graphql message id
-     * @return GraphQLProcessorResponseDTO
+     * @return InboundProcessorResponseDTO
      */
-    private GraphQLProcessorResponseDTO validateQueryDepthAndComplexity(SubscriptionAnalyzer subscriptionAnalyzer,
+    private InboundProcessorResponseDTO validateQueryDepthAndComplexity(SubscriptionAnalyzer subscriptionAnalyzer,
             InboundMessageContext inboundMessageContext, String payload, String operationId) {
 
-        GraphQLProcessorResponseDTO responseDTO = validateQueryDepth(subscriptionAnalyzer,
+        InboundProcessorResponseDTO responseDTO = validateQueryDepth(subscriptionAnalyzer,
                 inboundMessageContext.getInfoDTO(), payload, operationId);
         if (!responseDTO.isError()) {
             return validateQueryComplexity(subscriptionAnalyzer, inboundMessageContext.getInfoDTO(), payload,
@@ -436,12 +452,12 @@ public class GraphQLRequestProcessor {
      * @param infoDTO              APIKeyValidationInfoDTO
      * @param payload              GraphQL payload
      * @param operationId          Graphql message id
-     * @return GraphQLProcessorResponseDTO
+     * @return InboundProcessorResponseDTO
      */
-    private GraphQLProcessorResponseDTO validateQueryComplexity(SubscriptionAnalyzer subscriptionAnalyzer,
+    private InboundProcessorResponseDTO validateQueryComplexity(SubscriptionAnalyzer subscriptionAnalyzer,
             APIKeyValidationInfoDTO infoDTO, String payload, String operationId) {
 
-        GraphQLProcessorResponseDTO responseDTO = new GraphQLProcessorResponseDTO();
+        InboundProcessorResponseDTO responseDTO = new InboundProcessorResponseDTO();
         responseDTO.setId(operationId);
         try {
             QueryAnalyzerResponseDTO queryAnalyzerResponseDTO = subscriptionAnalyzer.analyseSubscriptionQueryComplexity(
@@ -472,12 +488,12 @@ public class GraphQLRequestProcessor {
      * @param infoDTO              APIKeyValidationInfoDTO
      * @param payload              GraphQL payload
      * @param operationId          GraphQL message Id
-     * @return GraphQLProcessorResponseDTO
+     * @return InboundProcessorResponseDTO
      */
-    private GraphQLProcessorResponseDTO validateQueryDepth(SubscriptionAnalyzer subscriptionAnalyzer,
+    private InboundProcessorResponseDTO validateQueryDepth(SubscriptionAnalyzer subscriptionAnalyzer,
             APIKeyValidationInfoDTO infoDTO, String payload, String operationId) {
 
-        GraphQLProcessorResponseDTO responseDTO = new GraphQLProcessorResponseDTO();
+        InboundProcessorResponseDTO responseDTO = new InboundProcessorResponseDTO();
         responseDTO.setId(operationId);
         QueryAnalyzerResponseDTO queryAnalyzerResponseDTO = subscriptionAnalyzer.analyseSubscriptionQueryDepth(
                 infoDTO.getGraphQLMaxDepth(), payload);
@@ -503,10 +519,10 @@ public class GraphQLRequestProcessor {
      * @param operationId           Operation ID
      * @return InboundProcessorResponseDTO
      */
-    public static GraphQLProcessorResponseDTO doThrottleForGraphQL(WebSocketFrame msg, ChannelHandlerContext ctx,
+    public static InboundProcessorResponseDTO doThrottleForGraphQL(WebSocketFrame msg, ChannelHandlerContext ctx,
             VerbInfoDTO verbInfoDTO, InboundMessageContext inboundMessageContext, String operationId) {
 
-        GraphQLProcessorResponseDTO responseDTO = new GraphQLProcessorResponseDTO();
+        InboundProcessorResponseDTO responseDTO = new InboundProcessorResponseDTO();
         responseDTO.setId(operationId);
         WebsocketInboundHandler websocketInboundHandler = new WebsocketInboundHandler();
 

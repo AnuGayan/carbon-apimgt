@@ -142,6 +142,10 @@ public class InboundMessageContext {
         this.signedJWTInfo = signedJWTInfo;
     }
 
+    public String getUserIP() {
+        return userIP;
+    }
+
     public void setUserIP(String userIP) {
         this.userIP = userIP;
     }

@@ -42,9 +42,9 @@ public class GraphQLResponseProcessor {
      * @param inboundMessageContext InboundMessageContext
      * @return InboundProcessorResponseDTO
      */
-    public GraphQLProcessorResponseDTO handleResponse(WebSocketFrame msg, ChannelHandlerContext ctx,
+    public InboundProcessorResponseDTO handleResponse(WebSocketFrame msg, ChannelHandlerContext ctx,
             InboundMessageContext inboundMessageContext) throws APISecurityException {
-        GraphQLProcessorResponseDTO responseDTO;
+        InboundProcessorResponseDTO responseDTO;
 
         try {
             PrivilegedCarbonContext.startTenantFlow();
@@ -99,9 +99,9 @@ public class GraphQLResponseProcessor {
      * @param errorMessage Error message
      * @return InboundProcessorResponseDTO
      */
-    public static GraphQLProcessorResponseDTO getBadRequestFrameErrorDTO(String errorMessage) {
+    public static InboundProcessorResponseDTO getBadRequestFrameErrorDTO(String errorMessage) {
 
-        GraphQLProcessorResponseDTO inboundProcessorResponseDTO = new GraphQLProcessorResponseDTO();
+        InboundProcessorResponseDTO inboundProcessorResponseDTO = new InboundProcessorResponseDTO();
         inboundProcessorResponseDTO.setError(true);
         inboundProcessorResponseDTO.setErrorCode(GraphQLConstants.FrameErrorConstants.BAD_REQUEST);
         inboundProcessorResponseDTO.setErrorMessage(errorMessage);

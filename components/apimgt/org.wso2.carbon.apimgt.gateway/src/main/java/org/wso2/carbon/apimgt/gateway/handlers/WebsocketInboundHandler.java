@@ -22,6 +22,7 @@ import com.nimbusds.jwt.SignedJWT;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
@@ -38,7 +39,7 @@ import org.wso2.carbon.apimgt.api.model.subscription.URLMapping;
 import org.wso2.carbon.apimgt.gateway.APIMgtGatewayConstants;
 import org.wso2.carbon.apimgt.gateway.InboundMessageContextDataHolder;
 import org.wso2.carbon.apimgt.gateway.handlers.graphQL.GraphQLConstants;
-import org.wso2.carbon.apimgt.gateway.handlers.graphQL.GraphQLProcessorResponseDTO;
+import org.wso2.carbon.apimgt.gateway.handlers.graphQL.InboundProcessorResponseDTO;
 import org.wso2.carbon.apimgt.gateway.handlers.graphQL.GraphQLRequestProcessor;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APIKeyValidator;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityConstants;
@@ -141,9 +142,7 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
         }
     }*/
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg)
+    @SuppressWarnings("unchecked") @Override public void channelRead(ChannelHandlerContext ctx, Object msg)
             throws Exception {
 
         String channelId = ctx.channel().id().asLongText();
@@ -202,7 +201,8 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
             useragent = useragent != null ? useragent : "-";
             inboundMessageContext.setHeaders(inboundMessageContext.getHeaders().add(HttpHeaders.USER_AGENT, useragent));
 
-            if (validateOAuthHeader(req, inboundMessageContext)) {
+            InboundProcessorResponseDTO responseDTO = validateOAuthHeader(req, inboundMessageContext);
+            if (!responseDTO.isError()) {
                 if (!MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(inboundMessageContext.getTenantDomain())) {
                     // carbon-mediation only support websocket invocation from super tenant APIs.
                     // This is a workaround to mimic the the invocation came from super tenant.
@@ -232,7 +232,20 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                         inboundMessageContext.getHeaders().get(HttpHeaders.AUTHORIZATION));
             } else {
                 InboundMessageContextDataHolder.getInstance().removeInboundMessageContextForConnection(channelId);
-                WebsocketUtil.sendInvalidCredentialsMessage(ctx, inboundMessageContext);
+                if (APIConstants.APITransportType.GRAPHQL.toString()
+                        .equals(inboundMessageContext.getElectedAPI().getApiType())) {
+                    String errorMessage = "No Authorization Header or access_token query parameter present";
+                    log.error(errorMessage + " in request for the websocket context "
+                            + inboundMessageContext.getApiContextUri());
+                    responseDTO = GraphQLRequestProcessor.getHandshakeErrorDTO(
+                            GraphQLConstants.HandshakeErrorConstants.API_AUTH_ERROR, errorMessage);
+                } else {
+                    // If not a GraphQL API (Only a WebSocket API)
+                    responseDTO.setError(true);
+                    responseDTO.setErrorMessage(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE);
+                    responseDTO.setErrorCode(HttpResponseStatus.UNAUTHORIZED.code());
+                }
+                WebsocketUtil.sendInvalidCredentialsMessage(ctx, inboundMessageContext, responseDTO);
             }
         } else if ((msg instanceof CloseWebSocketFrame) || (msg instanceof PingWebSocketFrame)) {
             //remove inbound message context from data holder
@@ -245,47 +258,19 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                     .equals(inboundMessageContext.getElectedAPI().getApiType()) && msg instanceof TextWebSocketFrame) {
                 // Authenticate and handle GraphQL subscription requests
                 GraphQLRequestProcessor graphQLRequestProcessor = new GraphQLRequestProcessor();
-                GraphQLProcessorResponseDTO responseDTO = graphQLRequestProcessor.handleRequest((WebSocketFrame) msg,
+                InboundProcessorResponseDTO responseDTO = graphQLRequestProcessor.handleRequest((WebSocketFrame) msg,
                         ctx, inboundMessageContext);
                 if (responseDTO.isError()) {
-                    if (responseDTO.isCloseConnection()) {
-                        // remove inbound message context from data holder
-                        InboundMessageContextDataHolder.getInstance().getInboundMessageContextMap().remove(channelId);
-                        if (log.isDebugEnabled()) {
-                            log.debug("Error while handling Outbound Websocket frame. Closing connection for "
-                                    + ctx.channel().toString());
-                        }
-                        ctx.writeAndFlush(new CloseWebSocketFrame(responseDTO.getErrorCode(),
-                                responseDTO.getErrorMessage() + StringUtils.SPACE + "Connection closed" + "!"));
-                        ctx.close();
-                    } else {
-                        String errorMessage = responseDTO.getErrorResponseString();
-                        ctx.writeAndFlush(new TextWebSocketFrame(errorMessage));
-                        if (responseDTO.getErrorCode() == GraphQLConstants.FrameErrorConstants.THROTTLED_OUT_ERROR) {
-                            if (log.isDebugEnabled()) {
-                                log.debug("Inbound Websocket frame is throttled. " + ctx.channel().toString());
-                            }
-                        }
-                    }
+                    handleGraphQLRequestError(responseDTO, channelId, ctx);
                 } else {
-                    ctx.fireChannelRead(msg);
-                    String clientIp = getRemoteIP(ctx);
-                    // publish analytics events if analytics is enabled
-                    if (APIUtil.isAnalyticsEnabled()) {
-                        publishRequestEvent(clientIp, true, inboundMessageContext);
-                    }
+                    handleWSRequestSuccess(ctx, msg, inboundMessageContext);
                 }
             } else {
                 // If not a GraphQL API (Only a WebSocket API)
                 boolean isAllowed = doThrottle(ctx, (WebSocketFrame) msg, null, inboundMessageContext);
 
                 if (isAllowed) {
-                    ctx.fireChannelRead(msg);
-                    String clientIp = getRemoteIP(ctx);
-                    // publish analytics events if analytics is enabled
-                    if (APIUtil.isAnalyticsEnabled()) {
-                        publishRequestEvent(clientIp, true, inboundMessageContext);
-                    }
+                    handleWSRequestSuccess(ctx, msg, inboundMessageContext);
                 } else {
                     ctx.writeAndFlush(new TextWebSocketFrame("Websocket frame throttled out"));
                     if (log.isDebugEnabled()) {
@@ -302,14 +287,17 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
      * @param req Full Http Request
      * @return true if the access token is valid
      */
-    private boolean validateOAuthHeader(FullHttpRequest req, InboundMessageContext inboundMessageContext)
-            throws APISecurityException {
+    private InboundProcessorResponseDTO validateOAuthHeader(FullHttpRequest req,
+            InboundMessageContext inboundMessageContext) throws APISecurityException {
+
+        InboundProcessorResponseDTO responseDTO = new InboundProcessorResponseDTO();
+
         try {
             PrivilegedCarbonContext.startTenantFlow();
             PrivilegedCarbonContext.getThreadLocalCarbonContext()
                     .setTenantDomain(inboundMessageContext.getTenantDomain(), true);
             inboundMessageContext.setVersion(getVersionFromUrl(inboundMessageContext.getUri()));
-            APIKeyValidationInfoDTO info;
+            APIKeyValidationInfoDTO info = null;
             if (!req.headers().contains(HttpHeaders.AUTHORIZATION)) {
                 QueryStringDecoder decoder = new QueryStringDecoder(req.getUri());
                 Map<String, List<String>> requestMap = decoder.parameters();
@@ -320,7 +308,7 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                     removeTokenFromQuery(requestMap, inboundMessageContext);
                 } else {
                     log.error("No Authorization Header or access_token query parameter present");
-                    return false;
+                    responseDTO.setError(true);
                 }
             }
             String authorizationHeader = req.headers().get(HttpHeaders.AUTHORIZATION);
@@ -371,10 +359,12 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                 if (isJwtToken) {
                     log.debug("The token was identified as a JWT token");
 
-                    AuthenticationContext authenticationContext = new JWTValidator(
-                            new APIKeyValidator()).authenticateForWebSocket(inboundMessageContext);
-                    inboundMessageContext.setAuthContext(authenticationContext);
-                    return WebsocketUtil.validateAuthenticationContext(inboundMessageContext, isDefaultVersion);
+                    if (APIConstants.APITransportType.GRAPHQL.toString()
+                            .equals(inboundMessageContext.getElectedAPI().getApiType())) {
+                        responseDTO = GraphQLRequestProcessor.authenticateGraphQLJWTToken(inboundMessageContext);
+                    } else {
+                        responseDTO = authenticateWSJWTToken(inboundMessageContext, isDefaultVersion);
+                    }
                 } else {
                     log.debug("The token was identified as an OAuth token");
                     //If the key have already been validated
@@ -391,7 +381,7 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                             }
 
                             inboundMessageContext.setInfoDTO(info);
-                            return info.isAuthorized();
+                            responseDTO.setError(info.isAuthorized());
                         }
                     }
                     String keyValidatorClientType = APISecurityUtils.getKeyValidatorClientType();
@@ -399,10 +389,10 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                         info = getApiKeyDataForWSClient(apiKey, inboundMessageContext.getTenantDomain(),
                                 inboundMessageContext.getApiContextUri(), apiVersion);
                     } else {
-                        return false;
+                        responseDTO.setError(true);
                     }
                     if (info == null || !info.isAuthorized()) {
-                        return false;
+                        responseDTO.setError(true);
                     }
                     if (info.getApiName() != null && info.getApiName().contains("*")) {
                         String[] str = info.getApiName().split("\\*");
@@ -422,14 +412,15 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                     }
                     inboundMessageContext.setToken(info.getEndUserToken());
                     inboundMessageContext.setInfoDTO(info);
-                    return true;
+                    responseDTO.setError(false);
                 }
             } else {
-                return false;
+                responseDTO.setError(true);
             }
         } finally {
             PrivilegedCarbonContext.endTenantFlow();
         }
+        return responseDTO;
     }
 
     protected APIKeyValidationInfoDTO getApiKeyDataForWSClient(String key, String domain, String apiContextUri,
@@ -717,5 +708,65 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
             verbInfoDTO.setThrottling(urlMapping.getThrottlingPolicy());
             resourceInfoDTO.getHttpVerbs().add(verbInfoDTO);
         }
+    }
+
+    /**
+     * @param responseDTO InboundProcessorResponseDTO
+     * @param channelId   Channel Id of the web socket connection
+     * @param ctx         ChannelHandlerContext
+     */
+    private void handleGraphQLRequestError(InboundProcessorResponseDTO responseDTO, String channelId,
+            ChannelHandlerContext ctx) {
+        if (responseDTO.isCloseConnection()) {
+            // remove inbound message context from data holder
+            InboundMessageContextDataHolder.getInstance().getInboundMessageContextMap().remove(channelId);
+            if (log.isDebugEnabled()) {
+                log.debug("Error while handling Outbound Websocket frame. Closing connection for " + ctx.channel()
+                        .toString());
+            }
+            ctx.writeAndFlush(new CloseWebSocketFrame(responseDTO.getErrorCode(),
+                    responseDTO.getErrorMessage() + StringUtils.SPACE + "Connection closed" + "!"));
+            ctx.close();
+        } else {
+            String errorMessage = responseDTO.getErrorResponseString();
+            ctx.writeAndFlush(new TextWebSocketFrame(errorMessage));
+            if (responseDTO.getErrorCode() == GraphQLConstants.FrameErrorConstants.THROTTLED_OUT_ERROR) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Inbound Websocket frame is throttled. " + ctx.channel().toString());
+                }
+            }
+        }
+    }
+
+    /**
+     * @param ctx                   ChannelHandlerContext
+     * @param msg                   Message
+     * @param inboundMessageContext InboundMessageContext
+     */
+    private void handleWSRequestSuccess(ChannelHandlerContext ctx, Object msg,
+            InboundMessageContext inboundMessageContext) {
+        ctx.fireChannelRead(msg);
+        // publish analytics events if analytics is enabled
+        if (APIUtil.isAnalyticsEnabled()) {
+            publishRequestEvent(inboundMessageContext.getUserIP(), true, inboundMessageContext);
+        }
+    }
+
+    /**
+     * @param inboundMessageContext InboundMessageContext
+     * @param isDefaultVersion      Is default version or not
+     * @return responseDTO
+     * @throws APISecurityException If an error occurs while authenticating the WebSocket API
+     */
+    private InboundProcessorResponseDTO authenticateWSJWTToken(InboundMessageContext inboundMessageContext,
+            Boolean isDefaultVersion) throws APISecurityException {
+        InboundProcessorResponseDTO responseDTO = new InboundProcessorResponseDTO();
+        AuthenticationContext authenticationContext = new JWTValidator(
+                new APIKeyValidator()).authenticateForWSAndGraphQL(inboundMessageContext);
+        inboundMessageContext.setAuthContext(authenticationContext);
+        if (!WebsocketUtil.validateAuthenticationContext(inboundMessageContext, isDefaultVersion)) {
+            responseDTO.setError(true);
+        }
+        return responseDTO;
     }
 }
