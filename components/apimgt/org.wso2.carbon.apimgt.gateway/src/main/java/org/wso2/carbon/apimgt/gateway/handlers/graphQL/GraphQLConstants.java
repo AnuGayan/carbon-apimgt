@@ -27,6 +27,8 @@ public class GraphQLConstants {
             Arrays.asList("first", "last", "limit"));
 
     public static class FrameErrorConstants {
+        public static final int API_AUTH_INVALID_CREDENTIALS = 4001;
+        public static final String API_AUTH_INVALID_CREDENTIALS_MESSAGE = "Invalid Credentials";
         public static final int THROTTLED_OUT_ERROR = 4003;
         public static final String THROTTLED_OUT_ERROR_MESSAGE = "Websocket frame throttled out";
         public static final int INTERNAL_SERVER_ERROR = 4004;

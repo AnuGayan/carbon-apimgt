@@ -23,11 +23,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import org.json.JSONObject;
 import org.wso2.carbon.apimgt.gateway.handlers.InboundMessageContext;
 import org.wso2.carbon.apimgt.gateway.dto.GraphQLOperationDTO;
-import org.wso2.carbon.apimgt.gateway.handlers.WebsocketUtil;
-import org.wso2.carbon.apimgt.gateway.handlers.security.APIKeyValidator;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityException;
-import org.wso2.carbon.apimgt.gateway.handlers.security.AuthenticationContext;
-import org.wso2.carbon.apimgt.gateway.handlers.security.jwt.JWTValidator;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 
 /**
@@ -48,24 +44,18 @@ public class GraphQLResponseProcessor {
      */
     public GraphQLProcessorResponseDTO handleResponse(WebSocketFrame msg, ChannelHandlerContext ctx,
             InboundMessageContext inboundMessageContext) throws APISecurityException {
+        GraphQLProcessorResponseDTO responseDTO;
 
         try {
             PrivilegedCarbonContext.startTenantFlow();
             PrivilegedCarbonContext.getThreadLocalCarbonContext()
                     .setTenantDomain(inboundMessageContext.getTenantDomain(), true);
-            AuthenticationContext authenticationContext = new JWTValidator(
-                    new APIKeyValidator()).authenticateForWebSocket(inboundMessageContext);
-            inboundMessageContext.setAuthContext(authenticationContext);
-            if (!WebsocketUtil.validateAuthenticationContext(inboundMessageContext,
-                    inboundMessageContext.getElectedAPI().isDefaultVersion())) {
-                WebsocketUtil.sendInvalidCredentialsMessage(ctx, inboundMessageContext);
-            }
+            responseDTO = GraphQLRequestProcessor.authenticateGraphQLJWTToken(inboundMessageContext);
 
-            GraphQLProcessorResponseDTO responseDTO = new GraphQLProcessorResponseDTO();
             String msgText = ((TextWebSocketFrame) msg).text();
             JSONObject graphQLMsg = new JSONObject(msgText);
 
-            if (checkIfSubscribeMessageResponse(graphQLMsg)) {
+            if (!responseDTO.isError() && checkIfSubscribeMessageResponse(graphQLMsg)) {
                 if (graphQLMsg.getString(GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_ID) != null) {
                     String operationId = graphQLMsg.getString(
                             GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_ID);

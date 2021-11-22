@@ -37,6 +37,7 @@ import org.wso2.carbon.apimgt.gateway.handlers.WebsocketInboundHandler;
 import org.wso2.carbon.apimgt.gateway.handlers.WebsocketUtil;
 import org.wso2.carbon.apimgt.gateway.handlers.graphQL.analyzer.SubscriptionAnalyzer;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APIKeyValidator;
+import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityConstants;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityException;
 import org.wso2.carbon.apimgt.gateway.handlers.security.AuthenticationContext;
 import org.wso2.carbon.apimgt.gateway.handlers.security.jwt.JWTValidator;
@@ -71,25 +72,20 @@ public class GraphQLRequestProcessor {
      */
     public GraphQLProcessorResponseDTO handleRequest(WebSocketFrame msg, ChannelHandlerContext ctx,
             InboundMessageContext inboundMessageContext) throws APISecurityException {
+        GraphQLProcessorResponseDTO responseDTO = new GraphQLProcessorResponseDTO();
 
         try {
             PrivilegedCarbonContext.startTenantFlow();
             PrivilegedCarbonContext.getThreadLocalCarbonContext()
                     .setTenantDomain(inboundMessageContext.getTenantDomain(), true);
-            AuthenticationContext authenticationContext = new JWTValidator(
-                    new APIKeyValidator()).authenticateForWebSocket(inboundMessageContext);
-            inboundMessageContext.setAuthContext(authenticationContext);
-            if (!WebsocketUtil.validateAuthenticationContext(inboundMessageContext,
-                    inboundMessageContext.getElectedAPI().isDefaultVersion())) {
-                WebsocketUtil.sendInvalidCredentialsMessage(ctx, inboundMessageContext);
-            }
+            responseDTO = authenticateGraphQLJWTToken(inboundMessageContext);
 
-            GraphQLProcessorResponseDTO responseDTO = new GraphQLProcessorResponseDTO();
             String msgText = ((TextWebSocketFrame) msg).text();
             JSONObject graphQLMsg = new JSONObject(msgText);
             Parser parser = new Parser();
 
-            if (checkIfSubscribeMessage(graphQLMsg)) {
+            // for gql subscription operation payloads
+            if (!responseDTO.isError() && checkIfSubscribeMessage(graphQLMsg)) {
                 String operationId = graphQLMsg.getString(GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_ID);
                 if (validatePayloadFields(graphQLMsg)) {
                     String graphQLSubscriptionPayload = ((JSONObject) graphQLMsg.get(
@@ -147,6 +143,33 @@ public class GraphQLRequestProcessor {
         } finally {
             PrivilegedCarbonContext.endTenantFlow();
         }
+    }
+
+    /**
+     * Authenticates JWT token in incoming GraphQL subscription requests.
+     *
+     * @param inboundMessageContext InboundMessageContext
+     * @return GraphQLProcessorResponseDTO
+     */
+    public static GraphQLProcessorResponseDTO authenticateGraphQLJWTToken(InboundMessageContext inboundMessageContext) {
+
+        GraphQLProcessorResponseDTO responseDTO = new GraphQLProcessorResponseDTO();
+        AuthenticationContext authenticationContext;
+        JWTValidator jwtValidator = new JWTValidator(new APIKeyValidator());
+        try {
+            authenticationContext = jwtValidator.authenticateForWebSocket(inboundMessageContext);
+            inboundMessageContext.setAuthContext(authenticationContext);
+            if (!WebsocketUtil.validateAuthenticationContext(inboundMessageContext,
+                    inboundMessageContext.getElectedAPI().isDefaultVersion())) {
+                responseDTO = getFrameErrorDTO(GraphQLConstants.FrameErrorConstants.API_AUTH_INVALID_CREDENTIALS,
+                        APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE, true);
+            }
+        } catch (APISecurityException e) {
+            log.error(GraphQLConstants.FrameErrorConstants.API_AUTH_INVALID_CREDENTIALS, e);
+            responseDTO = getFrameErrorDTO(GraphQLConstants.FrameErrorConstants.API_AUTH_INVALID_CREDENTIALS,
+                    e.getMessage(), true);
+        }
+        return responseDTO;
     }
 
     /**
