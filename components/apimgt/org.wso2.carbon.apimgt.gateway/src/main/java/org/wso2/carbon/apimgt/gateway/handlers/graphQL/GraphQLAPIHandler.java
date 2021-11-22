@@ -25,7 +25,6 @@ import graphql.schema.GraphQLType;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import graphql.schema.idl.UnExecutableSchemaGenerator;
-import graphql.validation.ValidationError;
 import graphql.validation.Validator;
 import org.apache.axiom.om.OMAbstractFactory;
 import org.apache.axiom.om.OMElement;
@@ -40,13 +39,11 @@ import org.apache.synapse.config.Entry;
 import org.apache.synapse.core.axis2.Axis2MessageContext;
 import org.apache.synapse.rest.AbstractHandler;
 import org.apache.synapse.transport.passthru.util.RelayUtils;
-import org.wso2.carbon.apimgt.api.gateway.GraphQLSchemaDTO;
 import org.wso2.carbon.apimgt.api.model.URITemplate;
 import org.wso2.carbon.apimgt.gateway.handlers.Utils;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityConstants;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.definitions.GraphQLSchemaDefinition;
-import org.wso2.carbon.apimgt.impl.internal.DataHolder;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamException;
@@ -68,13 +65,13 @@ public class GraphQLAPIHandler extends AbstractHandler {
     private static final String CLASS_NAME_AND_METHOD = "_GraphQLAPIHandler_handleRequest";
     private static final Log log = LogFactory.getLog(GraphQLAPIHandler.class);
     private GraphQLSchema schema = null;
-    private static Validator validator;
     private String apiUUID;
     private static String schemaDefinition;
+    private QueryValidator queryValidator;
 
     public GraphQLAPIHandler() {
 
-        validator = new Validator();
+        queryValidator = new QueryValidator(new Validator());
     }
 
     public String getApiUUID() {
@@ -318,8 +315,6 @@ public class GraphQLAPIHandler extends AbstractHandler {
      * @return true or false
      */
     private boolean validatePayloadWithSchema(MessageContext messageContext, Document document) {
-        ArrayList<String> validationErrorMessageList = new ArrayList<>();
-        List<ValidationError> validationErrors;
         String validationErrorMessage;
 
         synchronized (apiUUID + CLASS_NAME_AND_METHOD) {
@@ -335,15 +330,8 @@ public class GraphQLAPIHandler extends AbstractHandler {
             }
         }
 
-        validationErrors = validator.validateDocument(schema, document);
-        if (validationErrors != null && validationErrors.size() > 0) {
-            if (log.isDebugEnabled()) {
-                log.debug("Validation failed for " + document);
-            }
-            for (ValidationError error : validationErrors) {
-                validationErrorMessageList.add(error.getDescription());
-            }
-            validationErrorMessage = String.join(",", validationErrorMessageList);
+        validationErrorMessage = queryValidator.validatePayload(schema, document);
+        if (validationErrorMessage != null) {
             handleFailure(messageContext, validationErrorMessage);
             return false;
         }
