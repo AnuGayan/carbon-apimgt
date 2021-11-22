@@ -1625,6 +1625,9 @@ public final class APIConstants {
     public static final String ENDPOINT_SANDBOX_ENDPOINTS = "sandbox_endpoints";
     public static final String ENDPOINT_URLS = "urls";
     public static final String ENDPOINT_URL = "url";
+    public static final String ENDPOINT_SPECIFIC_CONFIG = "config";
+    public static final String ENDPOINT_CONFIG_ACTION_DURATION = "actionDuration";
+
     public static final String ENDPOINT_SECURITY_TYPE = "type";
     public static final String ENDPOINT_SECURITY_TYPE_BASIC = "basic";
     public static final String ENDPOINT_SECURITY_TYPE_DIGEST = "digest";

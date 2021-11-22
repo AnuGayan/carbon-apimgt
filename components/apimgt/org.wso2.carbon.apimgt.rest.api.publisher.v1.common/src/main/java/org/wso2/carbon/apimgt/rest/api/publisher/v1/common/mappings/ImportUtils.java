@@ -759,6 +759,20 @@ public class ImportUtils {
                     }
                 }
             }
+            if (endpointConfig.has(APIConstants.ENDPOINT_PRODUCTION_ENDPOINTS)) {
+                JsonObject sandboxEndpoint = endpointConfig.get(APIConstants.ENDPOINT_PRODUCTION_ENDPOINTS).
+                        getAsJsonObject();
+                if (sandboxEndpoint.has(APIConstants.ENDPOINT_SPECIFIC_CONFIG)) {
+                    JsonObject config = sandboxEndpoint.get(APIConstants.ENDPOINT_SPECIFIC_CONFIG).
+                            getAsJsonObject();
+                    if (config.has(APIConstants.ENDPOINT_CONFIG_ACTION_DURATION)) {
+                        Double actionDuration = config.get(APIConstants.ENDPOINT_CONFIG_ACTION_DURATION).getAsDouble();
+                        Integer value = (int) Math.round(actionDuration);
+                        config.remove(APIConstants.ENDPOINT_CONFIG_ACTION_DURATION);
+                        config.addProperty(APIConstants.ENDPOINT_CONFIG_ACTION_DURATION, value.toString());
+                    }
+                }
+            }
         }
         return configObject;
     }
