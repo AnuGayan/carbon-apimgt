@@ -25,6 +25,7 @@ import graphql.validation.Validator;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
+import org.apache.axis2.AxisFault;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -71,8 +72,9 @@ public class GraphQLRequestProcessor {
      * @return InboundProcessorResponseDTO with handshake processing response
      */
     public InboundProcessorResponseDTO handleRequest(WebSocketFrame msg, ChannelHandlerContext ctx,
-            InboundMessageContext inboundMessageContext) throws APISecurityException {
+            InboundMessageContext inboundMessageContext) throws APISecurityException, AxisFault {
         InboundProcessorResponseDTO responseDTO;
+        GraphQLAPIHandler.setGraphQLSchemaToDataHolder(inboundMessageContext);
 
         try {
             PrivilegedCarbonContext.startTenantFlow();

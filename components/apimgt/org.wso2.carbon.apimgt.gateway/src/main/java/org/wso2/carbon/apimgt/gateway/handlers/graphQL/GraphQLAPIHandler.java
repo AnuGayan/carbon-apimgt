@@ -30,6 +30,7 @@ import org.apache.axiom.om.OMAbstractFactory;
 import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.OMFactory;
 import org.apache.axiom.om.OMNamespace;
+import org.apache.axis2.AxisFault;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
@@ -39,11 +40,15 @@ import org.apache.synapse.config.Entry;
 import org.apache.synapse.core.axis2.Axis2MessageContext;
 import org.apache.synapse.rest.AbstractHandler;
 import org.apache.synapse.transport.passthru.util.RelayUtils;
+import org.wso2.carbon.apimgt.api.gateway.GraphQLSchemaDTO;
 import org.wso2.carbon.apimgt.api.model.URITemplate;
+import org.wso2.carbon.apimgt.gateway.handlers.InboundMessageContext;
 import org.wso2.carbon.apimgt.gateway.handlers.Utils;
+import org.wso2.carbon.apimgt.gateway.handlers.WebsocketUtil;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityConstants;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.definitions.GraphQLSchemaDefinition;
+import org.wso2.carbon.apimgt.impl.internal.DataHolder;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamException;
@@ -380,6 +385,32 @@ public class GraphQLAPIHandler extends AbstractHandler {
     @Override
     public boolean handleResponse(MessageContext messageContext) {
         return true;
+    }
+
+    /**
+     * Set the GraphQL Schema to the data holder
+     *
+     * @param inboundMessageContext InboundMessageContext
+     * @throws AxisFault
+     */
+    public static synchronized void setGraphQLSchemaToDataHolder(InboundMessageContext inboundMessageContext)
+            throws AxisFault {
+        String apiUuid = inboundMessageContext.getElectedAPI().getUuid();
+        if (DataHolder.getInstance().getGraphQLSchemaDTOForAPI(apiUuid) == null) {
+            // Retrieve the schema from the local entry
+            MessageContext messageContext = WebsocketUtil.getSynapseMessageContext(
+                    inboundMessageContext.getTenantDomain());
+            Entry localEntryObj = (Entry) messageContext.getConfiguration().getLocalRegistry()
+                    .get(apiUuid + GRAPHQL_IDENTIFIER);
+            if (localEntryObj != null) {
+                SchemaParser schemaParser = new SchemaParser();
+                String schemaDefinition = localEntryObj.getValue().toString();
+                TypeDefinitionRegistry registry = schemaParser.parse(schemaDefinition);
+                GraphQLSchema schema = UnExecutableSchemaGenerator.makeUnExecutableSchema(registry);
+                GraphQLSchemaDTO schemaDTO = new GraphQLSchemaDTO(schema, registry);
+                DataHolder.getInstance().addApiToGraphQLSchemaDTO(apiUuid, schemaDTO);
+            }
+        }
     }
 }
 
