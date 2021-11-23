@@ -75,7 +75,6 @@ public class SchemaValidator extends AbstractHandler {
         }
         OpenApiInteractionValidator validator = getOpenAPIValidator(swagger);
         OpenAPIRequest request = new OpenAPIRequest(messageContext);
-
         ValidationReport validationReport = validator.validateRequest(request);
         if (validationReport.hasErrors()) {
             StringBuilder finalMessage = new StringBuilder();

@@ -19,6 +19,13 @@ package org.wso2.carbon.apimgt.gateway.handlers.security.model;
 import com.atlassian.oai.validator.model.Request;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import io.swagger.parser.OpenAPIParser;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Paths;
+import io.swagger.v3.parser.core.models.ParseOptions;
+import io.swagger.v3.parser.core.models.SwaggerParseResult;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.synapse.MessageContext;
@@ -27,13 +34,17 @@ import org.wso2.carbon.apimgt.gateway.APIMgtGatewayConstants;
 import org.wso2.carbon.apimgt.gateway.handlers.security.utils.SchemaValidationUtils;
 
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
+
+import static org.openapitools.codegen.meta.features.ParameterFeature.Path;
 
 /**
  * Request Model class for OpenAPI
@@ -63,6 +74,15 @@ public class OpenAPIRequest implements Request {
         //Set Request path
         path = SchemaValidationUtils.getRestSubRequestPath(
                 messageContext.getProperty(REST_SUB_REQUEST_PATH).toString());
+        String swagger = messageContext.getProperty(APIMgtGatewayConstants.OPEN_API_STRING).toString();
+        if (swagger != null) {
+            OpenAPIParser openAPIParser = new OpenAPIParser();
+            SwaggerParseResult swaggerParseResult =
+                    openAPIParser.readContents(swagger, new ArrayList<>(), new ParseOptions());
+            OpenAPI openAPI = swaggerParseResult.getOpenAPI();
+            validatePath(openAPI);;
+        }
+
         //extract transport headers
         Map<String, String> transportHeaders = (Map<String, String>)
                 (axis2MessageContext.getProperty(APIMgtGatewayConstants.TRANSPORT_HEADERS));
@@ -72,8 +92,15 @@ public class OpenAPIRequest implements Request {
                 .stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> Collections.singleton(entry.getValue())));
         //Set transport headers
+        List<String> possibleContentTypeHeaders = new ArrayList();
+        possibleContentTypeHeaders.add("Content-Type");
+        possibleContentTypeHeaders.add("content-type");
+        possibleContentTypeHeaders.add("CONTENT-TYPE");
         for (Map.Entry<String, Collection<String>> header : headerMap.entrySet()) {
-            headers.put(header.getKey(), header.getValue().iterator().next());
+            String headerKey = header.getKey();
+            String value =  header.getValue().iterator().next();
+            headerKey = possibleContentTypeHeaders.contains(headerKey) ? "Content-Type" : headerKey;
+            headers.put(headerKey, value);
         }
         String apiResource = messageContext.getProperty(APIMgtGatewayConstants.RESOURCE).toString();
         //Extracting query params
@@ -83,6 +110,17 @@ public class OpenAPIRequest implements Request {
         } catch (UnsupportedEncodingException e) {
             logger.error("Failed to decode query string");
         }
+    }
+
+    protected void validatePath(OpenAPI openAPI) {
+
+        Paths paths = openAPI.getPaths();
+        if (path.equals("/") && !paths.containsKey(path)) {
+            if (paths.containsKey("/*")) {
+                path = "/*";
+            }
+        }
+
     }
 
     @Nonnull
