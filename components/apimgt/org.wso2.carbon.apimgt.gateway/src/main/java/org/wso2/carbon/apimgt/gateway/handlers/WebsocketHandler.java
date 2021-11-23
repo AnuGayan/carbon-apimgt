@@ -95,12 +95,12 @@ public class WebsocketHandler extends CombinedChannelDuplexHandler<WebsocketInbo
                     if (log.isDebugEnabled()) {
                         log.debug("Sending Outbound Websocket frame." + ctx.channel().toString());
                     }
-                    handleSWResponseSuccess(ctx, msg, promise, inboundMessageContext);
+                    handleWSResponseSuccess(ctx, msg, promise, inboundMessageContext);
                 }
             } else {
                 // If not a GraphQL API (Only a WebSocket API)
                 if (isAllowed(ctx, (WebSocketFrame) msg, inboundMessageContext)) {
-                    handleSWResponseSuccess(ctx, msg, promise, inboundMessageContext);
+                    handleWSResponseSuccess(ctx, msg, promise, inboundMessageContext);
                 } else {
                     ctx.writeAndFlush(new TextWebSocketFrame("Websocket frame throttled out"));
                     if (log.isDebugEnabled()) {
@@ -120,7 +120,7 @@ public class WebsocketHandler extends CombinedChannelDuplexHandler<WebsocketInbo
      * @param inboundMessageContext InboundMessageContext
      * @throws Exception
      */
-    private void handleSWResponseSuccess(ChannelHandlerContext ctx, Object msg, ChannelPromise promise,
+    private void handleWSResponseSuccess(ChannelHandlerContext ctx, Object msg, ChannelPromise promise,
             InboundMessageContext inboundMessageContext) throws Exception {
         outboundHandler().write(ctx, msg, promise);
         // publish analytics events if analytics is enabled
