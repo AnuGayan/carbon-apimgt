@@ -120,7 +120,6 @@ public class OpenAPIRequest implements Request {
                 path = "/*";
             }
         }
-
     }
 
     @Nonnull
