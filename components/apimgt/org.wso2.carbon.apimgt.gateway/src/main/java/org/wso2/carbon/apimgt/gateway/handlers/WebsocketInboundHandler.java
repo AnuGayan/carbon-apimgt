@@ -142,7 +142,9 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
         }
     }*/
 
-    @SuppressWarnings("unchecked") @Override public void channelRead(ChannelHandlerContext ctx, Object msg)
+    @SuppressWarnings("unchecked")
+    @Override
+    public void channelRead(ChannelHandlerContext ctx, Object msg)
             throws Exception {
 
         String channelId = ctx.channel().id().asLongText();
@@ -287,7 +289,7 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
      * @param req Full Http Request
      * @return true if the access token is valid
      */
-    private InboundProcessorResponseDTO validateOAuthHeader(FullHttpRequest req,
+    public InboundProcessorResponseDTO validateOAuthHeader(FullHttpRequest req,
             InboundMessageContext inboundMessageContext) throws APISecurityException {
 
         InboundProcessorResponseDTO responseDTO = new InboundProcessorResponseDTO();
@@ -758,7 +760,7 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
      * @return responseDTO
      * @throws APISecurityException If an error occurs while authenticating the WebSocket API
      */
-    private InboundProcessorResponseDTO authenticateWSJWTToken(InboundMessageContext inboundMessageContext,
+    public InboundProcessorResponseDTO authenticateWSJWTToken(InboundMessageContext inboundMessageContext,
             Boolean isDefaultVersion) throws APISecurityException {
         InboundProcessorResponseDTO responseDTO = new InboundProcessorResponseDTO();
         AuthenticationContext authenticationContext = new JWTValidator(
