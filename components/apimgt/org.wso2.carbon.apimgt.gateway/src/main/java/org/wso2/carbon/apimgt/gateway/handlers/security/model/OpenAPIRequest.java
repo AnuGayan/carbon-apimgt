@@ -19,8 +19,6 @@ package org.wso2.carbon.apimgt.gateway.handlers.security.model;
 import com.atlassian.oai.validator.model.Request;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import io.swagger.parser.OpenAPIParser;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Paths;
@@ -43,8 +41,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
-
-import static org.openapitools.codegen.meta.features.ParameterFeature.Path;
 
 /**
  * Request Model class for OpenAPI
