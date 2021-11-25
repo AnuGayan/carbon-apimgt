@@ -372,7 +372,7 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
             String isConsumerKeyEncoded = System.getProperty(ENCODE_CONSUMER_KEY, "false");
             if (isConsumerKeyEncoded.equalsIgnoreCase("true")) {
                 encoded = true;
-                consumerKey = Base64.getEncoder().encodeToString(consumerKey.getBytes(StandardCharsets.UTF_8));
+                consumerKey = Base64.getUrlEncoder().encodeToString(consumerKey.getBytes(StandardCharsets.UTF_8));
             }
             ClientInfo clientInfo = dcrClient.getApplication(consumerKey, encoded);
             return buildDTOFromClientInfo(clientInfo, new OAuthApplicationInfo());
@@ -406,7 +406,7 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
 
         try {
             String credentials = tokenRequest.getClientId() + ':' + tokenRequest.getClientSecret();
-            String authToken = Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
+            String authToken = Base64.getUrlEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
             tokenResponse = authClient.generate(authToken, GRANT_TYPE_VALUE, scopes);
         } catch (KeyManagerClientException e) {
             throw new APIManagementException("Error occurred while calling token endpoint!", e);
