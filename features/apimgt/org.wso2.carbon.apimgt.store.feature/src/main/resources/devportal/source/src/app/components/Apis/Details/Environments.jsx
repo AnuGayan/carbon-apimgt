@@ -241,7 +241,7 @@ class Environments extends React.Component {
                                                         className: classes.bootstrapFormLabel,
                                                     }}
                                                     inputProps={{
-                                                        'aria-labelledby':'urls',
+                                                        'aria-labelledby': 'urls',
                                                     }}
                                                 />
                                                 <Tooltip
@@ -288,7 +288,7 @@ class Environments extends React.Component {
                                                         className: classes.bootstrapFormLabel,
                                                     }}
                                                     inputProps={{
-                                                        'aria-labelledby':'urls',
+                                                        'aria-labelledby': 'urls',
                                                     }}
                                                 />
                                                 <Tooltip
@@ -641,10 +641,10 @@ class Environments extends React.Component {
                                         <div className={classes.iconAligner}>
                                             <Icon className={classes.iconEven}>cloud</Icon>
                                             <span className={classes.iconTextWrapper}>
-                                            <Typography className={classes.heading}>
-                                                {cluster.clusterDisplayName}
-                                            </Typography>
-                                        </span>
+                                                <Typography className={classes.heading}>
+                                                    {cluster.clusterDisplayName}
+                                                </Typography>
+                                            </span>
                                         </div>
                                     </ExpansionPanelSummary>
                                     <ExpansionPanelDetails>
