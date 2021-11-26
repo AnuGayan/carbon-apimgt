@@ -149,6 +149,13 @@ export default function Environments() {
                                     <TableCell align='left'>HTTPS Endpoint</TableCell>
                                 </>
                             )}
+                            {api.isGraphql()
+                                && (
+                                    <>
+                                        <TableCell align='left'>WS Endpoint</TableCell>
+                                        <TableCell align='left'>WSS Endpoint</TableCell>
+                                    </>
+                                )}
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -193,6 +200,13 @@ export default function Environments() {
                                         <TableCell align='left'>{row.endpoints.https}</TableCell>
                                     </>
                                 )}
+                                {api.isGraphql()
+                                    && (
+                                        <>
+                                            <TableCell align='left'>{row.endpoints.ws}</TableCell>
+                                            <TableCell align='left'>{row.endpoints.wss}</TableCell>
+                                        </>
+                                    )}
                             </TableRow>
                         ))}
                     </TableBody>
@@ -209,16 +223,16 @@ export default function Environments() {
                 )}
             {
                 allDeployments
-                 && (
-                     allDeployments.map((clusters) => (clusters.name.toLowerCase() === 'kubernetes' && (
-                         <Kubernetes
-                             clusters={clusters}
-                             selectedDeployments={selectedDeployments}
-                             setSelectedDeployments={setSelectedDeployments}
-                             api={api}
-                         />
-                     )))
-                 )
+                && (
+                    allDeployments.map((clusters) => (clusters.name.toLowerCase() === 'kubernetes' && (
+                        <Kubernetes
+                            clusters={clusters}
+                            selectedDeployments={selectedDeployments}
+                            setSelectedDeployments={setSelectedDeployments}
+                            api={api}
+                        />
+                    )))
+                )
             }
 
             <Grid
