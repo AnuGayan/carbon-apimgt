@@ -829,7 +829,7 @@ public class ImportUtils {
     }
 
     /**
-     * Replace original provider name from imported API/API Product context with the logged in username
+     * Replace original provider name from imported API/API Product context with the logged-in username
      * This method is used when "preserveProvider" property is set to false.
      *
      * @param jsonObject     Imported API or API Product
