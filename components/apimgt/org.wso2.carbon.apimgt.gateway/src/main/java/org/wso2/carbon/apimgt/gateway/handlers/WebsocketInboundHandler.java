@@ -760,7 +760,7 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
      * @return responseDTO
      * @throws APISecurityException If an error occurs while authenticating the WebSocket API
      */
-    public InboundProcessorResponseDTO authenticateWSJWTToken(InboundMessageContext inboundMessageContext,
+    private InboundProcessorResponseDTO authenticateWSJWTToken(InboundMessageContext inboundMessageContext,
             Boolean isDefaultVersion) throws APISecurityException {
         InboundProcessorResponseDTO responseDTO = new InboundProcessorResponseDTO();
         AuthenticationContext authenticationContext = new JWTValidator(

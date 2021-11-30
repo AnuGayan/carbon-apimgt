@@ -28,6 +28,7 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import org.junit.Assert;
 import org.junit.Before;
@@ -40,6 +41,8 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.wso2.carbon.apimgt.gateway.APIMgtGatewayConstants;
 import org.wso2.carbon.apimgt.gateway.InboundMessageContextDataHolder;
+import org.wso2.carbon.apimgt.gateway.handlers.graphQL.GraphQLRequestProcessor;
+import org.wso2.carbon.apimgt.gateway.handlers.graphQL.InboundProcessorResponseDTO;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityUtils;
 import org.wso2.carbon.apimgt.gateway.handlers.security.AuthenticationContext;
 import org.wso2.carbon.apimgt.gateway.handlers.security.jwt.JWTValidator;
@@ -75,7 +78,7 @@ import javax.cache.Caching;
 @PrepareForTest({WebsocketInboundHandler.class, MultitenantUtils.class, DataPublisherUtil.class,
         UsageComponent.class, PrivilegedCarbonContext.class, ServiceReferenceHolder.class, Caching.class,
         APISecurityUtils.class, WebsocketUtil.class, ThrottleDataPublisher.class, APIUtil.class, RegistryService.class,
-        org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder.class})
+        org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder.class, GraphQLRequestProcessor.class})
 @PowerMockIgnore("javax.net.ssl.SSLContext")
 public class WebsocketInboundHandlerTestCase {
 
@@ -84,6 +87,7 @@ public class WebsocketInboundHandlerTestCase {
     private String SUPER_TENANT_DOMAIN = "carbon.super";
     private ChannelHandlerContext channelHandlerContext;
     private org.wso2.carbon.apimgt.keymgt.model.entity.API websocketAPI;
+    private org.wso2.carbon.apimgt.keymgt.model.entity.API graphQLAPI;
     private HttpHeaders headers;
     private String AUTHORIZATION = "Bearer eyJ4NXQiOiJNell4TW1Ga09HWXdNV0kwWldObU5EY3hOR1l3WW1NNFpUQTNNV"
             + "0kyTkRBelpHUXpOR00wWkdSbE5qSmtPREZrWkRSaU9URmtNV0ZoTXpVMlpHVmxOZyIsImtpZCI6Ik16WXhNbUZrT0dZd01XSTBaV05tT"
@@ -103,6 +107,7 @@ public class WebsocketInboundHandlerTestCase {
     private APIManagerConfiguration apiManagerConfiguration;
     private Cache gatewayCache;
     ServiceReferenceHolder serviceReferenceHolder;
+    private GraphQLRequestProcessor graphQLRequestProcessor;
 
     @Before
     public void setup() throws Exception {
@@ -124,6 +129,8 @@ public class WebsocketInboundHandlerTestCase {
         };
         websocketAPI = new API(UUID.randomUUID().toString(), 1, "admin", "WSAPI", "1.0.0", "/wscontext", "Unlimited",
                 "WS", false);
+        graphQLAPI = new API(UUID.randomUUID().toString(), 2, "admin", "GraphQLAPI", "1.0.0", "/graphql", "Unlimited",
+                APIConstants.GRAPHQL_API, false);
         PowerMockito.mockStatic(MultitenantUtils.class);
         PowerMockito.mockStatic(DataPublisherUtil.class);
         PowerMockito.mockStatic(UsageComponent.class);
@@ -157,6 +164,8 @@ public class WebsocketInboundHandlerTestCase {
         Mockito.when(cacheBuilder.setExpiry(CacheConfiguration.ExpiryType.ACCESSED, duration)).thenReturn(cacheBuilder);
         Mockito.when(cacheBuilder.setStoreByValue(false)).thenReturn(cacheBuilder);
         Mockito.when(cacheBuilder.build()).thenReturn(gatewayCache);
+        graphQLRequestProcessor = Mockito.mock(GraphQLRequestProcessor.class);
+        PowerMockito.whenNew(GraphQLRequestProcessor.class).withAnyArguments().thenReturn(graphQLRequestProcessor);
 
         APIMgtGoogleAnalyticsUtils apiMgtGoogleAnalyticsUtils = Mockito.mock(APIMgtGoogleAnalyticsUtils.class);
         Mockito.doNothing().when(apiMgtGoogleAnalyticsUtils).init("");
@@ -179,7 +188,8 @@ public class WebsocketInboundHandlerTestCase {
     @Test
     public void testWSHandshakeResponse() throws Exception {
 
-        InboundMessageContext inboundMessageContext = createWebSocketApiMessageContext();
+        // For Web Socket APIs
+        InboundMessageContext inboundMessageContext = createApiMessageContext(websocketAPI);
         InboundMessageContextDataHolder.getInstance()
                 .addInboundMessageContextForConnection(channelIdString, inboundMessageContext);
         FullHttpRequest fullHttpRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET,
@@ -192,7 +202,7 @@ public class WebsocketInboundHandlerTestCase {
         Mockito.when(jwtValidator.authenticateForWSAndGraphQL(inboundMessageContext.getSignedJWTInfo(),
                         inboundMessageContext.getApiContextUri(), inboundMessageContext.getVersion()))
                 .thenReturn(authenticationContext);
-        Mockito.when(WebsocketUtil.validateAuthenticationContext(inboundMessageContext, false)).thenReturn(true);
+        PowerMockito.when(WebsocketUtil.validateAuthenticationContext(inboundMessageContext, false)).thenReturn(true);
         websocketInboundHandler.channelRead(channelHandlerContext, fullHttpRequest);
         Assert.assertTrue((InboundMessageContextDataHolder.getInstance().getInboundMessageContextMap()
                 .containsKey(channelIdString)));// No error has occurred context exists in data-holder map.
@@ -201,9 +211,8 @@ public class WebsocketInboundHandlerTestCase {
         Assert.assertEquals(inboundMessageContext.getToken(),
                 fullHttpRequest.headers().get(APIMgtGatewayConstants.WS_JWT_TOKEN_HEADER));
         Assert.assertEquals(inboundMessageContext.getUserIP(), remoteIP);
-
         // error response
-        Mockito.when(WebsocketUtil.validateAuthenticationContext(inboundMessageContext, false)).thenReturn(false);
+        PowerMockito.when(WebsocketUtil.validateAuthenticationContext(inboundMessageContext, false)).thenReturn(false);
         websocketInboundHandler.channelRead(channelHandlerContext, fullHttpRequest);
         Assert.assertFalse(InboundMessageContextDataHolder.getInstance().getInboundMessageContextMap()
                 .containsKey(channelIdString));  // Closing connection error has occurred
@@ -211,17 +220,16 @@ public class WebsocketInboundHandlerTestCase {
 
     @Test
     public void testWSFrameResponse() throws Exception {
-        InboundMessageContext inboundMessageContext = createWebSocketApiMessageContext();
-        InboundMessageContextDataHolder.getInstance().addInboundMessageContextForConnection(channelIdString,
-                inboundMessageContext);
+        InboundMessageContext inboundMessageContext = createApiMessageContext(websocketAPI);
+        InboundMessageContextDataHolder.getInstance()
+                .addInboundMessageContextForConnection(channelIdString, inboundMessageContext);
         ByteBuf content = Mockito.mock(ByteBuf.class);
         WebSocketFrame msg = Mockito.mock(WebSocketFrame.class);
         Mockito.when(msg.content()).thenReturn(content);
 
         PowerMockito.mockStatic(ThrottleDataPublisher.class);
         ThrottleDataPublisher throttleDataPublisher = Mockito.mock(ThrottleDataPublisher.class);
-        Mockito.when(ServiceReferenceHolder.getInstance().getThrottleDataPublisher())
-                .thenReturn(throttleDataPublisher);
+        Mockito.when(ServiceReferenceHolder.getInstance().getThrottleDataPublisher()).thenReturn(throttleDataPublisher);
         DataPublisher dataPublisher = Mockito.mock(DataPublisher.class);
         Mockito.when(ThrottleDataPublisher.getDataPublisher()).thenReturn(dataPublisher);
         Mockito.when(dataPublisher.tryPublish(Mockito.anyObject())).thenReturn(true);
@@ -239,10 +247,80 @@ public class WebsocketInboundHandlerTestCase {
                 .containsKey(channelIdString)));
     }
 
-    private InboundMessageContext createWebSocketApiMessageContext() {
+    @Test
+    public void testGraphQLHandshakeResponse() throws Exception {
+
+        // For GraphQL APIs
+        InboundMessageContext inboundMessageContext = createApiMessageContext(graphQLAPI);
+        InboundMessageContextDataHolder.getInstance()
+                .addInboundMessageContextForConnection(channelIdString, inboundMessageContext);
+        FullHttpRequest fullHttpRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET,
+                "ws://localhost:8080/graphql");
+        fullHttpRequest.headers().set(org.apache.http.HttpHeaders.AUTHORIZATION, AUTHORIZATION);
+        PowerMockito.when(WebsocketUtil.getApi(fullHttpRequest.uri(), SUPER_TENANT_DOMAIN)).thenReturn(graphQLAPI);
+        JWTValidator jwtValidator = Mockito.mock(JWTValidator.class);
+        PowerMockito.whenNew(JWTValidator.class).withAnyArguments().thenReturn(jwtValidator);
+        AuthenticationContext authenticationContext = Mockito.mock(AuthenticationContext.class);
+        Mockito.when(jwtValidator.authenticateForWSAndGraphQL(inboundMessageContext.getSignedJWTInfo(),
+                        inboundMessageContext.getApiContextUri(), inboundMessageContext.getVersion()))
+                .thenReturn(authenticationContext);
+        PowerMockito.when(WebsocketUtil.validateAuthenticationContext(inboundMessageContext, false)).thenReturn(true);
+        websocketInboundHandler.channelRead(channelHandlerContext, fullHttpRequest);
+        Assert.assertTrue((InboundMessageContextDataHolder.getInstance().getInboundMessageContextMap()
+                .containsKey(channelIdString)));// No error has occurred context exists in data-holder map.
+        Assert.assertEquals(inboundMessageContext.getHeaders().get(org.apache.http.HttpHeaders.AUTHORIZATION),
+                AUTHORIZATION);
+        Assert.assertEquals(inboundMessageContext.getToken(),
+                fullHttpRequest.headers().get(APIMgtGatewayConstants.WS_JWT_TOKEN_HEADER));
+        Assert.assertEquals(inboundMessageContext.getUserIP(), remoteIP);
+
+        // error response
+        InboundProcessorResponseDTO responseDTO = new InboundProcessorResponseDTO();
+        PowerMockito.when(WebsocketUtil.validateAuthenticationContext(inboundMessageContext, false)).thenReturn(false);
+        websocketInboundHandler.channelRead(channelHandlerContext, fullHttpRequest);
+        Assert.assertFalse(InboundMessageContextDataHolder.getInstance().getInboundMessageContextMap()
+                .containsKey(channelIdString));  // Closing connection error has occurred
+    }
+
+    @Test
+    public void testGraphQLFrameResponse() throws Exception {
+        InboundMessageContext inboundMessageContext = createApiMessageContext(graphQLAPI);
+        InboundMessageContextDataHolder.getInstance().addInboundMessageContextForConnection(channelIdString,
+                inboundMessageContext);
+        ByteBuf content = Mockito.mock(ByteBuf.class);
+        TextWebSocketFrame msg = Mockito.mock(TextWebSocketFrame.class);
+        Mockito.when(msg.content()).thenReturn(content);
+        PowerMockito.mockStatic(ThrottleDataPublisher.class);
+        ThrottleDataPublisher throttleDataPublisher = Mockito.mock(ThrottleDataPublisher.class);
+        Mockito.when(ServiceReferenceHolder.getInstance().getThrottleDataPublisher())
+                .thenReturn(throttleDataPublisher);
+        DataPublisher dataPublisher = Mockito.mock(DataPublisher.class);
+        Mockito.when(ThrottleDataPublisher.getDataPublisher()).thenReturn(dataPublisher);
+        Mockito.when(dataPublisher.tryPublish(Mockito.anyObject())).thenReturn(true);
+        InboundProcessorResponseDTO inboundProcessorResponseDTO = new InboundProcessorResponseDTO();
+        Mockito.when(graphQLRequestProcessor.handleRequest(msg, channelHandlerContext, inboundMessageContext))
+                .thenReturn(inboundProcessorResponseDTO);
+        websocketInboundHandler.channelRead(channelHandlerContext, msg);
+        Assert.assertTrue((InboundMessageContextDataHolder.getInstance().getInboundMessageContextMap()
+                .containsKey(channelIdString)));// No error has occurred context exists in data-holder map.
+
+        // error response (connection is not closing scenario)
+        inboundProcessorResponseDTO.setError(true);
+        inboundProcessorResponseDTO.setCloseConnection(false);
+        websocketInboundHandler.channelRead(channelHandlerContext, msg);
+        Assert.assertTrue((InboundMessageContextDataHolder.getInstance().getInboundMessageContextMap()
+                .containsKey(channelIdString)));
+        // error response (connection is closing scenario)
+        inboundProcessorResponseDTO.setCloseConnection(true);
+        websocketInboundHandler.channelRead(channelHandlerContext, msg);
+        Assert.assertFalse((InboundMessageContextDataHolder.getInstance().getInboundMessageContextMap()
+                .containsKey(channelIdString)));
+    }
+
+    private InboundMessageContext createApiMessageContext(API api) {
         InboundMessageContext inboundMessageContext = new InboundMessageContext();
         inboundMessageContext.setTenantDomain("carbon.super");
-        inboundMessageContext.setElectedAPI(websocketAPI);
+        inboundMessageContext.setElectedAPI(api);
         inboundMessageContext.setToken("test-backend-jwt-token");
         return inboundMessageContext;
     }

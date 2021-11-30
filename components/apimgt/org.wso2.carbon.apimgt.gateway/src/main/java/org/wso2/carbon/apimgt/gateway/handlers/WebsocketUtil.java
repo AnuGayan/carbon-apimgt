@@ -263,6 +263,7 @@ public class WebsocketUtil {
 	 *
 	 * @param ctx                   Channel handler context
 	 * @param inboundMessageContext InboundMessageContext
+	 * @param responseDTO           InboundProcessorResponseDTO
 	 * @throws APISecurityException
 	 */
 	public static void sendInvalidCredentialsMessage(ChannelHandlerContext ctx,
