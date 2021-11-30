@@ -159,7 +159,8 @@ public class GraphQLRequestProcessor {
         AuthenticationContext authenticationContext;
         JWTValidator jwtValidator = new JWTValidator(new APIKeyValidator());
         try {
-            authenticationContext = jwtValidator.authenticateForWSAndGraphQL(inboundMessageContext);
+            authenticationContext = jwtValidator.authenticateForWSAndGraphQL(inboundMessageContext.getSignedJWTInfo(),
+                    inboundMessageContext.getApiContextUri(), inboundMessageContext.getVersion());
             inboundMessageContext.setAuthContext(authenticationContext);
             if (!WebsocketUtil.validateAuthenticationContext(inboundMessageContext,
                     inboundMessageContext.getElectedAPI().isDefaultVersion())) {
@@ -304,7 +305,9 @@ public class GraphQLRequestProcessor {
             String matchingResource) throws APISecurityException {
 
         JWTValidator jwtValidator = new JWTValidator(new APIKeyValidator());
-        jwtValidator.validateScopesForGraphQLSubscriptions(inboundMessageContext, matchingResource);
+        jwtValidator.validateScopesForGraphQLSubscriptions(inboundMessageContext.getApiContextUri(),
+                inboundMessageContext.getVersion(), matchingResource, inboundMessageContext.getSignedJWTInfo(),
+                inboundMessageContext.getAuthContext());
         return true;
     }
 

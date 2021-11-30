@@ -189,7 +189,9 @@ public class WebsocketInboundHandlerTestCase {
         JWTValidator jwtValidator = Mockito.mock(JWTValidator.class);
         PowerMockito.whenNew(JWTValidator.class).withAnyArguments().thenReturn(jwtValidator);
         AuthenticationContext authenticationContext = Mockito.mock(AuthenticationContext.class);
-        Mockito.when(jwtValidator.authenticateForWSAndGraphQL(inboundMessageContext)).thenReturn(authenticationContext);
+        Mockito.when(jwtValidator.authenticateForWSAndGraphQL(inboundMessageContext.getSignedJWTInfo(),
+                        inboundMessageContext.getApiContextUri(), inboundMessageContext.getVersion()))
+                .thenReturn(authenticationContext);
         Mockito.when(WebsocketUtil.validateAuthenticationContext(inboundMessageContext, false)).thenReturn(true);
         websocketInboundHandler.channelRead(channelHandlerContext, fullHttpRequest);
         Assert.assertTrue((InboundMessageContextDataHolder.getInstance().getInboundMessageContextMap()

@@ -764,7 +764,8 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
             Boolean isDefaultVersion) throws APISecurityException {
         InboundProcessorResponseDTO responseDTO = new InboundProcessorResponseDTO();
         AuthenticationContext authenticationContext = new JWTValidator(
-                new APIKeyValidator()).authenticateForWSAndGraphQL(inboundMessageContext);
+                new APIKeyValidator()).authenticateForWSAndGraphQL(inboundMessageContext.getSignedJWTInfo(),
+                inboundMessageContext.getApiContextUri(), inboundMessageContext.getVersion());
         inboundMessageContext.setAuthContext(authenticationContext);
         if (!WebsocketUtil.validateAuthenticationContext(inboundMessageContext, isDefaultVersion)) {
             responseDTO.setError(true);
