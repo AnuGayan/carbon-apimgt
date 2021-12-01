@@ -18,6 +18,10 @@
 
 package org.wso2.carbon.apimgt.gateway.service;
 
+import graphql.schema.GraphQLSchema;
+import graphql.schema.idl.SchemaParser;
+import graphql.schema.idl.TypeDefinitionRegistry;
+import graphql.schema.idl.UnExecutableSchemaGenerator;
 import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.impl.llom.util.AXIOMUtil;
 import org.apache.axis2.AxisFault;
@@ -28,6 +32,8 @@ import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.gateway.CredentialDto;
 import org.wso2.carbon.apimgt.api.gateway.GatewayAPIDTO;
 import org.wso2.carbon.apimgt.api.gateway.GatewayContentDTO;
+import org.wso2.carbon.apimgt.api.gateway.GraphQLSchemaDTO;
+import org.wso2.carbon.apimgt.gateway.internal.DataHolder;
 import org.wso2.carbon.apimgt.gateway.utils.EndpointAdminServiceProxy;
 import org.wso2.carbon.apimgt.gateway.utils.GatewayUtils;
 import org.wso2.carbon.apimgt.gateway.utils.LocalEntryServiceProxy;
@@ -781,6 +787,8 @@ public class APIGatewayAdmin extends org.wso2.carbon.core.AbstractAdmin {
             log.debug(gatewayAPIDTO.getName() + ":" + gatewayAPIDTO.getVersion() + " Default API Definition deployed");
             log.debug(gatewayAPIDTO.getName() + ":" + gatewayAPIDTO.getVersion() + "Deployed successfully");
         }
+        // Store the GraphQL schema in DataHolder
+        addDeployedGraphqlQLToAPI(gatewayAPIDTO);
 
         return true;
     }
@@ -891,6 +899,8 @@ public class APIGatewayAdmin extends org.wso2.carbon.core.AbstractAdmin {
                     "successfully");
             log.debug(gatewayAPIDTO.getName() + ":" + gatewayAPIDTO.getVersion() + "undeployed successfully");
         }
+        // Remove the GraphQL schema from the DataHolder
+        DataHolder.getInstance().getApiToGraphQLSchemaDTOMap().remove(gatewayAPIDTO.getApiId());
     }
 
     public boolean unDeployAPI(GatewayAPIDTO gatewayAPIDTO) throws AxisFault {
@@ -908,5 +918,23 @@ public class APIGatewayAdmin extends org.wso2.carbon.core.AbstractAdmin {
         unDeployAPI(certificateManager, sequenceAdminServiceProxy, restapiAdminServiceProxy, localEntryServiceProxy,
                 endpointAdminServiceProxy, gatewayAPIDTO, mediationSecurityAdminServiceProxy);
         return true;
+    }
+
+
+    /**
+     * Add GraphQLSchemaDTO of deployed GraphQL API to Gateway internal data holder.
+     *
+     * @param gatewayAPIDTO GatewayAPIDTO
+     */
+    public static void addDeployedGraphqlQLToAPI(GatewayAPIDTO gatewayAPIDTO) {
+
+        if (gatewayAPIDTO != null && gatewayAPIDTO.getGraphQLSchema() != null) {
+            String apiId = gatewayAPIDTO.getApiId();
+            SchemaParser schemaParser = new SchemaParser();
+            TypeDefinitionRegistry registry = schemaParser.parse(gatewayAPIDTO.getGraphQLSchema());
+            GraphQLSchema schema = UnExecutableSchemaGenerator.makeUnExecutableSchema(registry);
+            GraphQLSchemaDTO schemaDTO = new GraphQLSchemaDTO(schema, registry);
+            DataHolder.getInstance().addApiToGraphQLSchemaDTO(apiId, schemaDTO);
+        }
     }
 }

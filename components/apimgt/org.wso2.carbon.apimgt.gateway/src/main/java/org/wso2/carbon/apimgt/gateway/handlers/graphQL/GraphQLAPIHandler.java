@@ -17,7 +17,12 @@
  */
 package org.wso2.carbon.apimgt.gateway.handlers.graphQL;
 
-import graphql.language.*;
+
+import graphql.language.Definition;
+import graphql.language.Document;
+import graphql.language.Field;
+import graphql.language.OperationDefinition;
+import graphql.language.Selection;
 import graphql.parser.InvalidSyntaxException;
 import graphql.parser.Parser;
 import graphql.schema.GraphQLSchema;
@@ -46,15 +51,19 @@ import org.wso2.carbon.apimgt.gateway.handlers.InboundMessageContext;
 import org.wso2.carbon.apimgt.gateway.handlers.Utils;
 import org.wso2.carbon.apimgt.gateway.handlers.WebsocketUtil;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityConstants;
+import org.wso2.carbon.apimgt.gateway.internal.DataHolder;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.definitions.GraphQLSchemaDefinition;
-import org.wso2.carbon.apimgt.impl.internal.DataHolder;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
 import java.net.URLDecoder;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 
 import static org.apache.axis2.Constants.Configuration.HTTP_METHOD;
 
@@ -237,8 +246,7 @@ public class GraphQLAPIHandler extends AbstractHandler {
      */
     private void supportForBasicAndAuthentication(MessageContext messageContext) {
         ArrayList<String> roleArrayList = new ArrayList<>();
-        @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-        HashMap<String, String> operationThrottlingMappingList = new HashMap<>();
+        @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") HashMap<String, String> operationThrottlingMappingList = new HashMap<>();
         @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
         HashMap<String, Boolean> operationAuthSchemeMappingList = new HashMap<>();
         HashMap<String, String> operationScopeMappingList = new HashMap<>();

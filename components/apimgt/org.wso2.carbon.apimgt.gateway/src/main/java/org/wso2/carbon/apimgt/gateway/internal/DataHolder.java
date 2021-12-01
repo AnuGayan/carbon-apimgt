@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.wso2.carbon.apimgt.impl.internal;
+package org.wso2.carbon.apimgt.gateway.internal;
 
 import org.wso2.carbon.apimgt.api.gateway.GraphQLSchemaDTO;
 

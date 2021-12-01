@@ -31,9 +31,7 @@ import org.wso2.carbon.apimgt.impl.dto.GatewayArtifactSynchronizerProperties;
 import org.wso2.carbon.apimgt.impl.gatewayartifactsynchronizer.ArtifactRetriever;
 import org.wso2.carbon.apimgt.impl.gatewayartifactsynchronizer.exception.ArtifactSynchronizerException;
 import org.wso2.carbon.apimgt.gateway.internal.ServiceReferenceHolder;
-import org.wso2.carbon.apimgt.impl.internal.DataHolder;
 import org.wso2.carbon.apimgt.impl.utils.APIGatewayAdminClient;
-import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 
 import java.io.IOException;
@@ -80,7 +78,6 @@ public class InMemoryAPIDeployer {
                         GatewayAPIDTO gatewayAPIDTO = new Gson().fromJson(gatewayRuntimeArtifact, GatewayAPIDTO.class);
                         MessageContext.setCurrentMessageContext(org.wso2.carbon.apimgt.gateway.utils.GatewayUtils.createAxis2MessageContext());
                         apiGatewayAdmin.deployAPI(gatewayAPIDTO);
-                        APIUtil.addDeployedGraphqlQLToAPI(gatewayAPIDTO);
                         if (debugEnabled) {
                             log.debug("API with " + apiId + " is deployed in gateway with the label of " + gatewayLabel);
                         }
@@ -136,7 +133,6 @@ public class InMemoryAPIDeployer {
                                     gatewayAPIDTO = new Gson().fromJson(runtimeArtifact, GatewayAPIDTO.class);
                                     log.info("Deploying synapse artifacts of " + gatewayAPIDTO.getName());
                                     apiGatewayAdmin.deployAPI(gatewayAPIDTO);
-                                    APIUtil.addDeployedGraphqlQLToAPI(gatewayAPIDTO);
                                 }
                             } catch (AxisFault axisFault) {
                                 log.error("Error in deploying" + gatewayAPIDTO.getName()+ " to the Gateway ");
@@ -186,7 +182,6 @@ public class InMemoryAPIDeployer {
                         GatewayAPIDTO gatewayAPIDTO = new Gson().fromJson(gatewayRuntimeArtifact, GatewayAPIDTO.class);
                         APIGatewayAdminClient apiGatewayAdminClient = new APIGatewayAdminClient();
                         apiGatewayAdminClient.unDeployAPI(gatewayAPIDTO);
-                        DataHolder.getInstance().getApiToGraphQLSchemaDTOMap().remove(gatewayAPIDTO.getApiId());
                         if (debugEnabled) {
                             log.debug("API with " + apiId + " is undeployed in gateway with the label of " + gatewayLabel);
                         }

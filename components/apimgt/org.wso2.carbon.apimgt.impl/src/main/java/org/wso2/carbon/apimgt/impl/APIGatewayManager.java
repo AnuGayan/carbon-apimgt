@@ -53,7 +53,6 @@ import org.wso2.carbon.apimgt.impl.dto.Environment;
 import org.wso2.carbon.apimgt.impl.dto.GatewayArtifactSynchronizerProperties;
 import org.wso2.carbon.apimgt.impl.gatewayartifactsynchronizer.ArtifactSaver;
 import org.wso2.carbon.apimgt.impl.gatewayartifactsynchronizer.exception.ArtifactSynchronizerException;
-import org.wso2.carbon.apimgt.impl.internal.DataHolder;
 import org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.impl.notifier.events.DeployAPIInGatewayEvent;
 import org.wso2.carbon.apimgt.impl.recommendationmgt.RecommendationEnvironment;
@@ -231,7 +230,6 @@ public class APIGatewayManager {
                         if (!isGatewayDefinedAsALabel) {
                             client = new APIGatewayAdminClient(environment);
                             client.deployAPI(gatewayAPIDTO);
-                            APIUtil.addDeployedGraphqlQLToAPI(gatewayAPIDTO);
                         }
                     }
 
