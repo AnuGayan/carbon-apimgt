@@ -41,8 +41,10 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.wso2.carbon.apimgt.gateway.APIMgtGatewayConstants;
 import org.wso2.carbon.apimgt.gateway.InboundMessageContextDataHolder;
-import org.wso2.carbon.apimgt.gateway.handlers.graphQL.GraphQLRequestProcessor;
-import org.wso2.carbon.apimgt.gateway.handlers.graphQL.InboundProcessorResponseDTO;
+import org.wso2.carbon.apimgt.gateway.dto.InboundProcessorResponseDTO;
+import org.wso2.carbon.apimgt.gateway.graphQL.GraphQLProcessor;
+import org.wso2.carbon.apimgt.gateway.graphQL.GraphQLProcessorUtil;
+import org.wso2.carbon.apimgt.gateway.graphQL.GraphQLRequestProcessor;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityUtils;
 import org.wso2.carbon.apimgt.gateway.handlers.security.AuthenticationContext;
 import org.wso2.carbon.apimgt.gateway.handlers.security.jwt.JWTValidator;
@@ -54,6 +56,7 @@ import org.wso2.carbon.apimgt.impl.APIManagerConfiguration;
 import org.wso2.carbon.apimgt.impl.jwt.JWTValidationService;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.keymgt.model.entity.API;
+import org.wso2.carbon.apimgt.usage.publisher.APIMgtUsageDataPublisher;
 import org.wso2.carbon.apimgt.usage.publisher.DataPublisherUtil;
 import org.wso2.carbon.apimgt.usage.publisher.internal.UsageComponent;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
@@ -78,7 +81,8 @@ import javax.cache.Caching;
 @PrepareForTest({WebsocketInboundHandler.class, MultitenantUtils.class, DataPublisherUtil.class,
         UsageComponent.class, PrivilegedCarbonContext.class, ServiceReferenceHolder.class, Caching.class,
         APISecurityUtils.class, WebsocketUtil.class, ThrottleDataPublisher.class, APIUtil.class, RegistryService.class,
-        org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder.class, GraphQLRequestProcessor.class})
+        org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder.class, GraphQLProcessorUtil.class,
+        GraphQLProcessor.class, APIMgtUsageDataPublisher.class})
 @PowerMockIgnore("javax.net.ssl.SSLContext")
 public class WebsocketInboundHandlerTestCase {
 
@@ -86,8 +90,8 @@ public class WebsocketInboundHandlerTestCase {
     private static final String remoteIP = "192.168.0.100";
     private String SUPER_TENANT_DOMAIN = "carbon.super";
     private ChannelHandlerContext channelHandlerContext;
-    private org.wso2.carbon.apimgt.keymgt.model.entity.API websocketAPI;
-    private org.wso2.carbon.apimgt.keymgt.model.entity.API graphQLAPI;
+    private API websocketAPI;
+    private API graphQLAPI;
     private HttpHeaders headers;
     private String AUTHORIZATION = "Bearer eyJ4NXQiOiJNell4TW1Ga09HWXdNV0kwWldObU5EY3hOR1l3WW1NNFpUQTNNV"
             + "0kyTkRBelpHUXpOR00wWkdSbE5qSmtPREZrWkRSaU9URmtNV0ZoTXpVMlpHVmxOZyIsImtpZCI6Ik16WXhNbUZrT0dZd01XSTBaV05tT"
@@ -102,12 +106,12 @@ public class WebsocketInboundHandlerTestCase {
     private String API_KEY = "587hfbt4i8ydno87ywq";
     private String CACHE_KEY = "587hfbt4i8ydno87ywq:https://localhost/1.0";
     private String TOKEN_CACHE_EXPIRY = "900";
-    private String USER_AGENT = "Mozilla";
     private WebsocketInboundHandler websocketInboundHandler;
     private APIManagerConfiguration apiManagerConfiguration;
     private Cache gatewayCache;
     ServiceReferenceHolder serviceReferenceHolder;
     private GraphQLRequestProcessor graphQLRequestProcessor;
+    private APIMgtUsageDataPublisher usageDataPublisher;
 
     @Before
     public void setup() throws Exception {
@@ -120,13 +124,9 @@ public class WebsocketInboundHandlerTestCase {
         Mockito.when(channelId.asLongText()).thenReturn(channelIdString);
         SocketAddress socketAddress = Mockito.mock(SocketAddress.class);
         Mockito.when(channel.remoteAddress()).thenReturn(socketAddress);
+        PowerMockito.mockStatic(APIMgtUsageDataPublisher.class);
+        usageDataPublisher = Mockito.mock(APIMgtUsageDataPublisher.class);
         headers = Mockito.mock(HttpHeaders.class);
-        websocketInboundHandler = new WebsocketInboundHandler() {
-            @Override
-            public String getRemoteIP(ChannelHandlerContext ctx) {
-                return remoteIP;
-            }
-        };
         websocketAPI = new API(UUID.randomUUID().toString(), 1, "admin", "WSAPI", "1.0.0", "/wscontext", "Unlimited",
                 "WS", false);
         graphQLAPI = new API(UUID.randomUUID().toString(), 2, "admin", "GraphQLAPI", "1.0.0", "/graphql", "Unlimited",
@@ -144,6 +144,7 @@ public class WebsocketInboundHandlerTestCase {
         PowerMockito.when(ServiceReferenceHolder.getInstance()).thenReturn(serviceReferenceHolder);
         PowerMockito.when(serviceReferenceHolder.getAPIManagerConfiguration()).thenReturn(apiManagerConfiguration);
         PowerMockito.mockStatic(WebsocketUtil.class);
+        PowerMockito.when(WebsocketUtil.getRemoteIP(channelHandlerContext)).thenReturn(remoteIP);
         JWTValidationService jwtValidationService = Mockito.mock(JWTValidationService.class);
         PowerMockito.when(serviceReferenceHolder.getJwtValidationService()).thenReturn(jwtValidationService);
         PowerMockito.when(serviceReferenceHolder.getJwtValidationService()
@@ -164,12 +165,14 @@ public class WebsocketInboundHandlerTestCase {
         Mockito.when(cacheBuilder.setExpiry(CacheConfiguration.ExpiryType.ACCESSED, duration)).thenReturn(cacheBuilder);
         Mockito.when(cacheBuilder.setStoreByValue(false)).thenReturn(cacheBuilder);
         Mockito.when(cacheBuilder.build()).thenReturn(gatewayCache);
+        PowerMockito.mockStatic(GraphQLProcessorUtil.class);
         graphQLRequestProcessor = Mockito.mock(GraphQLRequestProcessor.class);
         PowerMockito.whenNew(GraphQLRequestProcessor.class).withAnyArguments().thenReturn(graphQLRequestProcessor);
 
         APIMgtGoogleAnalyticsUtils apiMgtGoogleAnalyticsUtils = Mockito.mock(APIMgtGoogleAnalyticsUtils.class);
         Mockito.doNothing().when(apiMgtGoogleAnalyticsUtils).init("");
         PowerMockito.whenNew(APIMgtGoogleAnalyticsUtils.class).withAnyArguments().thenReturn(apiMgtGoogleAnalyticsUtils);
+        websocketInboundHandler = new WebsocketInboundHandler();
     }
 
     @Test
@@ -233,15 +236,15 @@ public class WebsocketInboundHandlerTestCase {
         DataPublisher dataPublisher = Mockito.mock(DataPublisher.class);
         Mockito.when(ThrottleDataPublisher.getDataPublisher()).thenReturn(dataPublisher);
         Mockito.when(dataPublisher.tryPublish(Mockito.anyObject())).thenReturn(true);
-        Mockito.when(websocketInboundHandler.doThrottle(channelHandlerContext, msg, null, inboundMessageContext))
-                .thenReturn(true);
+        Mockito.when(WebsocketUtil.doThrottle(channelHandlerContext, msg, null, inboundMessageContext,
+                        usageDataPublisher)).thenReturn(true);
         websocketInboundHandler.channelRead(channelHandlerContext, msg);
         Assert.assertTrue((InboundMessageContextDataHolder.getInstance().getInboundMessageContextMap()
                 .containsKey(channelIdString)));// No error has occurred context exists in data-holder map.
 
         // error response (the connection will not be closed for Web socket APIs)
-        Mockito.when(websocketInboundHandler.doThrottle(channelHandlerContext, msg, null, inboundMessageContext))
-                .thenReturn(false);
+        Mockito.when(WebsocketUtil.doThrottle(channelHandlerContext, msg, null, inboundMessageContext,
+                        usageDataPublisher)).thenReturn(false);
         websocketInboundHandler.channelRead(channelHandlerContext, msg);
         Assert.assertTrue((InboundMessageContextDataHolder.getInstance().getInboundMessageContextMap()
                 .containsKey(channelIdString)));
@@ -297,9 +300,10 @@ public class WebsocketInboundHandlerTestCase {
         DataPublisher dataPublisher = Mockito.mock(DataPublisher.class);
         Mockito.when(ThrottleDataPublisher.getDataPublisher()).thenReturn(dataPublisher);
         Mockito.when(dataPublisher.tryPublish(Mockito.anyObject())).thenReturn(true);
+        PowerMockito.mockStatic(GraphQLProcessor.class);
         InboundProcessorResponseDTO inboundProcessorResponseDTO = new InboundProcessorResponseDTO();
-        Mockito.when(graphQLRequestProcessor.handleRequest(msg, channelHandlerContext, inboundMessageContext))
-                .thenReturn(inboundProcessorResponseDTO);
+        Mockito.when(graphQLRequestProcessor.handleRequest(msg, channelHandlerContext, inboundMessageContext,
+                null)).thenReturn(inboundProcessorResponseDTO);
         websocketInboundHandler.channelRead(channelHandlerContext, msg);
         Assert.assertTrue((InboundMessageContextDataHolder.getInstance().getInboundMessageContextMap()
                 .containsKey(channelIdString)));// No error has occurred context exists in data-holder map.

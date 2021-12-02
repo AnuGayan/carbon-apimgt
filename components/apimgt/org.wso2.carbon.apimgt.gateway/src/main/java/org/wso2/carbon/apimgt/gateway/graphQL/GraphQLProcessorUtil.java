@@ -33,7 +33,6 @@ import org.apache.synapse.config.Entry;
 import org.wso2.carbon.apimgt.api.gateway.GraphQLSchemaDTO;
 import org.wso2.carbon.apimgt.api.model.URITemplate;
 import org.wso2.carbon.apimgt.gateway.handlers.InboundMessageContext;
-import org.wso2.carbon.apimgt.gateway.handlers.WebsocketInboundHandler;
 import org.wso2.carbon.apimgt.gateway.handlers.WebsocketUtil;
 import org.wso2.carbon.apimgt.gateway.internal.DataHolder;
 import org.wso2.carbon.apimgt.impl.definitions.GraphQLSchemaDefinition;

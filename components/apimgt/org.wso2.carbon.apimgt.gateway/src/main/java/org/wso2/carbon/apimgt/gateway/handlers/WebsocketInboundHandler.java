@@ -77,7 +77,7 @@ import javax.cache.Cache;
 public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
     private static final Log log = LogFactory.getLog(WebsocketInboundHandler.class);
     private static APIMgtUsageDataPublisher usageDataPublisher;
-    private static GraphQLRequestProcessor graphQLRequestProcessor = new GraphQLRequestProcessor();
+    private GraphQLRequestProcessor graphQLRequestProcessor = new GraphQLRequestProcessor();
 
     public WebsocketInboundHandler() {
         initializeDataPublisher();
