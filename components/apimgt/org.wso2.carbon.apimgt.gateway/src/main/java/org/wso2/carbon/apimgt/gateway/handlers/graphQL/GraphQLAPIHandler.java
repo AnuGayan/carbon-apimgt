@@ -20,9 +20,7 @@ package org.wso2.carbon.apimgt.gateway.handlers.graphQL;
 
 import graphql.language.Definition;
 import graphql.language.Document;
-import graphql.language.Field;
 import graphql.language.OperationDefinition;
-import graphql.language.Selection;
 import graphql.parser.InvalidSyntaxException;
 import graphql.parser.Parser;
 import graphql.schema.GraphQLSchema;
@@ -35,7 +33,6 @@ import org.apache.axiom.om.OMAbstractFactory;
 import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.OMFactory;
 import org.apache.axiom.om.OMNamespace;
-import org.apache.axis2.AxisFault;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
@@ -45,15 +42,11 @@ import org.apache.synapse.config.Entry;
 import org.apache.synapse.core.axis2.Axis2MessageContext;
 import org.apache.synapse.rest.AbstractHandler;
 import org.apache.synapse.transport.passthru.util.RelayUtils;
-import org.wso2.carbon.apimgt.api.gateway.GraphQLSchemaDTO;
-import org.wso2.carbon.apimgt.api.model.URITemplate;
-import org.wso2.carbon.apimgt.gateway.handlers.InboundMessageContext;
+import org.wso2.carbon.apimgt.gateway.graphQL.GraphQLProcessorUtil;
+import org.wso2.carbon.apimgt.gateway.graphQL.QueryValidator;
 import org.wso2.carbon.apimgt.gateway.handlers.Utils;
-import org.wso2.carbon.apimgt.gateway.handlers.WebsocketUtil;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityConstants;
-import org.wso2.carbon.apimgt.gateway.internal.DataHolder;
 import org.wso2.carbon.apimgt.impl.APIConstants;
-import org.wso2.carbon.apimgt.impl.definitions.GraphQLSchemaDefinition;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamException;
@@ -145,7 +138,8 @@ public class GraphQLAPIHandler extends AbstractHandler {
                             messageContext.setProperty(HTTP_VERB, httpVerb);
                             ((Axis2MessageContext) messageContext).getAxis2MessageContext().setProperty(HTTP_METHOD,
                                     operation.getOperation().toString());
-                            String operationList = getOperationList(operation, null);
+                            String operationList = GraphQLProcessorUtil.getOperationList(operation, null,
+                                    schemaDefinition);
                             messageContext.setProperty(APIConstants.API_ELECTED_RESOURCE, operationList);
                             if (log.isDebugEnabled()) {
                                 log.debug("Operation list has been successfully added to elected property");
@@ -165,76 +159,6 @@ public class GraphQLAPIHandler extends AbstractHandler {
             handleFailure(messageContext, e.getMessage());
         }
         return false;
-    }
-
-    /**
-     * This method used to extract operation List
-     *
-     * @param operation              operation
-     * @param typeDefinitionRegistry TypeDefinitionRegistry
-     * @return operationList
-     */
-    public static String getOperationList(OperationDefinition operation, TypeDefinitionRegistry typeDefinitionRegistry) {
-        String operationList;
-        GraphQLSchemaDefinition graphql = new GraphQLSchemaDefinition();
-        ArrayList<String> operationArray = new ArrayList<>();
-        TypeDefinitionRegistry typeRegistry;
-
-        if (typeDefinitionRegistry != null) {
-            typeRegistry = typeDefinitionRegistry;
-        } else {
-            SchemaParser schemaParser = new SchemaParser();
-            typeRegistry = schemaParser.parse(schemaDefinition);
-        }
-
-        List<URITemplate> list = graphql.extractGraphQLOperationList(typeRegistry,
-                operation.getOperation().toString());
-        ArrayList<String> supportedFields = getSupportedFields(list);
-
-        getNestedLevelOperations(operation.getSelectionSet().getSelections(), supportedFields, operationArray);
-        operationList = String.join(",", operationArray);
-        return operationList;
-    }
-
-    /**
-     * This method support to extracted nested level operations
-     *
-     * @param selectionList   selection List
-     * @param supportedFields supportedFields
-     * @param operationArray  operationArray
-     */
-    public static void getNestedLevelOperations(List<Selection> selectionList, ArrayList<String> supportedFields,
-            ArrayList<String> operationArray) {
-        for (Selection selection : selectionList) {
-            if (!(selection instanceof Field)) {
-                continue;
-            }
-            Field levelField = (Field) selection;
-            if (!operationArray.contains(levelField.getName()) &&
-                    supportedFields.contains(levelField.getName())) {
-                operationArray.add(levelField.getName());
-                if (log.isDebugEnabled()) {
-                    log.debug("Extracted operation: " + levelField.getName());
-                }
-            }
-            if (levelField.getSelectionSet() != null) {
-                getNestedLevelOperations(levelField.getSelectionSet().getSelections(), supportedFields, operationArray);
-            }
-        }
-    }
-
-    /**
-     * This method helps to extract only supported operation names
-     *
-     * @param list URITemplates
-     * @return supported Fields
-     */
-    private static ArrayList<String> getSupportedFields(List<URITemplate> list) {
-        ArrayList<String> supportedFields = new ArrayList<>();
-        for (URITemplate template : list) {
-            supportedFields.add(template.getUriTemplate());
-        }
-        return supportedFields;
     }
 
     /**
@@ -394,32 +318,4 @@ public class GraphQLAPIHandler extends AbstractHandler {
     public boolean handleResponse(MessageContext messageContext) {
         return true;
     }
-
-    /**
-     * Set the GraphQL Schema to the data holder
-     *
-     * @param inboundMessageContext InboundMessageContext
-     * @throws AxisFault
-     */
-    public static synchronized void setGraphQLSchemaToDataHolder(InboundMessageContext inboundMessageContext)
-            throws AxisFault {
-        String apiUuid = inboundMessageContext.getElectedAPI().getUuid();
-        if (DataHolder.getInstance().getGraphQLSchemaDTOForAPI(apiUuid) == null) {
-            // Retrieve the schema from the local entry
-            MessageContext messageContext = WebsocketUtil.getSynapseMessageContext(
-                    inboundMessageContext.getTenantDomain());
-            Entry localEntryObj = (Entry) messageContext.getConfiguration().getLocalRegistry()
-                    .get(apiUuid + GRAPHQL_IDENTIFIER);
-            if (localEntryObj != null) {
-                SchemaParser schemaParser = new SchemaParser();
-                String schemaDefinition = localEntryObj.getValue().toString();
-                TypeDefinitionRegistry registry = schemaParser.parse(schemaDefinition);
-                GraphQLSchema schema = UnExecutableSchemaGenerator.makeUnExecutableSchema(registry);
-                GraphQLSchemaDTO schemaDTO = new GraphQLSchemaDTO(schema, registry);
-                DataHolder.getInstance().addApiToGraphQLSchemaDTO(apiUuid, schemaDTO);
-            }
-        }
-    }
 }
-
-

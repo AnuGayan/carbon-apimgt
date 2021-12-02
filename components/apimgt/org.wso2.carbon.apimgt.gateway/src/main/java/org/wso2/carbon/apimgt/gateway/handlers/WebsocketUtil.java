@@ -24,6 +24,7 @@ import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.util.CharsetUtil;
 import org.apache.axiom.util.UIDGenerator;
 import org.apache.axis2.AxisFault;
@@ -31,27 +32,45 @@ import org.apache.axis2.context.ConfigurationContext;
 import org.apache.axis2.context.OperationContext;
 import org.apache.axis2.context.ServiceContext;
 import org.apache.axis2.description.InOutAxisOperation;
+import org.apache.http.HttpHeaders;
 import org.apache.synapse.MessageContext;
 import org.apache.synapse.core.axis2.MessageContextCreatorForAxis2;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.carbon.apimgt.gateway.handlers.graphQL.InboundProcessorResponseDTO;
+import org.wso2.carbon.apimgt.api.APIManagementException;
+import org.wso2.carbon.apimgt.gateway.APIMgtGatewayConstants;
+import org.wso2.carbon.apimgt.gateway.dto.InboundProcessorResponseDTO;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityConstants;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityException;
 import org.wso2.carbon.apimgt.gateway.handlers.security.AuthenticationContext;
+import org.wso2.carbon.apimgt.gateway.handlers.throttling.APIThrottleConstants;
 import org.wso2.carbon.apimgt.gateway.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.APIManagerConfiguration;
 import org.wso2.carbon.apimgt.impl.caching.CacheProvider;
 import org.wso2.carbon.apimgt.impl.dto.APIKeyValidationInfoDTO;
+import org.wso2.carbon.apimgt.impl.dto.VerbInfoDTO;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.keymgt.model.entity.API;
+import org.wso2.carbon.apimgt.usage.publisher.APIMgtUsageDataPublisher;
+import org.wso2.carbon.apimgt.usage.publisher.DataPublisherUtil;
+import org.wso2.carbon.apimgt.usage.publisher.dto.ExecutionTimeDTO;
+import org.wso2.carbon.apimgt.usage.publisher.dto.RequestResponseStreamDTO;
+import org.wso2.carbon.apimgt.usage.publisher.dto.ThrottlePublisherDTO;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.core.multitenancy.utils.TenantAxisUtils;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
+import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import javax.cache.Cache;
+import java.net.Inet4Address;
+import java.net.Inet6Address;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.TreeMap;
+import java.util.UUID;
 
 public class WebsocketUtil {
 	private static Logger log = LoggerFactory.getLogger(WebsocketUtil.class);
@@ -316,5 +335,218 @@ public class WebsocketUtil {
 		axis2MsgCtx.setProperty(org.apache.axis2.context.MessageContext.CLIENT_API_NON_BLOCKING, Boolean.TRUE);
 		axis2MsgCtx.setServerSide(true);
 		return axis2MsgCtx;
+	}
+
+	/**
+	 * Checks if the request is throttled
+	 *
+	 * @param ctx                   ChannelHandlerContext
+	 * @param msg                   WebSocketFrame
+	 * @param verbInfoDTO           VerbInfoDTO
+	 * @param inboundMessageContext InboundMessageContext
+	 * @param usageDataPublisher    APIMgtUsageDataPublisher
+	 * @return false if throttled
+	 * @throws APIManagementException
+	 */
+	public static boolean doThrottle(ChannelHandlerContext ctx, WebSocketFrame msg, VerbInfoDTO verbInfoDTO,
+			InboundMessageContext inboundMessageContext, APIMgtUsageDataPublisher usageDataPublisher) {
+
+		APIKeyValidationInfoDTO infoDTO = inboundMessageContext.getInfoDTO();
+		String apiName = infoDTO.getApiName();
+		String apiContext = inboundMessageContext.getApiContextUri();
+		String apiVersion = inboundMessageContext.getVersion();
+		String applicationLevelTier = infoDTO.getApplicationTier();
+
+		String apiLevelTier = infoDTO.getApiTier();
+		String apiLevelThrottleKey = apiContext + ":" + apiVersion;
+		String subscriptionLevelTier = infoDTO.getTier();
+		String resourceLevelTier;
+		String resourceLevelThrottleKey;
+
+		// If API level throttle policy is present then it will apply and no resource level policy will apply for it
+		if (verbInfoDTO == null) {
+			resourceLevelThrottleKey = apiLevelThrottleKey;
+			resourceLevelTier = apiLevelTier;
+		} else {
+			resourceLevelThrottleKey = verbInfoDTO.getRequestKey();
+			resourceLevelTier = verbInfoDTO.getThrottling();
+		}
+
+		String authorizedUser;
+		if (MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equalsIgnoreCase(infoDTO.getSubscriberTenantDomain())) {
+			authorizedUser = infoDTO.getSubscriber() + "@" + infoDTO.getSubscriberTenantDomain();
+		} else {
+			authorizedUser = infoDTO.getSubscriber();
+		}
+
+		String appTenant = infoDTO.getSubscriberTenantDomain();
+		String apiTenant = inboundMessageContext.getTenantDomain();
+		String appId = infoDTO.getApplicationId();
+		String applicationLevelThrottleKey = appId + ":" + authorizedUser;
+		String subscriptionLevelThrottleKey = appId + ":" + apiContext + ":" + apiVersion;
+		String messageId = UIDGenerator.generateURNString();
+		String remoteIP = getRemoteIP(ctx);
+		if (log.isDebugEnabled()) {
+			log.debug("Remote IP address : " + remoteIP);
+		}
+		if (remoteIP.indexOf(":") > 0) {
+			remoteIP = remoteIP.substring(1, remoteIP.indexOf(":"));
+		}
+		JSONObject jsonObMap = new JSONObject();
+		if (remoteIP != null && remoteIP.length() > 0) {
+			try {
+				InetAddress address = APIUtil.getAddress(remoteIP);
+				if (address instanceof Inet4Address) {
+					jsonObMap.put(APIThrottleConstants.IP, APIUtil.ipToLong(remoteIP));
+				} else if (address instanceof Inet6Address) {
+					jsonObMap.put(APIThrottleConstants.IPv6, APIUtil.ipToBigInteger(remoteIP));
+				}
+			} catch (UnknownHostException e) {
+				//ignore the error and log it
+				log.error("Error while parsing host IP " + remoteIP, e);
+			}
+		}
+		jsonObMap.put(APIThrottleConstants.MESSAGE_SIZE, msg.content().capacity());
+		try {
+			PrivilegedCarbonContext.startTenantFlow();
+			PrivilegedCarbonContext.getThreadLocalCarbonContext()
+					.setTenantDomain(inboundMessageContext.getTenantDomain(), true);
+			boolean isThrottled = WebsocketUtil.isThrottled(resourceLevelThrottleKey, subscriptionLevelThrottleKey,
+					applicationLevelThrottleKey);
+			if (isThrottled) {
+				if (APIUtil.isAnalyticsEnabled()) {
+					publishThrottleEvent(inboundMessageContext, usageDataPublisher);
+				}
+				return false;
+			}
+		} finally {
+			PrivilegedCarbonContext.endTenantFlow();
+		}
+		Object[] objects = new Object[] { messageId, applicationLevelThrottleKey, applicationLevelTier,
+				apiLevelThrottleKey, apiLevelTier, subscriptionLevelThrottleKey, subscriptionLevelTier,
+				resourceLevelThrottleKey, resourceLevelTier, authorizedUser, apiContext, apiVersion, appTenant,
+				apiTenant, appId, apiName, jsonObMap.toString() };
+		org.wso2.carbon.databridge.commons.Event event = new org.wso2.carbon.databridge.commons.Event(
+				"org.wso2.throttle.request.stream:1.0.0", System.currentTimeMillis(), null, null, objects);
+		if (ServiceReferenceHolder.getInstance().getThrottleDataPublisher() == null) {
+			log.error("Cannot publish events to traffic manager because ThrottleDataPublisher "
+					+ "has not been initialised");
+			return true;
+		}
+		ServiceReferenceHolder.getInstance().getThrottleDataPublisher().getDataPublisher().tryPublish(event);
+		return true;
+	}
+
+	public static String getRemoteIP(ChannelHandlerContext ctx) {
+		return ((InetSocketAddress) ctx.channel().remoteAddress()).getAddress().getHostAddress();
+	}
+
+	/**
+	 * Publish request event to analytics server
+	 *
+	 * @param clientIp              client's IP Address
+	 * @param isThrottledOut        request is throttled out or not
+	 * @param inboundMessageContext InboundMessageContext
+	 * @param usageDataPublisher    APIMgtUsageDataPublisher
+	 */
+	public static void publishRequestEvent(String clientIp, boolean isThrottledOut,
+			InboundMessageContext inboundMessageContext, APIMgtUsageDataPublisher usageDataPublisher) {
+		long requestTime = System.currentTimeMillis();
+		String useragent = inboundMessageContext.getHeaders().get(HttpHeaders.USER_AGENT);
+
+		try {
+			APIKeyValidationInfoDTO infoDTO = inboundMessageContext.getInfoDTO();
+			String appOwner = infoDTO.getSubscriber();
+			String keyType = infoDTO.getType();
+			String correlationID = UUID.randomUUID().toString();
+
+			RequestResponseStreamDTO requestPublisherDTO = new RequestResponseStreamDTO();
+			requestPublisherDTO.setApiName(infoDTO.getApiName());
+			requestPublisherDTO.setApiCreator(infoDTO.getApiPublisher());
+			requestPublisherDTO.setApiCreatorTenantDomain(MultitenantUtils.getTenantDomain(infoDTO.getApiPublisher()));
+			requestPublisherDTO.setApiVersion(infoDTO.getApiName() + ':' + inboundMessageContext.getVersion());
+			requestPublisherDTO.setApplicationId(infoDTO.getApplicationId());
+			requestPublisherDTO.setApplicationName(infoDTO.getApplicationName());
+			requestPublisherDTO.setApplicationOwner(appOwner);
+			requestPublisherDTO.setUserIp(clientIp);
+			requestPublisherDTO.setApplicationConsumerKey(infoDTO.getConsumerKey());
+			//context will always be empty as this method will call only for WebSocketFrame and url is null
+			requestPublisherDTO.setApiContext(inboundMessageContext.getApiContextUri());
+			requestPublisherDTO.setThrottledOut(isThrottledOut);
+			requestPublisherDTO.setApiHostname(DataPublisherUtil.getHostAddress());
+			requestPublisherDTO.setApiMethod("-");
+			requestPublisherDTO.setRequestTimestamp(requestTime);
+			requestPublisherDTO.setApiResourcePath("-");
+			requestPublisherDTO.setApiResourceTemplate("-");
+			requestPublisherDTO.setUserAgent(useragent);
+			requestPublisherDTO.setUsername(infoDTO.getEndUserName());
+			requestPublisherDTO.setUserTenantDomain(inboundMessageContext.getTenantDomain());
+			requestPublisherDTO.setApiTier(infoDTO.getTier());
+			requestPublisherDTO.setApiVersion(inboundMessageContext.getVersion());
+			requestPublisherDTO.setMetaClientType(keyType);
+			requestPublisherDTO.setCorrelationID(correlationID);
+			requestPublisherDTO.setUserAgent(useragent);
+			requestPublisherDTO.setCorrelationID(correlationID);
+			requestPublisherDTO.setGatewayType(APIMgtGatewayConstants.GATEWAY_TYPE);
+			requestPublisherDTO.setLabel(APIMgtGatewayConstants.SYNAPDE_GW_LABEL);
+			requestPublisherDTO.setProtocol("WebSocket");
+			requestPublisherDTO.setDestination("-");
+			requestPublisherDTO.setBackendTime(0);
+			requestPublisherDTO.setResponseCacheHit(false);
+			requestPublisherDTO.setResponseCode(0);
+			requestPublisherDTO.setResponseSize(0);
+			requestPublisherDTO.setServiceTime(0);
+			requestPublisherDTO.setResponseTime(0);
+			ExecutionTimeDTO executionTime = new ExecutionTimeDTO();
+			executionTime.setBackEndLatency(0);
+			executionTime.setOtherLatency(0);
+			executionTime.setRequestMediationLatency(0);
+			executionTime.setResponseMediationLatency(0);
+			executionTime.setSecurityLatency(0);
+			executionTime.setThrottlingLatency(0);
+			requestPublisherDTO.setExecutionTime(executionTime);
+			usageDataPublisher.publishEvent(requestPublisherDTO);
+		} catch (Exception e) {
+			// flow should not break if event publishing failed
+			log.error("Cannot publish event. " + e.getMessage(), e);
+		}
+	}
+
+	/**
+	 * Publish throttle events.
+	 *
+	 * @param inboundMessageContext InboundMessageContext
+	 * @param usageDataPublisher    APIMgtUsageDataPublisher
+	 */
+	private static void publishThrottleEvent(InboundMessageContext inboundMessageContext,
+			APIMgtUsageDataPublisher usageDataPublisher) {
+		long requestTime = System.currentTimeMillis();
+		String correlationID = UUID.randomUUID().toString();
+		try {
+			APIKeyValidationInfoDTO infoDTO = inboundMessageContext.getInfoDTO();
+			ThrottlePublisherDTO throttlePublisherDTO = new ThrottlePublisherDTO();
+			throttlePublisherDTO.setKeyType(infoDTO.getType());
+			throttlePublisherDTO.setTenantDomain(inboundMessageContext.getTenantDomain());
+			//throttlePublisherDTO.setApplicationConsumerKey(infoDTO.getConsumerKey());
+			throttlePublisherDTO.setApiname(infoDTO.getApiName());
+			throttlePublisherDTO.setVersion(infoDTO.getApiName() + ':' + inboundMessageContext.getVersion());
+			throttlePublisherDTO.setContext(inboundMessageContext.getApiContextUri());
+			throttlePublisherDTO.setApiCreator(infoDTO.getApiPublisher());
+			throttlePublisherDTO.setApiCreatorTenantDomain(MultitenantUtils.getTenantDomain(infoDTO.getApiPublisher()));
+			throttlePublisherDTO.setApplicationName(infoDTO.getApplicationName());
+			throttlePublisherDTO.setApplicationId(infoDTO.getApplicationId());
+			throttlePublisherDTO.setSubscriber(infoDTO.getSubscriber());
+			throttlePublisherDTO.setThrottledTime(requestTime);
+			throttlePublisherDTO.setGatewayType(APIMgtGatewayConstants.GATEWAY_TYPE);
+			throttlePublisherDTO.setThrottledOutReason("-");
+			throttlePublisherDTO.setUsername(infoDTO.getEndUserName());
+			throttlePublisherDTO.setCorrelationID(correlationID);
+			throttlePublisherDTO.setHostName(DataPublisherUtil.getHostAddress());
+			throttlePublisherDTO.setAccessToken("-");
+			usageDataPublisher.publishEvent(throttlePublisherDTO);
+		} catch (Exception e) {
+			// flow should not break if event publishing failed
+			log.error("Cannot publish event. " + e.getMessage(), e);
+		}
 	}
 }

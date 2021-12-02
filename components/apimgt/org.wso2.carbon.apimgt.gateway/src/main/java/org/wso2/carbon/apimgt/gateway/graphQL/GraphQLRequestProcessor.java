@@ -15,7 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.wso2.carbon.apimgt.gateway.handlers.graphQL;
+package org.wso2.carbon.apimgt.gateway.graphQL;
 
 import graphql.language.Definition;
 import graphql.language.Document;
@@ -26,7 +26,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import org.apache.axis2.AxisFault;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONObject;
@@ -34,20 +33,16 @@ import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.gateway.dto.GraphQLOperationDTO;
 import org.wso2.carbon.apimgt.gateway.dto.QueryAnalyzerResponseDTO;
 import org.wso2.carbon.apimgt.gateway.handlers.InboundMessageContext;
-import org.wso2.carbon.apimgt.gateway.handlers.WebsocketInboundHandler;
-import org.wso2.carbon.apimgt.gateway.handlers.WebsocketUtil;
+import org.wso2.carbon.apimgt.gateway.dto.InboundProcessorResponseDTO;
 import org.wso2.carbon.apimgt.gateway.handlers.graphQL.analyzer.SubscriptionAnalyzer;
-import org.wso2.carbon.apimgt.gateway.handlers.security.APIKeyValidator;
-import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityConstants;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityException;
-import org.wso2.carbon.apimgt.gateway.handlers.security.AuthenticationContext;
-import org.wso2.carbon.apimgt.gateway.handlers.security.jwt.JWTValidator;
 import org.wso2.carbon.apimgt.gateway.internal.DataHolder;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.dto.APIKeyValidationInfoDTO;
 import org.wso2.carbon.apimgt.impl.dto.ResourceInfoDTO;
 import org.wso2.carbon.apimgt.impl.dto.VerbInfoDTO;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
+import org.wso2.carbon.apimgt.usage.publisher.APIMgtUsageDataPublisher;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 
 import java.util.List;
@@ -57,7 +52,7 @@ import java.util.Set;
  * A GraphQL subscriptions specific extension of RequestProcessor. This class intercepts the inbound websocket
  * execution path of graphQL subscription requests.
  */
-public class GraphQLRequestProcessor {
+public class GraphQLRequestProcessor extends GraphQLProcessor {
 
     private static final Log log = LogFactory.getLog(GraphQLRequestProcessor.class);
 
@@ -69,12 +64,14 @@ public class GraphQLRequestProcessor {
      * @param msg                   Websocket request message frame
      * @param ctx                   ChannelHandlerContext
      * @param inboundMessageContext InboundMessageContext
+     * @param usageDataPublisher APIMgtUsageDataPublisher
      * @return InboundProcessorResponseDTO with handshake processing response
      */
     public InboundProcessorResponseDTO handleRequest(WebSocketFrame msg, ChannelHandlerContext ctx,
-            InboundMessageContext inboundMessageContext) throws APISecurityException, AxisFault {
+            InboundMessageContext inboundMessageContext, APIMgtUsageDataPublisher usageDataPublisher)
+            throws APISecurityException, AxisFault {
         InboundProcessorResponseDTO responseDTO;
-        GraphQLAPIHandler.setGraphQLSchemaToDataHolder(inboundMessageContext);
+        GraphQLProcessorUtil.setGraphQLSchemaToDataHolder(inboundMessageContext);
 
         try {
             PrivilegedCarbonContext.startTenantFlow();
@@ -101,10 +98,10 @@ public class GraphQLRequestProcessor {
                             responseDTO = validateQueryPayload(inboundMessageContext, document, operationId);
                             if (!responseDTO.isError()) {
                                 // subscription operation name
-                                String subscriptionOperation = GraphQLAPIHandler.getOperationList(operation,
+                                String subscriptionOperation = GraphQLProcessorUtil.getOperationList(operation,
                                         DataHolder.getInstance().getGraphQLSchemaDTOForAPI(
                                                         inboundMessageContext.getElectedAPI().getUuid())
-                                                .getTypeDefinitionRegistry());
+                                                .getTypeDefinitionRegistry(), null);
                                 // validate scopes based on subscription payload
                                 responseDTO = validateScopes(inboundMessageContext, subscriptionOperation, operationId);
                                 if (!responseDTO.isError()) {
@@ -121,7 +118,7 @@ public class GraphQLRequestProcessor {
                                     if (!responseDTO.isError()) {
                                         // throttle for matching resource
                                         responseDTO = doThrottleForGraphQL(msg, ctx, verbInfoDTO, inboundMessageContext,
-                                                operationId);
+                                                operationId, usageDataPublisher);
                                         inboundMessageContext.addVerbInfoForGraphQLMsgId(graphQLMsg.getString(
                                                         GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_ID),
                                                 new GraphQLOperationDTO(verbInfoDTO, subscriptionOperation));
@@ -145,34 +142,6 @@ public class GraphQLRequestProcessor {
         } finally {
             PrivilegedCarbonContext.endTenantFlow();
         }
-    }
-
-    /**
-     * Authenticates JWT token in incoming GraphQL subscription requests.
-     *
-     * @param inboundMessageContext InboundMessageContext
-     * @return InboundProcessorResponseDTO
-     */
-    public static InboundProcessorResponseDTO authenticateGraphQLJWTToken(InboundMessageContext inboundMessageContext) {
-
-        InboundProcessorResponseDTO responseDTO = new InboundProcessorResponseDTO();
-        AuthenticationContext authenticationContext;
-        JWTValidator jwtValidator = new JWTValidator(new APIKeyValidator());
-        try {
-            authenticationContext = jwtValidator.authenticateForWSAndGraphQL(inboundMessageContext.getSignedJWTInfo(),
-                    inboundMessageContext.getApiContextUri(), inboundMessageContext.getVersion());
-            inboundMessageContext.setAuthContext(authenticationContext);
-            if (!WebsocketUtil.validateAuthenticationContext(inboundMessageContext,
-                    inboundMessageContext.getElectedAPI().isDefaultVersion())) {
-                responseDTO = getFrameErrorDTO(GraphQLConstants.FrameErrorConstants.API_AUTH_INVALID_CREDENTIALS,
-                        APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE, true);
-            }
-        } catch (APISecurityException e) {
-            log.error(GraphQLConstants.FrameErrorConstants.API_AUTH_INVALID_CREDENTIALS, e);
-            responseDTO = getFrameErrorDTO(GraphQLConstants.FrameErrorConstants.API_AUTH_INVALID_CREDENTIALS,
-                    e.getMessage(), true);
-        }
-        return responseDTO;
     }
 
     /**
@@ -244,7 +213,7 @@ public class GraphQLRequestProcessor {
      * @param operationId           Graphql message id
      * @return InboundProcessorResponseDTO
      */
-    protected InboundProcessorResponseDTO validateQueryPayload(InboundMessageContext inboundMessageContext,
+    private InboundProcessorResponseDTO validateQueryPayload(InboundMessageContext inboundMessageContext,
             Document document, String operationId) {
 
         InboundProcessorResponseDTO responseDTO = new InboundProcessorResponseDTO();
@@ -267,135 +236,13 @@ public class GraphQLRequestProcessor {
     }
 
     /**
-     * Validates scopes for subscription operations.
-     *
-     * @param inboundMessageContext InboundMessageContext
-     * @param subscriptionOperation Subscription operation
-     * @param operationId           GraphQL message Id
-     * @return InboundProcessorResponseDTO
-     */
-    public static InboundProcessorResponseDTO validateScopes(InboundMessageContext inboundMessageContext, String subscriptionOperation, String operationId) {
-
-        InboundProcessorResponseDTO responseDTO = new InboundProcessorResponseDTO();
-        // validate scopes based on subscription payload
-        try {
-            if (!authorizeGraphQLSubscriptionEvents(inboundMessageContext, subscriptionOperation)) {
-                String errorMessage =
-                        GraphQLConstants.FrameErrorConstants.RESOURCE_FORBIDDEN_ERROR_MESSAGE + StringUtils.SPACE
-                                + subscriptionOperation;
-                log.error(errorMessage);
-                responseDTO = getGraphQLFrameErrorDTO(GraphQLConstants.FrameErrorConstants.RESOURCE_FORBIDDEN_ERROR,
-                        errorMessage, false, operationId);
-            }
-        } catch (APISecurityException e) {
-            log.error(GraphQLConstants.FrameErrorConstants.RESOURCE_FORBIDDEN_ERROR_MESSAGE, e);
-            responseDTO = getGraphQLFrameErrorDTO(GraphQLConstants.FrameErrorConstants.RESOURCE_FORBIDDEN_ERROR,
-                    e.getMessage(), false, operationId);
-        }
-        return responseDTO;
-    }
-
-    /**
-     * Validate scopes of JWT token for incoming GraphQL subscription messages.
-     *
-     * @param inboundMessageContext InboundMessageContext
-     * @param matchingResource      Invoking GraphQL subscription operation
-     * @return true if authorized
-     * @throws APISecurityException If authorization fails
-     */
-    public static boolean authorizeGraphQLSubscriptionEvents(InboundMessageContext inboundMessageContext,
-            String matchingResource) throws APISecurityException {
-
-        JWTValidator jwtValidator = new JWTValidator(new APIKeyValidator());
-        jwtValidator.validateScopesForGraphQLSubscriptions(inboundMessageContext.getApiContextUri(),
-                inboundMessageContext.getVersion(), matchingResource, inboundMessageContext.getSignedJWTInfo(),
-                inboundMessageContext.getAuthContext());
-        return true;
-    }
-
-    /**
-     * Get error frame DTO for error code and message closeConnection parameters.
-     *
-     * @param errorCode       Error code
-     * @param errorMessage    Error message
-     * @param closeConnection Whether to close connection after throwing the error frame
-     * @return InboundProcessorResponseDTO
-     */
-    public static InboundProcessorResponseDTO getFrameErrorDTO(int errorCode, String errorMessage,
-            boolean closeConnection) {
-
-        InboundProcessorResponseDTO inboundProcessorResponseDTO = new InboundProcessorResponseDTO();
-        inboundProcessorResponseDTO.setError(true);
-        inboundProcessorResponseDTO.setErrorCode(errorCode);
-        inboundProcessorResponseDTO.setErrorMessage(errorMessage);
-        inboundProcessorResponseDTO.setCloseConnection(closeConnection);
-        return inboundProcessorResponseDTO;
-    }
-
-    /**
-     * Get GraphQL subscription error frame DTO for error code and message closeConnection parameters.
-     *
-     * @param errorCode       Error code
-     * @param errorMessage    Error message
-     * @param closeConnection Whether to close connection after throwing the error frame
-     * @param operationId     Operation ID
-     * @return InboundProcessorResponseDTO
-     */
-    public static InboundProcessorResponseDTO getGraphQLFrameErrorDTO(int errorCode, String errorMessage,
-            boolean closeConnection, String operationId) {
-
-        InboundProcessorResponseDTO inboundProcessorResponseDTO = new InboundProcessorResponseDTO();
-        inboundProcessorResponseDTO.setError(true);
-        inboundProcessorResponseDTO.setErrorCode(errorCode);
-        inboundProcessorResponseDTO.setErrorMessage(errorMessage);
-        inboundProcessorResponseDTO.setCloseConnection(closeConnection);
-        inboundProcessorResponseDTO.setId(operationId);
-        return inboundProcessorResponseDTO;
-    }
-
-    /**
-     * Get bad request (error code 4010) error frame DTO for GraphQL subscriptions. The closeConnection parameter is
-     * false.
-     *
-     * @param errorMessage Error message
-     * @param operationId  Operation ID
-     * @return InboundProcessorResponseDTO
-     */
-    public static InboundProcessorResponseDTO getBadRequestGraphQLFrameErrorDTO(String errorMessage,
-            String operationId) {
-
-        InboundProcessorResponseDTO inboundProcessorResponseDTO = new InboundProcessorResponseDTO();
-        inboundProcessorResponseDTO.setError(true);
-        inboundProcessorResponseDTO.setErrorCode(GraphQLConstants.FrameErrorConstants.BAD_REQUEST);
-        inboundProcessorResponseDTO.setErrorMessage(errorMessage);
-        inboundProcessorResponseDTO.setId(operationId);
-        return inboundProcessorResponseDTO;
-    }
-
-    /**
-     * Get GraphQL Subscriptions handshake error DTO for error code and message. The closeConnection parameter is false.
-     *
-     * @param errorCode    Error code
-     * @param errorMessage Error message
-     * @return InboundProcessorResponseDTO
-     */
-    public static InboundProcessorResponseDTO getHandshakeErrorDTO(int errorCode, String errorMessage) {
-
-        InboundProcessorResponseDTO inboundProcessorResponseDTO = new InboundProcessorResponseDTO();
-        inboundProcessorResponseDTO.setError(true);
-        inboundProcessorResponseDTO.setErrorCode(errorCode);
-        inboundProcessorResponseDTO.setErrorMessage(errorMessage);
-        return inboundProcessorResponseDTO;
-    }
-
-    /**
      * Finds matching VerbInfoDTO for the subscription operation.
      *
      * @param inboundMessageContext InboundMessageContext
      * @param operation             subscription operation name
      * @return VerbInfoDTO
      */
-    public static VerbInfoDTO findMatchingVerb(InboundMessageContext inboundMessageContext, String operation) {
+    private static VerbInfoDTO findMatchingVerb(InboundMessageContext inboundMessageContext, String operation) {
         String resourceCacheKey;
         VerbInfoDTO verbInfoDTO = null;
         if (inboundMessageContext.getResourcesMap() != null) {
@@ -512,35 +359,6 @@ public class GraphQLRequestProcessor {
             responseDTO.setErrorMessage(GraphQLConstants.FrameErrorConstants.GRAPHQL_QUERY_TOO_DEEP_MESSAGE + " : "
                     + queryAnalyzerResponseDTO.getErrorList().toString());
             return responseDTO;
-        }
-        return responseDTO;
-    }
-
-    /**
-     * Checks if the request is throttled for GraphQL subscriptions.
-     *
-     * @param msg                   Websocket frame
-     * @param ctx                   Channel handler context
-     * @param verbInfoDTO           InboundMessageContext
-     * @param inboundMessageContext VerbInfoDTO for invoking operation
-     * @param operationId           Operation ID
-     * @return InboundProcessorResponseDTO
-     */
-    public static InboundProcessorResponseDTO doThrottleForGraphQL(WebSocketFrame msg, ChannelHandlerContext ctx,
-            VerbInfoDTO verbInfoDTO, InboundMessageContext inboundMessageContext, String operationId) {
-
-        InboundProcessorResponseDTO responseDTO = new InboundProcessorResponseDTO();
-        responseDTO.setId(operationId);
-        WebsocketInboundHandler websocketInboundHandler = new WebsocketInboundHandler();
-
-        boolean isAllowed = websocketInboundHandler.doThrottle(ctx, msg, verbInfoDTO, inboundMessageContext);
-
-        if (isAllowed) {
-            return responseDTO;
-        } else {
-            responseDTO.setError(true);
-            responseDTO.setErrorCode(GraphQLConstants.FrameErrorConstants.THROTTLED_OUT_ERROR);
-            responseDTO.setErrorMessage(GraphQLConstants.FrameErrorConstants.THROTTLED_OUT_ERROR_MESSAGE);
         }
         return responseDTO;
     }

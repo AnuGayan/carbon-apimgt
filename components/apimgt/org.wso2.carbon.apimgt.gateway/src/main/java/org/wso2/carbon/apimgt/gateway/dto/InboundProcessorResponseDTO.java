@@ -15,9 +15,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.wso2.carbon.apimgt.gateway.handlers.graphQL;
+package org.wso2.carbon.apimgt.gateway.dto;
 
 import org.json.JSONObject;
+import org.wso2.carbon.apimgt.gateway.graphQL.GraphQLConstants;
 
 /**
  * DTO class to hold response information during execution of Inbound processors.

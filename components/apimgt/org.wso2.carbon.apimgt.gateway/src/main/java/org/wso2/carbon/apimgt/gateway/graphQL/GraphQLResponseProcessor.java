@@ -15,7 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.wso2.carbon.apimgt.gateway.handlers.graphQL;
+package org.wso2.carbon.apimgt.gateway.graphQL;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
@@ -23,14 +23,16 @@ import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import org.json.JSONObject;
 import org.wso2.carbon.apimgt.gateway.handlers.InboundMessageContext;
 import org.wso2.carbon.apimgt.gateway.dto.GraphQLOperationDTO;
+import org.wso2.carbon.apimgt.gateway.dto.InboundProcessorResponseDTO;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityException;
+import org.wso2.carbon.apimgt.usage.publisher.APIMgtUsageDataPublisher;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 
 /**
  * A GraphQL subscriptions specific extension of ResponseProcessor. This class intercepts the inbound websocket
  * execution path of graphQL subscription responses (subscribe messages).
  */
-public class GraphQLResponseProcessor {
+public class GraphQLResponseProcessor extends GraphQLProcessor {
 
     /**
      * Handle inbound websocket responses of GraphQL subscriptions and perform authentication, authorization
@@ -39,18 +41,19 @@ public class GraphQLResponseProcessor {
      * @param msg                   graphQL subscription response payload
      * @param ctx                   ChannelHandlerContext
      * @param inboundMessageContext InboundMessageContext
-     * @param inboundMessageContext InboundMessageContext
+     * @param usageDataPublisher    APIMgtUsageDataPublisher
      * @return InboundProcessorResponseDTO
      */
     public InboundProcessorResponseDTO handleResponse(WebSocketFrame msg, ChannelHandlerContext ctx,
-            InboundMessageContext inboundMessageContext) throws APISecurityException {
+            InboundMessageContext inboundMessageContext, APIMgtUsageDataPublisher usageDataPublisher)
+            throws APISecurityException {
         InboundProcessorResponseDTO responseDTO;
 
         try {
             PrivilegedCarbonContext.startTenantFlow();
             PrivilegedCarbonContext.getThreadLocalCarbonContext()
                     .setTenantDomain(inboundMessageContext.getTenantDomain(), true);
-            responseDTO = GraphQLRequestProcessor.authenticateGraphQLJWTToken(inboundMessageContext);
+            responseDTO = authenticateGraphQLJWTToken(inboundMessageContext);
 
             String msgText = ((TextWebSocketFrame) msg).text();
             JSONObject graphQLMsg = new JSONObject(msgText);
@@ -62,15 +65,15 @@ public class GraphQLResponseProcessor {
                     GraphQLOperationDTO graphQLOperationDTO = inboundMessageContext.getVerbInfoForGraphQLMsgId(
                             graphQLMsg.getString(GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_ID));
                     // validate scopes based on subscription payload
-                    responseDTO = GraphQLRequestProcessor.validateScopes(inboundMessageContext,
+                    responseDTO =validateScopes(inboundMessageContext,
                             graphQLOperationDTO.getOperation(), operationId);
                     if (!responseDTO.isError()) {
                         // throttle for matching resource
-                        return GraphQLRequestProcessor.doThrottleForGraphQL(msg, ctx,
-                                graphQLOperationDTO.getVerbInfoDTO(), inboundMessageContext, operationId);
+                        return doThrottleForGraphQL(msg, ctx, graphQLOperationDTO.getVerbInfoDTO(),
+                                inboundMessageContext, operationId, usageDataPublisher);
                     }
                 } else {
-                    responseDTO = getBadRequestFrameErrorDTO("Missing mandatory id field in the message");
+                    responseDTO = getBadRequestGraphQLFrameErrorDTO("Missing mandatory id field in the message", null);
                 }
             }
             return responseDTO;
@@ -91,20 +94,5 @@ public class GraphQLResponseProcessor {
         return graphQLMsg.getString(GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_TYPE) != null
                 && GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_ARRAY_FOR_DATA.contains(
                 graphQLMsg.getString(GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_TYPE));
-    }
-
-    /**
-     * Get bad request (error code 4010) error frame DTO for error message. The closeConnection parameter is false.
-     *
-     * @param errorMessage Error message
-     * @return InboundProcessorResponseDTO
-     */
-    public static InboundProcessorResponseDTO getBadRequestFrameErrorDTO(String errorMessage) {
-
-        InboundProcessorResponseDTO inboundProcessorResponseDTO = new InboundProcessorResponseDTO();
-        inboundProcessorResponseDTO.setError(true);
-        inboundProcessorResponseDTO.setErrorCode(GraphQLConstants.FrameErrorConstants.BAD_REQUEST);
-        inboundProcessorResponseDTO.setErrorMessage(errorMessage);
-        return inboundProcessorResponseDTO;
     }
 }

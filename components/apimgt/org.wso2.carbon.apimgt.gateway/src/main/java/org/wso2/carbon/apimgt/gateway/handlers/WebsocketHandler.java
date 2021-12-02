@@ -28,15 +28,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.apimgt.gateway.InboundMessageContextDataHolder;
-import org.wso2.carbon.apimgt.gateway.handlers.graphQL.GraphQLConstants;
-import org.wso2.carbon.apimgt.gateway.handlers.graphQL.InboundProcessorResponseDTO;
-import org.wso2.carbon.apimgt.gateway.handlers.graphQL.GraphQLResponseProcessor;
+import org.wso2.carbon.apimgt.gateway.dto.InboundProcessorResponseDTO;
+import org.wso2.carbon.apimgt.gateway.graphQL.GraphQLConstants;
+import org.wso2.carbon.apimgt.gateway.graphQL.GraphQLResponseProcessor;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
+import org.wso2.carbon.apimgt.usage.publisher.APIMgtUsageDataPublisher;
 
 public class WebsocketHandler extends CombinedChannelDuplexHandler<WebsocketInboundHandler, WebsocketOutboundHandler> {
 
     private static final Log log = LogFactory.getLog(WebsocketInboundHandler.class);
+    private static GraphQLResponseProcessor graphQLResponseProcessor = new GraphQLResponseProcessor();
 
     public WebsocketHandler() {
         super(new WebsocketInboundHandler(), new WebsocketOutboundHandler());
@@ -67,9 +69,8 @@ public class WebsocketHandler extends CombinedChannelDuplexHandler<WebsocketInbo
             if (APIConstants.APITransportType.GRAPHQL.toString()
                     .equals(inboundMessageContext.getElectedAPI().getApiType()) && msg instanceof TextWebSocketFrame) {
                 // Authenticate and handle GraphQL subscription responses
-                GraphQLResponseProcessor graphQLResponseProcessor = new GraphQLResponseProcessor();
                 InboundProcessorResponseDTO responseDTO = graphQLResponseProcessor.handleResponse((WebSocketFrame) msg,
-                        ctx, inboundMessageContext);
+                        ctx, inboundMessageContext, inboundHandler().getUsageDataPublisher());
                 if (responseDTO.isError()) {
                     if (responseDTO.isCloseConnection()) {
                         // remove inbound message context from data holder
@@ -99,7 +100,8 @@ public class WebsocketHandler extends CombinedChannelDuplexHandler<WebsocketInbo
                 }
             } else {
                 // If not a GraphQL API (Only a WebSocket API)
-                if (isAllowed(ctx, (WebSocketFrame) msg, inboundMessageContext)) {
+                if (isAllowed(ctx, (WebSocketFrame) msg, inboundMessageContext,
+                        inboundHandler().getUsageDataPublisher())) {
                     handleWSResponseSuccess(ctx, msg, promise, inboundMessageContext);
                 } else {
                     ctx.writeAndFlush(new TextWebSocketFrame("Websocket frame throttled out"));
@@ -126,16 +128,17 @@ public class WebsocketHandler extends CombinedChannelDuplexHandler<WebsocketInbo
         // publish analytics events if analytics is enabled
         if (APIUtil.isAnalyticsEnabled()) {
             String clientIp = getClientIp(ctx);
-            inboundHandler().publishRequestEvent(clientIp, true, inboundMessageContext);
+            WebsocketUtil.publishRequestEvent(clientIp, true, inboundMessageContext,
+                    inboundHandler().getUsageDataPublisher());
         }
     }
 
     protected boolean isAllowed(ChannelHandlerContext ctx, WebSocketFrame msg,
-            InboundMessageContext inboundMessageContext) {
-        return inboundHandler().doThrottle(ctx, msg, null, inboundMessageContext);
+            InboundMessageContext inboundMessageContext, APIMgtUsageDataPublisher usageDataPublisher) {
+        return WebsocketUtil.doThrottle(ctx, msg, null, inboundMessageContext, usageDataPublisher);
     }
 
     protected String getClientIp(ChannelHandlerContext ctx) {
-        return inboundHandler().getRemoteIP(ctx);
+        return WebsocketUtil.getRemoteIP(ctx);
     }
 }

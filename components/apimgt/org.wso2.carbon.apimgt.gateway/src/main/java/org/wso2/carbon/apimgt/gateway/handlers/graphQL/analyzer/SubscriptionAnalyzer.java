@@ -26,7 +26,7 @@ import org.json.simple.parser.ParseException;
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.gateway.dto.QueryAnalyzerResponseDTO;
 import org.wso2.carbon.apimgt.gateway.handlers.graphQL.FieldComplexityCalculatorImpl;
-import org.wso2.carbon.apimgt.gateway.handlers.graphQL.QueryAnalyzer;
+import org.wso2.carbon.apimgt.gateway.graphQL.QueryAnalyzer;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 
 import java.util.Base64;
