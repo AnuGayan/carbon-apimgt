@@ -278,7 +278,6 @@ public class WebsocketInboundHandlerTestCase {
         Assert.assertEquals(inboundMessageContext.getUserIP(), remoteIP);
 
         // error response
-        InboundProcessorResponseDTO responseDTO = new InboundProcessorResponseDTO();
         PowerMockito.when(WebsocketUtil.validateAuthenticationContext(inboundMessageContext, false)).thenReturn(false);
         websocketInboundHandler.channelRead(channelHandlerContext, fullHttpRequest);
         Assert.assertFalse(InboundMessageContextDataHolder.getInstance().getInboundMessageContextMap()
