@@ -59,7 +59,8 @@ public class GraphQLResponseProcessor extends GraphQLProcessor {
             JSONObject graphQLMsg = new JSONObject(msgText);
 
             if (!responseDTO.isError() && checkIfSubscribeMessageResponse(graphQLMsg)) {
-                if (graphQLMsg.getString(GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_ID) != null) {
+                if (graphQLMsg.has(GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_ID)
+                        && graphQLMsg.getString(GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_ID) != null) {
                     String operationId = graphQLMsg.getString(
                             GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_ID);
                     GraphQLOperationDTO graphQLOperationDTO = inboundMessageContext.getVerbInfoForGraphQLMsgId(
