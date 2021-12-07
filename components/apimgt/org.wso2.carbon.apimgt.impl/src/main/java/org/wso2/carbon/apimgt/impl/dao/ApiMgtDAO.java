@@ -1766,7 +1766,7 @@ public class ApiMgtDAO {
              ResultSet result = getSubscriptionResultSet(groupingId, subscriber, applicationName, ps)) {
             int index = 0;
             while (result.next()) {
-                if (index >= startSubIndex && index < endSubIndex) {
+                if (index >= startSubIndex && index <= endSubIndex) {
                     String apiType = result.getString("TYPE");
 
                     if (APIConstants.API_PRODUCT.toString().equals(apiType)) {
@@ -1785,10 +1785,6 @@ public class ApiMgtDAO {
                         SubscribedAPI subscribedAPI = new SubscribedAPI(subscriber, identifier);
                         initSubscribedAPI(subscribedAPI, subscriber, result);
                         subscribedAPIs.add(subscribedAPI);
-                    }
-
-                    if (index == endSubIndex - 1) {
-                        break;
                     }
                 }
                 index++;
