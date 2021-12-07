@@ -143,7 +143,6 @@ public class WorkflowsApiServiceImpl implements WorkflowsApiService {
             }
 
             org.wso2.carbon.apimgt.impl.dto.WorkflowDTO workflowDTO = apiMgtDAO.retrieveWorkflow(workflowReferenceId);
-
             if (workflowDTO == null) {
                 RestApiUtil.handleResourceNotFoundError(RestApiConstants.RESOURCE_WORKFLOW, workflowReferenceId, log);
             }

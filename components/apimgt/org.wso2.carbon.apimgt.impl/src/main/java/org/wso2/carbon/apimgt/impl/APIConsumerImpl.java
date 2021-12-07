@@ -4229,7 +4229,8 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
                 appRegWFDto.setUserName(userId);
             }
 
-            appRegWFDto.setCallbackUrl(appRegistrationWorkflow.getCallbackURL());
+
+            appRegWFDto.setCallbackUrl(request.getOAuthApplicationInfo().getCallBackURL());
             appRegWFDto.setAppInfoDTO(request);
             appRegWFDto.setDomainList(allowedDomains);
 

@@ -2061,6 +2061,7 @@ public final class APIConstants {
     public static final String[] WS_SUPPORTED_METHODS = { "subscribe", "publish" };
 
     public static final String JSON_GRANT_TYPES = "grant_types";
+    public static final String JSON_CALLBACK_URL = "callback_url";
     public static final String JSON_USERNAME = "username";
     public static final String REGEX_ILLEGAL_CHARACTERS_FOR_API_METADATA = "[~!@#;:%^*()+={}|<>\"\',\\[\\]&/$\\\\]";
     public static final String JSON_CLIENT_ID = "client_id";
