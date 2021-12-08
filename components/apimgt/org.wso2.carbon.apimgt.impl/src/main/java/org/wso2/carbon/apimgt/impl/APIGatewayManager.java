@@ -1151,10 +1151,10 @@ public class APIGatewayManager {
                 markForSuspension +
                 "\t</markForSuspension>\n" +
                 "</default>";
-        String seqStart = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                "<sequence xmlns=\"http://ws.apache.org/ns/synapse\" name=\""+
-                context.replace('/', '-') + "\">\n";
-        String seqBody = "   <property name=\"OUT_ONLY\" value=\"true\"/>\n" +
+        String seq = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<sequence xmlns=\"http://ws.apache.org/ns/synapse\" name=\"" +
+                context.replace('/', '-') + "\">\n" +
+                "   <property name=\"OUT_ONLY\" value=\"true\"/>\n" +
                 "   <script language=\"js\">var sub_path = mc.getProperty(\"websocket.subscriber.path\");\t    \n" +
                 "        \tvar queryParamString = sub_path.split(\"\\\\?\")[1];\n" +
                 "                if(queryParamString != undefined) {\t    \n" +
@@ -1182,15 +1182,6 @@ public class APIGatewayManager {
                 "      </endpoint>\n" +
                 "   </send>\n" +
                 "</sequence>";
-        String webSocketSubProtocol =
-                "   <property name=\"websocket.subprotocol\" value=\"graphql-ws\" scope=\"axis2\"/>\n";
-
-        String seq;
-        if (StringUtils.equalsIgnoreCase(APIConstants.GRAPHQL_API, api.getType())) {
-            seq = seqStart +webSocketSubProtocol + seqBody;
-        } else {
-            seq = seqStart + seqBody;
-        }
         return seq;
     }
 
