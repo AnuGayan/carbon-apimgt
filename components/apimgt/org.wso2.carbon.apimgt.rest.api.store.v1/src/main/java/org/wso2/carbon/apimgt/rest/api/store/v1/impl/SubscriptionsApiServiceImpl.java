@@ -31,6 +31,7 @@ import org.wso2.carbon.apimgt.api.SubscriptionAlreadyExistingException;
 import org.wso2.carbon.apimgt.api.WorkflowResponse;
 import org.wso2.carbon.apimgt.api.WorkflowStatus;
 import org.wso2.carbon.apimgt.api.model.APIIdentifier;
+import org.wso2.carbon.apimgt.api.model.APIProductIdentifier;
 import org.wso2.carbon.apimgt.api.model.ApiTypeWrapper;
 import org.wso2.carbon.apimgt.api.model.Application;
 import org.wso2.carbon.apimgt.api.model.Monetization;
@@ -463,8 +464,16 @@ public class SubscriptionsApiServiceImpl implements SubscriptionsApiService {
             apiConsumer = RestApiCommonUtil.getConsumer(username);
             SubscribedAPI subscribedAPI = validateAndGetSubscription(subscriptionId, apiConsumer);
             // for cross tenant scenario, we need to get the API's tenant domain. logged in user is not applicable
-            tenantDomain = MultitenantUtils
-                    .getTenantDomain(APIUtil.replaceEmailDomainBack(subscribedAPI.getApiId().getProviderName()));
+            APIIdentifier apiIdentifier = subscribedAPI.getApiId();
+            APIProductIdentifier productIdentifier = subscribedAPI.getProductId();
+            if (apiIdentifier != null) {
+                tenantDomain = MultitenantUtils
+                        .getTenantDomain(APIUtil.replaceEmailDomainBack(apiIdentifier.getProviderName()));
+            } else if (productIdentifier != null) {
+                tenantDomain = MultitenantUtils
+                        .getTenantDomain(APIUtil.replaceEmailDomainBack(productIdentifier.getProviderName()));
+            }
+
             SubscriptionDTO subscriptionDTO = SubscriptionMappingUtil.fromSubscriptionToDTO(subscribedAPI, tenantDomain);
             return Response.ok().entity(subscriptionDTO).build();
         } catch (APIManagementException e) {
