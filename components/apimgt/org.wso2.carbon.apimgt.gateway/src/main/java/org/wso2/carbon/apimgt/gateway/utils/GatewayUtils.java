@@ -112,6 +112,9 @@ public class GatewayUtils {
 
         org.apache.axis2.context.MessageContext axis2MsgContext =
                 ((Axis2MessageContext) synCtx).getAxis2MessageContext();
+        if ((axis2MsgContext).getProperty(org.apache.axis2.context.MessageContext.TRANSPORT_HEADERS) == null) {
+            return null;
+        }
         Map headers =
                 (Map) (axis2MsgContext).getProperty(org.apache.axis2.context.MessageContext.TRANSPORT_HEADERS);
         String xForwardForHeader = (String) headers.get(HEADER_X_FORWARDED_FOR);
