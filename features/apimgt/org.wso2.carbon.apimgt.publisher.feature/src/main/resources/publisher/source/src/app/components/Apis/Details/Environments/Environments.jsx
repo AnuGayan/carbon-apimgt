@@ -138,24 +138,7 @@ export default function Environments() {
                             <TableCell align='left'>Name</TableCell>
                             <TableCell align='left'>Type</TableCell>
                             <TableCell align='left'>Server URL</TableCell>
-                            {api.isWebSocket() ? (
-                                <>
-                                    <TableCell align='left'>WS Endpoint</TableCell>
-                                    <TableCell align='left'>WSS Endpoint</TableCell>
-                                </>
-                            ) : (
-                                <>
-                                    <TableCell align='left'>HTTP Endpoint</TableCell>
-                                    <TableCell align='left'>HTTPS Endpoint</TableCell>
-                                </>
-                            )}
-                            {api.isGraphql()
-                                && (
-                                    <>
-                                        <TableCell align='left'>WS Endpoint</TableCell>
-                                        <TableCell align='left'>WSS Endpoint</TableCell>
-                                    </>
-                                )}
+                            <TableCell align='left'>Endpoint URLs</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -188,25 +171,25 @@ export default function Environments() {
                                 </TableCell>
                                 <TableCell align='left'>{row.type}</TableCell>
                                 <TableCell align='left'>{row.serverUrl}</TableCell>
-
-                                {api.isWebSocket() ? (
-                                    <>
-                                        <TableCell align='left'>{row.endpoints.ws}</TableCell>
-                                        <TableCell align='left'>{row.endpoints.wss}</TableCell>
-                                    </>
-                                ) : (
-                                    <>
-                                        <TableCell align='left'>{row.endpoints.http}</TableCell>
-                                        <TableCell align='left'>{row.endpoints.https}</TableCell>
-                                    </>
-                                )}
-                                {api.isGraphql()
-                                    && (
+                                <TableCell align='left'>
+                                    {api.isWebSocket() ? (
                                         <>
-                                            <TableCell align='left'>{row.endpoints.ws}</TableCell>
-                                            <TableCell align='left'>{row.endpoints.wss}</TableCell>
+                                            <div>{row.endpoints.wss}</div>
+                                            <div>{row.endpoints.ws}</div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div>{row.endpoints.https}</div>
+                                            <div>{row.endpoints.http}</div>
                                         </>
                                     )}
+                                    {api.isGraphql() && (
+                                        <>
+                                            <div>{row.endpoints.wss}</div>
+                                            <div>{row.endpoints.ws}</div>
+                                        </>
+                                    )}
+                                </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
