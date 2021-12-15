@@ -161,9 +161,9 @@ public class CertificateManagerImplTest {
     }
 
     @Test
-    public void testAddToPublisherWhenDBError() {
+    public void testAddToPublisherWhenDBError() throws CertificateAliasExistsException, CertificateManagementException {
 
-        PowerMockito.stub(PowerMockito.method(CertificateMgtDAO.class, "addCertificate")).toReturn(false);
+        Mockito.when(certificateMgtDAO.addCertificate(BASE64_ENCODED_CERT,ALIAS,END_POINT,TENANT_ID)).thenReturn(false);
         ResponseCode responseCode = certificateManager.addCertificateToParentNode(BASE64_ENCODED_CERT, ALIAS,
                 END_POINT, TENANT_ID);
         Assert.assertEquals(ResponseCode.INTERNAL_SERVER_ERROR, responseCode);
