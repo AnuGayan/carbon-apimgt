@@ -914,8 +914,16 @@ public class APIGatewayManager {
         String[] fileNames = new String[2];
         fileNames[0] = ENDPOINT_PRODUCTION + fileName;
         fileNames[1] = ENDPOINT_SANDBOX + fileName;
-        gatewayAPIDTO.setSequencesToBeRemove(addStringToList(fileNames[0], gatewayAPIDTO.getSequencesToBeRemove()));
-        gatewayAPIDTO.setSequencesToBeRemove(addStringToList(fileNames[1], gatewayAPIDTO.getSequencesToBeRemove()));
+
+        if (APIConstants.APITransportType.WS.toString().equals(api.getType())) {
+            gatewayAPIDTO.setSequencesToBeRemove(addStringToList(fileNames[0], gatewayAPIDTO.getSequencesToBeRemove()));
+            gatewayAPIDTO.setSequencesToBeRemove(addStringToList(fileNames[1], gatewayAPIDTO.getSequencesToBeRemove()));
+        } else {
+            gatewayAPIDTO.setGraphQLWSSequencesToBeRemove(
+                    addStringToList(fileNames[0], gatewayAPIDTO.getGraphQLWSSequencesToBeRemove()));
+            gatewayAPIDTO.setGraphQLWSSequencesToBeRemove(
+                    addStringToList(fileNames[1], gatewayAPIDTO.getGraphQLWSSequencesToBeRemove()));
+        }
     }
 
     /**
@@ -1055,23 +1063,45 @@ public class APIGatewayManager {
                 String content = createSeqString(api, production_endpoint, ENDPOINT_PRODUCTION);
                 element = AXIOMUtil.stringToOM(content);
                 String fileName = element.getAttributeValue(new QName("name"));
-                gatewayAPIDTO.setSequencesToBeRemove(addStringToList(fileName, gatewayAPIDTO.getSequencesToBeRemove()));
+                if (APIConstants.APITransportType.WS.toString().equals(api.getType())) {
+                    gatewayAPIDTO.setSequencesToBeRemove(
+                            addStringToList(fileName, gatewayAPIDTO.getSequencesToBeRemove()));
+                } else {
+                    gatewayAPIDTO.setGraphQLWSSequencesToBeRemove(
+                            addStringToList(fileName, gatewayAPIDTO.getGraphQLWSSequencesToBeRemove()));
+                }
                 GatewayContentDTO productionSequence = new GatewayContentDTO();
                 productionSequence.setContent(APIUtil.convertOMtoString(element));
                 productionSequence.setName(fileName);
-                gatewayAPIDTO.setSequenceToBeAdd(
-                        addGatewayContentToList(productionSequence, gatewayAPIDTO.getSequenceToBeAdd()));
+                if (APIConstants.APITransportType.WS.toString().equals(api.getType())) {
+                    gatewayAPIDTO.setSequenceToBeAdd(
+                            addGatewayContentToList(productionSequence, gatewayAPIDTO.getSequenceToBeAdd()));
+                } else {
+                    gatewayAPIDTO.setGraphQLWSSequenceToBeAdd(
+                            addGatewayContentToList(productionSequence, gatewayAPIDTO.getGraphQLWSSequenceToBeAdd()));
+                }
             }
             if (sandbox_endpoint != null) {
                 String content = createSeqString(api, sandbox_endpoint, ENDPOINT_SANDBOX);
                 element = AXIOMUtil.stringToOM(content);
                 String fileName = element.getAttributeValue(new QName("name"));
-                gatewayAPIDTO.setSequencesToBeRemove(addStringToList(fileName, gatewayAPIDTO.getSequencesToBeRemove()));
+                if (APIConstants.APITransportType.WS.toString().equals(api.getType())) {
+                    gatewayAPIDTO.setSequencesToBeRemove(
+                            addStringToList(fileName, gatewayAPIDTO.getSequencesToBeRemove()));
+                } else {
+                    gatewayAPIDTO.setGraphQLWSSequencesToBeRemove(
+                            addStringToList(fileName, gatewayAPIDTO.getGraphQLWSSequencesToBeRemove()));
+                }
                 GatewayContentDTO sandboxEndpointSequence = new GatewayContentDTO();
                 sandboxEndpointSequence.setContent(APIUtil.convertOMtoString(element));
                 sandboxEndpointSequence.setName(fileName);
-                gatewayAPIDTO.setSequenceToBeAdd(
-                        addGatewayContentToList(sandboxEndpointSequence, gatewayAPIDTO.getSequenceToBeAdd()));
+                if (APIConstants.APITransportType.WS.toString().equals(api.getType())) {
+                    gatewayAPIDTO.setSequenceToBeAdd(
+                            addGatewayContentToList(sandboxEndpointSequence, gatewayAPIDTO.getSequenceToBeAdd()));
+                } else {
+                    gatewayAPIDTO.setGraphQLWSSequenceToBeAdd(addGatewayContentToList(sandboxEndpointSequence,
+                            gatewayAPIDTO.getGraphQLWSSequenceToBeAdd()));
+                }
             }
         } catch (XMLStreamException e) {
             String msg = "Error while parsing the Sequence";

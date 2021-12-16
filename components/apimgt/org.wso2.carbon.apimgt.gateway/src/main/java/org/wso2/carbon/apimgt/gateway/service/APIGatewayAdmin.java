@@ -43,6 +43,7 @@ import org.wso2.carbon.apimgt.gateway.utils.SequenceAdminServiceProxy;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.certificatemgt.CertificateManager;
 import org.wso2.carbon.apimgt.impl.certificatemgt.CertificateManagerImpl;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.rest.api.APIData;
 import org.wso2.carbon.rest.api.ResourceData;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
@@ -790,6 +791,36 @@ public class APIGatewayAdmin extends org.wso2.carbon.core.AbstractAdmin {
         // Store the GraphQL schema in DataHolder
         addDeployedGraphqlQLToAPI(gatewayAPIDTO);
 
+        try {
+            PrivilegedCarbonContext.startTenantFlow();
+            PrivilegedCarbonContext.getThreadLocalCarbonContext()
+                    .setTenantDomain(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME, true);
+            SequenceAdminServiceProxy graphQLWSSequenceAdminServiceProxy =
+                    getSequenceAdminServiceClient(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME);
+            // Add GraphQL WS Sequences
+            if (gatewayAPIDTO.getGraphQLWSSequenceToBeAdd() != null) {
+                for (GatewayContentDTO sequence : gatewayAPIDTO.getGraphQLWSSequenceToBeAdd()) {
+                    OMElement element;
+                    try {
+                        element = AXIOMUtil.stringToOM(sequence.getContent());
+                    } catch (XMLStreamException e) {
+                        log.error("Exception occurred while converting String to an OM.", e);
+                        throw new AxisFault(e.getMessage());
+                    }
+                    if (graphQLWSSequenceAdminServiceProxy.isExistingSequence(sequence.getName())) {
+                        if (gatewayAPIDTO.isOverride()) {
+                            graphQLWSSequenceAdminServiceProxy.deleteSequence(sequence.getName());
+                            graphQLWSSequenceAdminServiceProxy.addSequence(element);
+                        }
+                    } else {
+                        graphQLWSSequenceAdminServiceProxy.addSequence(element);
+                    }
+                }
+            }
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
+        }
+
         return true;
     }
 
@@ -898,6 +929,24 @@ public class APIGatewayAdmin extends org.wso2.carbon.core.AbstractAdmin {
             log.debug(gatewayAPIDTO.getName() + ":" + gatewayAPIDTO.getVersion() + " Vault entries removed " +
                     "successfully");
             log.debug(gatewayAPIDTO.getName() + ":" + gatewayAPIDTO.getVersion() + "undeployed successfully");
+        }
+
+        try {
+            PrivilegedCarbonContext.startTenantFlow();
+            PrivilegedCarbonContext.getThreadLocalCarbonContext()
+                    .setTenantDomain(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME, true);
+            SequenceAdminServiceProxy graphQLWSSequenceAdminServiceProxy =
+                    getSequenceAdminServiceClient(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME);
+            // Remove GraphQL WS Sequences to be removed.
+            if (gatewayAPIDTO.getGraphQLWSSequencesToBeRemove() != null) {
+                for (String sequenceName : gatewayAPIDTO.getGraphQLWSSequencesToBeRemove()) {
+                    if (graphQLWSSequenceAdminServiceProxy.isExistingSequence(sequenceName) && gatewayAPIDTO.isOverride()) {
+                        graphQLWSSequenceAdminServiceProxy.deleteSequence(sequenceName);
+                    }
+                }
+            }
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
         }
         // Remove the GraphQL schema from the DataHolder
         DataHolder.getInstance().getApiToGraphQLSchemaDTOMap().remove(gatewayAPIDTO.getApiId());

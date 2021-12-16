@@ -40,6 +40,8 @@ public class GatewayAPIDTO implements Serializable {
     private boolean override;
     private GatewayContentDTO[] sequenceToBeAdd;
     private String[] sequencesToBeRemove;
+    private GatewayContentDTO[] graphQLWSSequenceToBeAdd;
+    private String[] graphQLWSSequencesToBeRemove;
     private GatewayContentDTO[] localEntriesToBeAdd;
     private String[] localEntriesToBeRemove;
     private GatewayContentDTO[] clientCertificatesToBeAdd;
@@ -137,6 +139,22 @@ public class GatewayAPIDTO implements Serializable {
     public void setSequencesToBeRemove(String[] sequencesToBeRemove) {
 
         this.sequencesToBeRemove = sequencesToBeRemove;
+    }
+
+    public GatewayContentDTO[] getGraphQLWSSequenceToBeAdd() {
+        return graphQLWSSequenceToBeAdd;
+    }
+
+    public void setGraphQLWSSequenceToBeAdd(GatewayContentDTO[] graphQLWSSequenceToBeAdd) {
+        this.graphQLWSSequenceToBeAdd = graphQLWSSequenceToBeAdd;
+    }
+
+    public String[] getGraphQLWSSequencesToBeRemove() {
+        return graphQLWSSequencesToBeRemove;
+    }
+
+    public void setGraphQLWSSequencesToBeRemove(String[] graphQLWSSequencesToBeRemove) {
+        this.graphQLWSSequencesToBeRemove = graphQLWSSequencesToBeRemove;
     }
 
     public GatewayContentDTO[] getLocalEntriesToBeAdd() {
