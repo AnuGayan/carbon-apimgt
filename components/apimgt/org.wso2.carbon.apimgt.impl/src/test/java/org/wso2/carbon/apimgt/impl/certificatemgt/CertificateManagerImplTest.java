@@ -163,7 +163,9 @@ public class CertificateManagerImplTest {
     @Test
     public void testAddToPublisherWhenDBError() throws CertificateAliasExistsException, CertificateManagementException {
 
-        Mockito.when(certificateMgtDAO.addCertificate(BASE64_ENCODED_CERT,ALIAS,END_POINT,TENANT_ID)).thenReturn(false);
+        Mockito.when(certificateMgtDAO
+                .addCertificate(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyInt()))
+                .thenReturn(false);
         ResponseCode responseCode = certificateManager.addCertificateToParentNode(BASE64_ENCODED_CERT, ALIAS,
                 END_POINT, TENANT_ID);
         Assert.assertEquals(ResponseCode.INTERNAL_SERVER_ERROR, responseCode);
