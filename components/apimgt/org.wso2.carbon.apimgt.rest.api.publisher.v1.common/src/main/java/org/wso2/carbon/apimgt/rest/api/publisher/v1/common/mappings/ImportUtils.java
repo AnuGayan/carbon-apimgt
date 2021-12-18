@@ -2168,7 +2168,7 @@ public class ImportUtils {
                                                      String[] tokenScopes) throws IOException, APIManagementException {
 
         JsonObject dependentAPIParamsConfigObject = null;
-        // Retrieve the dependent APIs param configurations from the params file of the API Product
+        // Retrieve the dependent APIs param configurations from the params file of the API Product.
         JsonObject dependentAPIsParams = APIControllerUtil.getDependentAPIsParams(path);
         String apisDirectoryPath = path + File.separator + ImportExportConstants.APIS_DIRECTORY;
         File apisDirectory = new File(apisDirectoryPath);
