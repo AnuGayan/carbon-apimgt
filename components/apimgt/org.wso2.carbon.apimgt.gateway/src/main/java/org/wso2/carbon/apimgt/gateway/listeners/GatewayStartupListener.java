@@ -118,7 +118,7 @@ public class GatewayStartupListener extends AbstractAxis2ConfigurationContextObs
                         .getAPIManagerConfiguration().getGatewayArtifactSynchronizerProperties();
 
         boolean flag = false;
-        long waitTime = System.currentTimeMillis() + 60 * 1000; // 1 minute
+        long waitTime = System.currentTimeMillis() + 60 * 1000;
         long retryDuration = 5000;
 
         if (gatewayArtifactSynchronizerProperties.isRetrieveFromStorageEnabled()) {

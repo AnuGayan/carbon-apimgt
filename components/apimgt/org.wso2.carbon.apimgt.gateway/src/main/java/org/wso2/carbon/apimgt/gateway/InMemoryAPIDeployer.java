@@ -161,9 +161,8 @@ public class InMemoryAPIDeployer {
                             org.wso2.carbon.apimgt.gateway.utils.GatewayUtils.createAxis2MessageContext());
                     PrivilegedCarbonContext.startTenantFlow();
                     PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
-
-                    List<String> gatewayRuntimeArtifacts = ServiceReferenceHolder.getInstance()
-                            .getArtifactRetriever().retrieveAllArtifacts(encodedString, tenantDomain);
+                    List<String> gatewayRuntimeArtifacts = ServiceReferenceHolder.getInstance().getArtifactRetriever()
+                            .retrieveAllArtifacts(encodedString, tenantDomain);
                     if (gatewayRuntimeArtifacts.size() == 0) {
                         return true;
                     }
@@ -177,8 +176,7 @@ public class InMemoryAPIDeployer {
                                 addDeployedCertificatesToAPIAssociation(gatewayAPIDTO);
                             }
                         } catch (AxisFault axisFault) {
-                            log.error("Error in deploying " + gatewayAPIDTO.getName() + " to the Gateway ",
-                                    axisFault);
+                            log.error("Error in deploying " + gatewayAPIDTO.getName() + " to the Gateway ", axisFault);
                             errorCount++;
                         }
                     }
