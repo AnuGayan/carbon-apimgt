@@ -168,7 +168,7 @@ function AddEdit(props) {
         let keys;
         const schema = Joi.string().regex(/^[^~!@#;:%^*()+={}|\\<>"',&$\s+]*$/);
         const validateKeyTemplates = ['$userId', '$apiContext', '$apiVersion', '$resourceKey',
-            '$appTenant', '$apiTenant', '$appId', '$clientIp'];
+            '$appTenant', '$apiTenant', '$appId', '$clientIp', '$customProperty'];
         switch (fieldName) {
             case 'policyName':
                 if (value === '') {
@@ -374,7 +374,7 @@ function AddEdit(props) {
                                     defaultMessage={'The specific combination of attributes being checked '
                                         + 'in the policy need to be defined as the key template. Allowed values are : '
                                         + '$userId, $apiContext, $apiVersion, $resourceKey, $appTenant, $apiTenant,'
-                                        + ' $appId, $clientIp'}
+                                        + ' $appId, $clientIp, $customProperty'}
                                 />
                             )}
                         />
