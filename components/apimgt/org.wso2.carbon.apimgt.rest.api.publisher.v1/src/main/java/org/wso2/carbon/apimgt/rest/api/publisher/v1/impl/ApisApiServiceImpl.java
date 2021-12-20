@@ -212,6 +212,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -3266,11 +3267,12 @@ public class ApisApiServiceImpl implements ApisApiService {
      * @param inlineApiDefinition Swagger API definition String
      * @param messageContext CXF message context
      * @return API Import using OpenAPI definition response
+     * @throws APIManagementException when error occurs while importing the OpenAPI definition
      */
     @Override
     public Response importOpenAPIDefinition(InputStream fileInputStream, Attachment fileDetail, String url,
                                             String additionalProperties, String inlineApiDefinition,
-                                            MessageContext messageContext) {
+                                            MessageContext messageContext) throws APIManagementException {
 
         // validate 'additionalProperties' json
         if (StringUtils.isBlank(additionalProperties)) {
@@ -3286,8 +3288,15 @@ public class ApisApiServiceImpl implements ApisApiService {
             throw RestApiUtil.buildBadRequestException("Error while parsing 'additionalProperties'", e);
         }
 
-        // Import the API and Definition
         try {
+            LinkedHashMap endpointConfig = (LinkedHashMap) apiDTOFromProperties.getEndpointConfig();
+
+            // OAuth 2.0 backend protection: API Key and API Secret encryption
+            PublisherCommonUtils
+                    .encryptEndpointSecurityOAuthCredentials(endpointConfig, CryptoUtil.getDefaultCryptoUtil(),
+                            StringUtils.EMPTY, StringUtils.EMPTY, apiDTOFromProperties);
+
+            // Import the API and Definition
             APIDTO createdApiDTO = importOpenAPIDefinition(fileInputStream, url, inlineApiDefinition,
                     apiDTOFromProperties, fileDetail, null);
             if (createdApiDTO != null) {
@@ -3299,6 +3308,11 @@ public class ApisApiServiceImpl implements ApisApiService {
             String errorMessage = "Error while retrieving API location : " + apiDTOFromProperties.getProvider() + "-" +
                     apiDTOFromProperties.getName() + "-" + apiDTOFromProperties.getVersion();
             RestApiUtil.handleInternalServerError(errorMessage, e, log);
+        } catch (CryptoException e) {
+            String errorMessage =
+                    "Error while encrypting the secret key of API : " + apiDTOFromProperties.getProvider() + "-"
+                            + apiDTOFromProperties.getName() + "-" + apiDTOFromProperties.getVersion();
+            throw new APIManagementException(errorMessage, e);
         }
         return null;
     }
