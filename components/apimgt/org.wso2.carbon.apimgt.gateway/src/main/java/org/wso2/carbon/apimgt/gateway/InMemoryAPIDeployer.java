@@ -157,7 +157,8 @@ public class InMemoryAPIDeployer {
                     String labelString = String.join("|", assignedGatewayLabels);
                     String encodedString = Base64.encodeBase64URLSafeString(labelString.getBytes());
                     APIGatewayAdmin apiGatewayAdmin = new APIGatewayAdmin();
-                    MessageContext.setCurrentMessageContext(org.wso2.carbon.apimgt.gateway.utils.GatewayUtils.createAxis2MessageContext());
+                    MessageContext.setCurrentMessageContext(
+                            org.wso2.carbon.apimgt.gateway.utils.GatewayUtils.createAxis2MessageContext());
                     PrivilegedCarbonContext.startTenantFlow();
                     PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
 
@@ -196,7 +197,6 @@ public class InMemoryAPIDeployer {
                     String msg = "Error deploying APIs to the Gateway ";
                     log.error(msg, e);
                     return false;
-//                    throw new ArtifactSynchronizerException(msg, e);
                 } finally {
                     MessageContext.destroyCurrentMessageContext();
                     PrivilegedCarbonContext.endTenantFlow();

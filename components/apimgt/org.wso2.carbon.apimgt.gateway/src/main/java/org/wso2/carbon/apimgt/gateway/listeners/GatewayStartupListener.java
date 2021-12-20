@@ -116,8 +116,10 @@ public class GatewayStartupListener extends AbstractAxis2ConfigurationContextObs
         GatewayArtifactSynchronizerProperties gatewayArtifactSynchronizerProperties =
                 ServiceReferenceHolder.getInstance()
                         .getAPIManagerConfiguration().getGatewayArtifactSynchronizerProperties();
+
         boolean flag = false;
-        long waitTime = System.currentTimeMillis() + 60 * 1000;
+        long waitTime = System.currentTimeMillis() + 60 * 1000; // 1 minute
+        long retryDuration = 5000;
 
         if (gatewayArtifactSynchronizerProperties.isRetrieveFromStorageEnabled()) {
             InMemoryAPIDeployer inMemoryAPIDeployer = new InMemoryAPIDeployer();
@@ -125,6 +127,14 @@ public class GatewayStartupListener extends AbstractAxis2ConfigurationContextObs
             while (waitTime > System.currentTimeMillis() && !flag) {
                 flag = inMemoryAPIDeployer.deployAllAPIsAtGatewayStartup(
                         gatewayArtifactSynchronizerProperties.getGatewayLabels(), tenantDomain);
+                if (!flag) {
+                    log.error("Unable to deploy synapse artifacts at gateway. Next retry in " + (retryDuration / 1000)
+                            + " seconds");
+                    try {
+                        Thread.sleep(retryDuration);
+                    } catch (InterruptedException ignore) {
+                    }
+                }
             }
         }
         return flag;
