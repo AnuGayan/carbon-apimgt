@@ -33,6 +33,7 @@ import org.apache.axis2.util.JavaUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpHeaders;
+import org.apache.http.client.HttpClient;
 import org.apache.synapse.MessageContext;
 import org.apache.synapse.SynapseException;
 import org.apache.synapse.config.Entry;
@@ -45,6 +46,7 @@ import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityUtils;
 import org.wso2.carbon.apimgt.gateway.handlers.security.AuthenticationContext;
 import org.wso2.carbon.apimgt.gateway.utils.APIMgtGoogleAnalyticsUtils;
 import org.wso2.carbon.apimgt.gateway.utils.GatewayUtils;
+import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.tracing.TracingSpan;
 import org.wso2.carbon.apimgt.tracing.TracingTracer;
 import org.wso2.carbon.apimgt.tracing.Util;
@@ -224,7 +226,9 @@ public class APIMgtGoogleAnalyticsTrackingHandler extends AbstractHandler {
             log.debug("Publishing https GET from gateway to Google analytics" + " with ID: " + msgCtx.getMessageID()
                     + " started at " + new SimpleDateFormat("[yyyy.MM.dd HH:mm:ss,SSS zzz]").format(new Date()));
         }
-        GoogleAnalyticsDataPublisher.publishGET(payload, userAgent, false);
+        HttpClient client = APIUtil.getHttpClient(GoogleAnalyticsConstants.HTTP_ENDPOINT_HOST +
+                GoogleAnalyticsConstants.HTTP_ENDPOINT_URI + "?" + payload);
+        GoogleAnalyticsDataPublisher.publishGET(payload, userAgent, false, client);
         if (log.isDebugEnabled()) {
             log.debug("Publishing https GET from gateway to Google analytics" + " with ID: " + msgCtx.getMessageID()
                     + " ended at " + new SimpleDateFormat("[yyyy.MM.dd HH:mm:ss,SSS zzz]").format(new Date()));
