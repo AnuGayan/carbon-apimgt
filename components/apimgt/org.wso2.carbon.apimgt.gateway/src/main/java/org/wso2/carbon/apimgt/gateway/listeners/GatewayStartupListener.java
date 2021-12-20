@@ -117,10 +117,15 @@ public class GatewayStartupListener extends AbstractAxis2ConfigurationContextObs
                 ServiceReferenceHolder.getInstance()
                         .getAPIManagerConfiguration().getGatewayArtifactSynchronizerProperties();
         boolean flag = false;
+        long waitTime = System.currentTimeMillis() + 60 * 1000;
+
         if (gatewayArtifactSynchronizerProperties.isRetrieveFromStorageEnabled()) {
             InMemoryAPIDeployer inMemoryAPIDeployer = new InMemoryAPIDeployer();
-            flag = inMemoryAPIDeployer.deployAllAPIsAtGatewayStartup(gatewayArtifactSynchronizerProperties
-                    .getGatewayLabels(), tenantDomain);
+
+            while (waitTime > System.currentTimeMillis() && !flag) {
+                flag = inMemoryAPIDeployer.deployAllAPIsAtGatewayStartup(
+                        gatewayArtifactSynchronizerProperties.getGatewayLabels(), tenantDomain);
+            }
         }
         return flag;
     }

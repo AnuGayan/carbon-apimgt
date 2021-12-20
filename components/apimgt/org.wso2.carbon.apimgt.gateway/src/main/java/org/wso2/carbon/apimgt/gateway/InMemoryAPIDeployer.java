@@ -160,8 +160,9 @@ public class InMemoryAPIDeployer {
                     MessageContext.setCurrentMessageContext(org.wso2.carbon.apimgt.gateway.utils.GatewayUtils.createAxis2MessageContext());
                     PrivilegedCarbonContext.startTenantFlow();
                     PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantDomain(tenantDomain, true);
-                    List<String> gatewayRuntimeArtifacts =
-                            ServiceReferenceHolder.getInstance().getArtifactRetriever().retrieveAllArtifacts(encodedString, tenantDomain);
+
+                    List<String> gatewayRuntimeArtifacts = ServiceReferenceHolder.getInstance()
+                            .getArtifactRetriever().retrieveAllArtifacts(encodedString, tenantDomain);
                     if (gatewayRuntimeArtifacts.size() == 0) {
                         return true;
                     }
@@ -175,7 +176,8 @@ public class InMemoryAPIDeployer {
                                 addDeployedCertificatesToAPIAssociation(gatewayAPIDTO);
                             }
                         } catch (AxisFault axisFault) {
-                            log.error("Error in deploying " + gatewayAPIDTO.getName() + " to the Gateway ", axisFault);
+                            log.error("Error in deploying " + gatewayAPIDTO.getName() + " to the Gateway ",
+                                    axisFault);
                             errorCount++;
                         }
                     }
@@ -191,9 +193,10 @@ public class InMemoryAPIDeployer {
                         return false;
                     }
                 } catch (ArtifactSynchronizerException | AxisFault e) {
-                    String msg = "Error  deploying APIs to the Gateway ";
+                    String msg = "Error deploying APIs to the Gateway ";
                     log.error(msg, e);
-                    throw new ArtifactSynchronizerException(msg, e);
+                    return false;
+//                    throw new ArtifactSynchronizerException(msg, e);
                 } finally {
                     MessageContext.destroyCurrentMessageContext();
                     PrivilegedCarbonContext.endTenantFlow();
