@@ -169,6 +169,7 @@ function AddEdit(props) {
         const schema = Joi.string().regex(/^[^~!@#;:%^*()+={}|\\<>"',&$\s+]*$/);
         const validateKeyTemplates = ['$userId', '$apiContext', '$apiVersion', '$resourceKey',
             '$appTenant', '$apiTenant', '$appId', '$clientIp', '$customProperty'];
+        let isWrongPatern = false;
         switch (fieldName) {
             case 'policyName':
                 if (value === '') {
@@ -198,10 +199,18 @@ function AddEdit(props) {
                 break;
             case 'keyTemplate':
                 keys = value.split(':');
+                isWrongPatern = keys.map((obj) => {
+                    let partialIsValid = false;
+                    partialIsValid = validateKeyTemplates.includes(obj);
+                    if (!partialIsValid && obj.indexOf('$customProperty') !== -1) {
+                        partialIsValid = true;
+                    }
+                    return partialIsValid;
+                }).includes(false);
                 if (value === '') {
                     error = (fieldName + ' is Empty');
                 } else if (value.indexOf(' ') !== -1
-                || keys.map((obj) => validateKeyTemplates.includes(obj)).includes(false)) {
+                || isWrongPatern) {
                     error = intl.formatMessage({
                         id: 'Throttling.Custom.Policy.policy.invalid.key.template',
                         defaultMessage: 'Invalid Key Template',
@@ -374,7 +383,7 @@ function AddEdit(props) {
                                     defaultMessage={'The specific combination of attributes being checked '
                                         + 'in the policy need to be defined as the key template. Allowed values are : '
                                         + '$userId, $apiContext, $apiVersion, $resourceKey, $appTenant, $apiTenant,'
-                                        + ' $appId, $clientIp, $customProperty'}
+                                        + ' $appId, $clientIp, $customProperty, $customProperty.somevalue'}
                                 />
                             )}
                         />
