@@ -472,14 +472,14 @@ public class APIGatewayManager {
                 boolean isProductionEndpointSecured = false;
                 boolean isSandboxEndpointSecured = false;
                 if (!endpoints.isNull(APIConstants.ENDPOINT_SECURITY_PRODUCTION)) {
-                    productionEndpointSecurity = (JSONObject)  endpoints.get(APIConstants.ENDPOINT_SECURITY_PRODUCTION);
-                    isProductionEndpointSecured = (boolean)
-                            productionEndpointSecurity.get(APIConstants.ENDPOINT_SECURITY_ENABLED);
+                    productionEndpointSecurity = (JSONObject) endpoints.get(APIConstants.ENDPOINT_SECURITY_PRODUCTION);
+                    isProductionEndpointSecured =
+                            (boolean) productionEndpointSecurity.get(APIConstants.ENDPOINT_SECURITY_ENABLED);
                 }
                 if (!endpoints.isNull(APIConstants.ENDPOINT_SECURITY_SANDBOX)) {
                     sandboxEndpointSecurity = (JSONObject) endpoints.get(APIConstants.ENDPOINT_SECURITY_SANDBOX);
-                    isSandboxEndpointSecured = (boolean)
-                            sandboxEndpointSecurity.get(APIConstants.ENDPOINT_SECURITY_ENABLED);
+                    isSandboxEndpointSecured =
+                            (boolean) sandboxEndpointSecurity.get(APIConstants.ENDPOINT_SECURITY_ENABLED);
                 }
                 String secureVaultAlias = api.getId().getProviderName() + "--" + api.getId().getApiName() +
                         api.getId().getVersion();
