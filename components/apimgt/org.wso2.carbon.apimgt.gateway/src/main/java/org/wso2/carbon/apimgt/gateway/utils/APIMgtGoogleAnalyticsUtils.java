@@ -21,9 +21,11 @@ import org.apache.axiom.om.impl.builder.StAXOMBuilder;
 import org.apache.axis2.util.JavaUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.client.HttpClient;
 import org.wso2.carbon.apimgt.gateway.handlers.analytics.Constants;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder;
+import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.ganalytics.publisher.GoogleAnalyticsConstants;
 import org.wso2.carbon.ganalytics.publisher.GoogleAnalyticsData;
@@ -174,7 +176,9 @@ public class APIMgtGoogleAnalyticsUtils {
                     .build();
 
             String payload = GoogleAnalyticsDataPublisher.buildPayloadString(data);
-            GoogleAnalyticsDataPublisher.publishGET(payload, userAgent, false);
+            HttpClient client = APIUtil.getHttpClient(GoogleAnalyticsConstants.HTTP_ENDPOINT_HOST +
+                    GoogleAnalyticsConstants.HTTP_ENDPOINT_URI + "?" + payload);
+            GoogleAnalyticsDataPublisher.publishGET(payload, userAgent, false, client);
         } catch (Exception e) {
             // flow should not break if event publishing failed. Therefore catching generic Exception and ignoring
             log.error("Cannot publish event. " + e.getMessage(), e);
