@@ -780,8 +780,7 @@ public class APIMappingUtil {
                     gwEndpoints = environment.getWebsocketGatewayEndpoint().split(",");
                 } else if (APIConstants.GRAPHQL_API.equalsIgnoreCase(api.getType())) {
                     gwEndpoints = environment.getApiGatewayEndpoint().split(",");
-                    GraphQLSchemaDefinition gqlSchema = new GraphQLSchemaDefinition();
-                    if (gqlSchema.isSubscriptionAvailable(apiConsumer.getGraphqlSchema(api.getId()))) {
+                    if (isGraphQLSubscriptionsAvailable(api)) {
                         String[] gwWSEndpoints = environment.getWebsocketGatewayEndpoint().split(",");
                         gwEndpoints = ArrayUtils.addAll(gwEndpoints, gwWSEndpoints);
                     }
@@ -1074,4 +1073,16 @@ public class APIMappingUtil {
         return subscriptionAllowed;
     }
 
+    /**
+     * Check if GraphQL API has at least one of SUBSCRIPTION type operations.
+     *
+     * @param api GraphQL API
+     * @return true if subscriptions exists
+     */
+    private static boolean isGraphQLSubscriptionsAvailable(API api) {
+
+        return api.getUriTemplates().stream()
+                .filter(uriTemplate -> APIConstants.GRAPHQL_SUBSCRIPTION.equalsIgnoreCase(uriTemplate.getHTTPVerb()))
+                .findAny().orElse(null) != null;
+    }
 }
