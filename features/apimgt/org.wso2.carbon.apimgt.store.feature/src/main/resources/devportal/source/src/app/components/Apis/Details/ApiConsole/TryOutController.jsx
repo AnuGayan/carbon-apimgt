@@ -856,8 +856,6 @@ function TryOutController(props) {
                                                         ))
                                                     )}
                                                 </TextField>
-                                                {console.log('hello')}
-                                                {console.log(URLs)}
                                                 {api && api.type === 'GRAPHQL' && (
                                                     <>
                                                         <Typography className={classes.verticalSpace} variant='body1'>
