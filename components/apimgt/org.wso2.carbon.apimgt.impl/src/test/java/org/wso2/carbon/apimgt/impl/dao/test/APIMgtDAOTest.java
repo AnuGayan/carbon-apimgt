@@ -385,10 +385,8 @@ public class APIMgtDAOTest {
         application.setId(applicationId);
         assertTrue(applicationId > 0);
         Application[] results = apiMgtDAO.getApplicationsByOwner(ownerId, 100, 0);
-        System.out.println(results);
         Application expectedApplication = null;
         for (Application result : results) {
-            System.out.println();
             if (result.getName().equals("testApplication4")) {
                 expectedApplication = result;
             }
