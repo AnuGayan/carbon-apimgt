@@ -90,15 +90,15 @@ public class WebsocketUtil {
 	 *
 	 */
 	protected static void initParams() {
-			APIManagerConfiguration config = ServiceReferenceHolder.getInstance().getAPIManagerConfiguration();
-			String cacheEnabled = config.getFirstProperty(APIConstants.GATEWAY_TOKEN_CACHE_ENABLED);
-			if (cacheEnabled != null) {
-				gatewayTokenCacheEnabled = Boolean.parseBoolean(cacheEnabled);
-			}
-			String value = config.getFirstProperty(APIConstants.REMOVE_OAUTH_HEADERS_FROM_MESSAGE);
-			if (value != null) {
-				removeOAuthHeadersFromOutMessage = Boolean.parseBoolean(value);
-			}
+		APIManagerConfiguration config = ServiceReferenceHolder.getInstance().getAPIManagerConfiguration();
+		String cacheEnabled = config.getFirstProperty(APIConstants.GATEWAY_TOKEN_CACHE_ENABLED);
+		if (cacheEnabled != null) {
+			gatewayTokenCacheEnabled = Boolean.parseBoolean(cacheEnabled);
+		}
+		String value = config.getFirstProperty(APIConstants.REMOVE_OAUTH_HEADERS_FROM_MESSAGE);
+		if (value != null) {
+			removeOAuthHeadersFromOutMessage = Boolean.parseBoolean(value);
+		}
 	}
 
 	public static boolean isRemoveOAuthHeadersFromOutMessage() {
@@ -192,13 +192,13 @@ public class WebsocketUtil {
 	 * @return true if request is throttled out
 	 */
 	public static boolean isThrottled(String resourceLevelThrottleKey, String subscriptionLevelThrottleKey,
-	                           String applicationLevelThrottleKey) {
+			String applicationLevelThrottleKey) {
 		boolean isApiLevelThrottled = ServiceReferenceHolder.getInstance().getThrottleDataHolder()
-				                                                              .isAPIThrottled(resourceLevelThrottleKey);
+				.isAPIThrottled(resourceLevelThrottleKey);
 		boolean isSubscriptionLevelThrottled = ServiceReferenceHolder.getInstance().getThrottleDataHolder()
-				                                                              .isThrottled(subscriptionLevelThrottleKey);
+				.isThrottled(subscriptionLevelThrottleKey);
 		boolean isApplicationLevelThrottled = ServiceReferenceHolder.getInstance().getThrottleDataHolder()
-				                                                              .isThrottled(applicationLevelThrottleKey);
+				.isThrottled(applicationLevelThrottleKey);
 		return (isApiLevelThrottled || isApplicationLevelThrottled || isSubscriptionLevelThrottled);
 	}
 
@@ -567,6 +567,7 @@ public class WebsocketUtil {
 			String apiKey, InboundMessageContext inboundMessageContext) throws APISecurityException {
 		String cacheKey;
 		APIKeyValidationInfoDTO info = null;
+		boolean prefixAdded = false;
 
 		log.debug("The token was identified as an OAuth token");
 		//If the key have already been validated
@@ -578,8 +579,10 @@ public class WebsocketUtil {
 				//This prefix is added for synapse to dispatch this request to the specific sequence
 				if (APIConstants.API_KEY_TYPE_PRODUCTION.equals(info.getType())) {
 					inboundMessageContext.setUri("/_PRODUCTION_" + inboundMessageContext.getUri());
+					prefixAdded = true;
 				} else if (APIConstants.API_KEY_TYPE_SANDBOX.equals(info.getType())) {
 					inboundMessageContext.setUri("/_SANDBOX_" + inboundMessageContext.getUri());
+					prefixAdded = true;
 				}
 
 				inboundMessageContext.setInfoDTO(info);
@@ -607,12 +610,13 @@ public class WebsocketUtil {
 			WebsocketUtil.putCache(info, apiKey, cacheKey);
 		}
 		//This prefix is added for synapse to dispatch this request to the specific sequence
-		if (APIConstants.API_KEY_TYPE_PRODUCTION.equals(info.getType())) {
-			inboundMessageContext.setUri("/_PRODUCTION_" + inboundMessageContext.getUri());
-		} else if (APIConstants.API_KEY_TYPE_SANDBOX.equals(info.getType())) {
-			inboundMessageContext.setUri("/_SANDBOX_" + inboundMessageContext.getUri());
+		if (!prefixAdded) {
+			if (APIConstants.API_KEY_TYPE_PRODUCTION.equals(info.getType())) {
+				inboundMessageContext.setUri("/_PRODUCTION_" + inboundMessageContext.getUri());
+			} else if (APIConstants.API_KEY_TYPE_SANDBOX.equals(info.getType())) {
+				inboundMessageContext.setUri("/_SANDBOX_" + inboundMessageContext.getUri());
+			}
 		}
-
 		inboundMessageContext.setToken(info.getEndUserToken());
 		inboundMessageContext.setInfoDTO(info);
 		responseDTO.setError(false);
