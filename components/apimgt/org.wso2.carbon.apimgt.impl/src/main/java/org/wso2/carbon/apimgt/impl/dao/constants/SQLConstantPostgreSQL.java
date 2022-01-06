@@ -224,6 +224,20 @@ public class SQLConstantPostgreSQL extends SQLConstants{
                     " ) ORDER BY $1 $2 " +
                     " offset ? limit  ? ";
 
+    public static final String GET_APPLICATIONS_BY_OWNER =
+            "SELECT " +
+                    "   UUID, " +
+                    "   APPLICATION_ID, " +
+                    "   NAME," +
+                    "   CREATED_BY, " +
+                    "   APPLICATION_STATUS, " +
+                    "   GROUP_ID  " +
+                    " FROM" +
+                    "   AM_APPLICATION " +
+                    " WHERE " +
+                    "   CREATED_BY = ?" +
+                    " LIMIT ? OFFSET ? ";
+
     public static final String GET_REPLIES_SQL =
             "SELECT " +
                 "AM_API_COMMENTS.COMMENT_ID, " +

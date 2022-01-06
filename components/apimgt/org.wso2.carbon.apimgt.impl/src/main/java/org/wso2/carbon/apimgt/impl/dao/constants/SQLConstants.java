@@ -1109,7 +1109,7 @@ public class SQLConstants {
             "   AM_APPLICATION " +
             " WHERE " +
             "   CREATED_BY = ?" +
-            "   LIMIT ?, ? ";
+            " LIMIT ? , ? ";
 
     public static final String UPDATE_APPLICATION_OWNER =
             "UPDATE AM_APPLICATION " +

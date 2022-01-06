@@ -4147,6 +4147,8 @@ public class ApiMgtDAO {
      * Returns all applications created by given user Id
      *
      * @param userId
+     * @param limit
+     * @param offset
      * @return
      * @throws APIManagementException
      */
@@ -4157,10 +4159,13 @@ public class ApiMgtDAO {
         ResultSet rs = null;
         Application[] applications = null;
 
-        String sqlQuery = SQLConstants.GET_APPLICATIONS_BY_OWNER;
-
+        String sqlQuery = SQLConstantManagerFactory.getSQlString("GET_APPLICATIONS_BY_OWNER");
         try {
             connection = APIMgtDBUtil.getConnection();
+            String driverName = connection.getMetaData().getDriverName();
+            if (driverName.contains("Oracle")) {
+                limit = offset + limit;
+            }
             prepStmt = connection.prepareStatement(sqlQuery);
             prepStmt.setString(1, userId);
             prepStmt.setInt(2, offset);

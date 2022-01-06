@@ -221,6 +221,20 @@ public class SQLConstantsH2MySQL extends SQLConstants{
                     " ) ORDER BY $1 $2 " +
                     " limit ? , ? ";
 
+    public static final String GET_APPLICATIONS_BY_OWNER =
+            "SELECT " +
+                    "   UUID, " +
+                    "   APPLICATION_ID, " +
+                    "   NAME," +
+                    "   CREATED_BY, " +
+                    "   APPLICATION_STATUS, " +
+                    "   GROUP_ID  " +
+                    " FROM" +
+                    "   AM_APPLICATION " +
+                    " WHERE " +
+                    "   CREATED_BY = ?" +
+                    " LIMIT ? , ? ";
+
     public static final String GET_ALL_SERVICES_BY_WITH_SERVICE_KEY = "SELECT " +
             "   UUID," +
             "   SERVICE_KEY," +

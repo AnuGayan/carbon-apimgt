@@ -224,6 +224,20 @@ public class SQLConstantsDB2 extends SQLConstants{
                 "AND PARENT_COMMENT_ID = ? " +
                 "ORDER BY AM_API_COMMENTS.CREATED_TIME ASC LIMIT ? , ?";
 
+    public static final String GET_APPLICATIONS_BY_OWNER =
+            "SELECT " +
+                    "   UUID, " +
+                    "   APPLICATION_ID, " +
+                    "   NAME," +
+                    "   CREATED_BY, " +
+                    "   APPLICATION_STATUS, " +
+                    "   GROUP_ID  " +
+                    " FROM" +
+                    "   AM_APPLICATION " +
+                    " WHERE " +
+                    "   CREATED_BY = ?" +
+                    " LIMIT ? , ? ";
+
     public static final String GET_ROOT_COMMENTS_SQL =
             "SELECT " +
                 "AM_API_COMMENTS.COMMENT_ID, " +

@@ -74,6 +74,7 @@ import org.wso2.carbon.apimgt.impl.dto.APIKeyInfoDTO;
 import org.wso2.carbon.apimgt.impl.dto.ApplicationRegistrationWorkflowDTO;
 import org.wso2.carbon.apimgt.impl.dto.TierPermissionDTO;
 import org.wso2.carbon.apimgt.impl.factory.KeyManagerHolder;
+import org.wso2.carbon.apimgt.impl.factory.SQLConstantManagerFactory;
 import org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.impl.notifier.Notifier;
 import org.wso2.carbon.apimgt.impl.utils.APIMgtDBUtil;
@@ -134,6 +135,7 @@ public class APIMgtDAOTest {
         PowerMockito.mockStatic(KeyManagerHolder.class);
         keyManager = Mockito.mock(KeyManager.class);
         APIMgtDBUtil.initialize();
+        SQLConstantManagerFactory.initializeSQLConstantManager();
         apiMgtDAO = ApiMgtDAO.getInstance();
         IdentityTenantUtil.setRealmService(new TestRealmService());
         String identityConfigPath = System.getProperty("IdentityConfigurationPath");
@@ -366,6 +368,30 @@ public class APIMgtDAOTest {
         assertTrue(applicationId > 0);
         this.checkApplicationsEqual(application, apiMgtDAO.getApplicationByName("testApplication3", null, "org2"));
 
+    }
+
+    @Test
+    public void testAddGetApplicationByOwnerId() throws Exception {
+
+        Subscriber subscriber = new Subscriber("OWNER1");
+        subscriber.setEmail("owner1@wso2.com");
+        subscriber.setSubscribedDate(new Date());
+        subscriber.setTenantId(MultitenantConstants.SUPER_TENANT_ID);
+        apiMgtDAO.addSubscriber(subscriber, "org2");
+        Application application = new Application("testApplication4", subscriber);
+        application.setGroupId("org2");
+        String ownerId = application.getSubscriber().getName();
+        int applicationId = apiMgtDAO.addApplication(application, subscriber.getName());
+        application.setId(applicationId);
+        assertTrue(applicationId > 0);
+        Application[] results = apiMgtDAO.getApplicationsByOwner(ownerId, 100, 0);
+        Application expectedApplication = null;
+        for (Application result : results) {
+            if (result.getName().equals("testApplication4")) {
+                expectedApplication = result;
+            }
+        }
+        assertNotNull(expectedApplication);
     }
 
     @Test
