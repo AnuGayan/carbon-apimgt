@@ -46,6 +46,8 @@ public class InboundMessageContext {
     private SignedJWTInfo signedJWTInfo;
     private String userIP;
     private AuthenticationContext authContext;
+    private boolean isJWTToken;
+    private String apiKey;
 
     // Graphql Subscription specific connection context information
     private Map<String, GraphQLOperationDTO> graphQLMsgIdToVerbInfo = new HashMap<>();
@@ -156,5 +158,21 @@ public class InboundMessageContext {
 
     public void setAuthContext(AuthenticationContext authContext) {
         this.authContext = authContext;
+    }
+
+    public boolean isJWTToken() {
+        return isJWTToken;
+    }
+
+    public void setJWTToken(boolean JWTToken) {
+        isJWTToken = JWTToken;
+    }
+
+    public String getApiKey() {
+        return apiKey;
+    }
+
+    public void setApiKey(String apiKey) {
+        this.apiKey = apiKey;
     }
 }

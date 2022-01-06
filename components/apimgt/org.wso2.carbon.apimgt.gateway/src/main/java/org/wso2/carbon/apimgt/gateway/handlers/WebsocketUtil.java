@@ -41,9 +41,13 @@ import org.slf4j.LoggerFactory;
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.gateway.APIMgtGatewayConstants;
 import org.wso2.carbon.apimgt.gateway.dto.InboundProcessorResponseDTO;
+import org.wso2.carbon.apimgt.gateway.graphQL.GraphQLConstants;
+import org.wso2.carbon.apimgt.gateway.handlers.security.APIKeyValidator;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityConstants;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityException;
+import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityUtils;
 import org.wso2.carbon.apimgt.gateway.handlers.security.AuthenticationContext;
+import org.wso2.carbon.apimgt.gateway.handlers.security.jwt.JWTValidator;
 import org.wso2.carbon.apimgt.gateway.handlers.throttling.APIThrottleConstants;
 import org.wso2.carbon.apimgt.gateway.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.impl.APIConstants;
@@ -548,5 +552,76 @@ public class WebsocketUtil {
 			// flow should not break if event publishing failed
 			log.error("Cannot publish event. " + e.getMessage(), e);
 		}
+	}
+
+	/**
+	 * Authenticates OAuth token in incoming GraphQL subscription requests/responses or in WebSocket Handshake requests.
+	 *
+	 * @param responseDTO           InboundProcessorResponseDTO
+	 * @param apiKey                API key (token)
+	 * @param inboundMessageContext InboundMessageContext
+	 * @return InboundProcessorResponseDTO
+	 * @throws APISecurityException if an error occurs while retrieving API key data for client
+	 */
+	public static InboundProcessorResponseDTO authenticateOAuthToken(InboundProcessorResponseDTO responseDTO,
+			String apiKey, InboundMessageContext inboundMessageContext) throws APISecurityException {
+		String cacheKey;
+		APIKeyValidationInfoDTO info = null;
+
+		log.debug("The token was identified as an OAuth token");
+		//If the key have already been validated
+		if (WebsocketUtil.isGatewayTokenCacheEnabled()) {
+			cacheKey = WebsocketUtil.getAccessTokenCacheKey(apiKey, inboundMessageContext.getUri());
+			info = WebsocketUtil.validateCache(apiKey, cacheKey);
+			if (info != null) {
+
+				//This prefix is added for synapse to dispatch this request to the specific sequence
+				if (APIConstants.API_KEY_TYPE_PRODUCTION.equals(info.getType())) {
+					inboundMessageContext.setUri("/_PRODUCTION_" + inboundMessageContext.getUri());
+				} else if (APIConstants.API_KEY_TYPE_SANDBOX.equals(info.getType())) {
+					inboundMessageContext.setUri("/_SANDBOX_" + inboundMessageContext.getUri());
+				}
+
+				inboundMessageContext.setInfoDTO(info);
+				responseDTO.setError(info.isAuthorized());
+			}
+		}
+		String keyValidatorClientType = APISecurityUtils.getKeyValidatorClientType();
+		if (APIConstants.API_KEY_VALIDATOR_WS_CLIENT.equals(keyValidatorClientType)) {
+			info = getApiKeyDataForWSClient(apiKey, inboundMessageContext.getTenantDomain(),
+					inboundMessageContext.getApiContextUri(), inboundMessageContext.getVersion());
+		} else {
+			responseDTO.setError(true);
+		}
+		if (info == null || !info.isAuthorized()) {
+			responseDTO.setError(true);
+		}
+		if (info.getApiName() != null && info.getApiName().contains("*")) {
+			String[] str = info.getApiName().split("\\*");
+			inboundMessageContext.setVersion(str[1]);
+			inboundMessageContext.setUri("/" + str[1]);
+			info.setApiName(str[0]);
+		}
+		if (WebsocketUtil.isGatewayTokenCacheEnabled()) {
+			cacheKey = WebsocketUtil.getAccessTokenCacheKey(apiKey, inboundMessageContext.getUri());
+			WebsocketUtil.putCache(info, apiKey, cacheKey);
+		}
+		//This prefix is added for synapse to dispatch this request to the specific sequence
+		if (APIConstants.API_KEY_TYPE_PRODUCTION.equals(info.getType())) {
+			inboundMessageContext.setUri("/_PRODUCTION_" + inboundMessageContext.getUri());
+		} else if (APIConstants.API_KEY_TYPE_SANDBOX.equals(info.getType())) {
+			inboundMessageContext.setUri("/_SANDBOX_" + inboundMessageContext.getUri());
+		}
+
+		inboundMessageContext.setToken(info.getEndUserToken());
+		inboundMessageContext.setInfoDTO(info);
+		responseDTO.setError(false);
+		return responseDTO;
+	}
+
+	protected static APIKeyValidationInfoDTO getApiKeyDataForWSClient(String key, String domain, String apiContextUri,
+			String apiVersion) throws APISecurityException {
+
+		return new WebsocketWSClient().getAPIKeyData(apiContextUri, apiVersion, key, domain);
 	}
 }

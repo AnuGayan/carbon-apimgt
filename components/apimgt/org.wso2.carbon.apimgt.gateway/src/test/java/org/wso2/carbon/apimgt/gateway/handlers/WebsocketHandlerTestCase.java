@@ -149,6 +149,7 @@ public class WebsocketHandlerTestCase {
 
         InboundMessageContext inboundMessageContext = new InboundMessageContext();
         inboundMessageContext.setElectedAPI(graphQLAPI);
+        inboundMessageContext.setJWTToken(true);
         InboundMessageContextDataHolder.getInstance().addInboundMessageContextForConnection(channelIdString,
                 inboundMessageContext);
         msg = new TextWebSocketFrame("{\"id\":\"1\",\"type\":\"start\",\"payload\":{\"variables\":{},"

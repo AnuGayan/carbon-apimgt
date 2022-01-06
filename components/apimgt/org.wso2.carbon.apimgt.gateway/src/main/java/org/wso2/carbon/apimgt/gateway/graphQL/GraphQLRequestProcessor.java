@@ -34,6 +34,7 @@ import org.wso2.carbon.apimgt.gateway.dto.GraphQLOperationDTO;
 import org.wso2.carbon.apimgt.gateway.dto.QueryAnalyzerResponseDTO;
 import org.wso2.carbon.apimgt.gateway.handlers.InboundMessageContext;
 import org.wso2.carbon.apimgt.gateway.dto.InboundProcessorResponseDTO;
+import org.wso2.carbon.apimgt.gateway.handlers.WebsocketUtil;
 import org.wso2.carbon.apimgt.gateway.handlers.graphQL.analyzer.SubscriptionAnalyzer;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityException;
 import org.wso2.carbon.apimgt.gateway.internal.DataHolder;
@@ -70,14 +71,16 @@ public class GraphQLRequestProcessor extends GraphQLProcessor {
     public InboundProcessorResponseDTO handleRequest(WebSocketFrame msg, ChannelHandlerContext ctx,
             InboundMessageContext inboundMessageContext, APIMgtUsageDataPublisher usageDataPublisher)
             throws APISecurityException, AxisFault {
-        InboundProcessorResponseDTO responseDTO;
+        InboundProcessorResponseDTO responseDTO = new InboundProcessorResponseDTO();
         GraphQLProcessorUtil.setGraphQLSchemaToDataHolder(inboundMessageContext);
 
         try {
             PrivilegedCarbonContext.startTenantFlow();
             PrivilegedCarbonContext.getThreadLocalCarbonContext()
                     .setTenantDomain(inboundMessageContext.getTenantDomain(), true);
-            responseDTO = authenticateGraphQLJWTToken(inboundMessageContext);
+            responseDTO = inboundMessageContext.isJWTToken() ?
+                    authenticateGraphQLJWTToken(inboundMessageContext) :
+                    authenticateGraphQLOAuthToken(responseDTO, inboundMessageContext);
 
             String msgText = ((TextWebSocketFrame) msg).text();
             JSONObject graphQLMsg = new JSONObject(msgText);

@@ -24,6 +24,7 @@ import org.json.JSONObject;
 import org.wso2.carbon.apimgt.gateway.handlers.InboundMessageContext;
 import org.wso2.carbon.apimgt.gateway.dto.GraphQLOperationDTO;
 import org.wso2.carbon.apimgt.gateway.dto.InboundProcessorResponseDTO;
+import org.wso2.carbon.apimgt.gateway.handlers.WebsocketUtil;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityException;
 import org.wso2.carbon.apimgt.usage.publisher.APIMgtUsageDataPublisher;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
@@ -47,13 +48,15 @@ public class GraphQLResponseProcessor extends GraphQLProcessor {
     public InboundProcessorResponseDTO handleResponse(WebSocketFrame msg, ChannelHandlerContext ctx,
             InboundMessageContext inboundMessageContext, APIMgtUsageDataPublisher usageDataPublisher)
             throws APISecurityException {
-        InboundProcessorResponseDTO responseDTO;
+        InboundProcessorResponseDTO responseDTO = new InboundProcessorResponseDTO();
 
         try {
             PrivilegedCarbonContext.startTenantFlow();
             PrivilegedCarbonContext.getThreadLocalCarbonContext()
                     .setTenantDomain(inboundMessageContext.getTenantDomain(), true);
-            responseDTO = authenticateGraphQLJWTToken(inboundMessageContext);
+            responseDTO = inboundMessageContext.isJWTToken() ?
+                    authenticateGraphQLJWTToken(inboundMessageContext) :
+                    authenticateGraphQLOAuthToken(responseDTO, inboundMessageContext);
 
             String msgText = ((TextWebSocketFrame) msg).text();
             JSONObject graphQLMsg = new JSONObject(msgText);

@@ -67,6 +67,21 @@ public abstract class GraphQLProcessor {
     }
 
     /**
+     * Authenticates OAuth token in incoming GraphQL subscription requests.
+     *
+     * @param responseDTO           InboundProcessorResponseDTO
+     * @param inboundMessageContext InboundMessageContext
+     * @return InboundProcessorResponseDTO
+     * @throws APISecurityException if an error occurs while retrieving API key data for client
+     */
+    public static InboundProcessorResponseDTO authenticateGraphQLOAuthToken(InboundProcessorResponseDTO responseDTO,
+            InboundMessageContext inboundMessageContext) throws APISecurityException {
+
+        return WebsocketUtil.authenticateOAuthToken(responseDTO, inboundMessageContext.getApiKey(),
+                inboundMessageContext);
+    }
+
+    /**
      * Validates scopes for subscription operations.
      *
      * @param inboundMessageContext InboundMessageContext

@@ -165,7 +165,7 @@ public class GraphQLRequestProcessorTest {
     @Test
     public void testHandleRequestAuthError() throws APISecurityException, AxisFault {
 
-        InboundMessageContext inboundMessageContext = new InboundMessageContext();
+        InboundMessageContext inboundMessageContext = createApiMessageContext(graphQLAPI);
         String msgText = "{\"type\":\"connection_init\",\"payload\":{}}";
         TextWebSocketFrame msg = new TextWebSocketFrame(msgText);
         InboundProcessorResponseDTO responseDTO = new InboundProcessorResponseDTO();
@@ -184,7 +184,7 @@ public class GraphQLRequestProcessorTest {
     @Test
     public void testHandleRequestInvalidPayload() throws Exception {
 
-        InboundMessageContext inboundMessageContext = new InboundMessageContext();
+        InboundMessageContext inboundMessageContext = createApiMessageContext(graphQLAPI);
         String msgText = "{\"id\":\"1\",\"type\":\"start\",\"payload\":{\"variables\":{},\"extensions\":{},"
                 + "\"operationName\":null}}";
         TextWebSocketFrame msg = new TextWebSocketFrame(msgText);
@@ -256,7 +256,7 @@ public class GraphQLRequestProcessorTest {
     @Test
     public void testHandleRequestInvalidQueryPayload() throws Exception {
 
-        InboundMessageContext inboundMessageContext = new InboundMessageContext();
+        InboundMessageContext inboundMessageContext = createApiMessageContext(graphQLAPI);
         int msgSize = 100;
         String msgText = "{\"id\":\"1\",\"type\":\"start\",\"payload\":{\"variables\":{},\"extensions\":{},"
                 + "\"operationName\":null,\"query\":\"subscription {\\n  "
@@ -301,7 +301,7 @@ public class GraphQLRequestProcessorTest {
     @Test
     public void testHandleRequestInvalidScope() throws Exception  {
 
-        InboundMessageContext inboundMessageContext = new InboundMessageContext();
+        InboundMessageContext inboundMessageContext = createApiMessageContext(graphQLAPI);
         String msgText = "{\"id\":\"1\",\"type\":\"start\",\"payload\":{\"variables\":{},\"extensions\":{},"
                 + "\"operationName\":null,\"query\":\"subscription {\\n  "
                 + "liftStatusChange {\\n    id\\n    name\\n }\\n}\\n\"}}";
@@ -355,7 +355,7 @@ public class GraphQLRequestProcessorTest {
     @Test
     public void testHandleRequestTooDeep() throws Exception {
 
-        InboundMessageContext inboundMessageContext = new InboundMessageContext();
+        InboundMessageContext inboundMessageContext = createApiMessageContext(graphQLAPI);
         String msgText = "{\"id\":\"1\",\"type\":\"start\",\"payload\":{\"variables\":{},\"extensions\":{},"
                 + "\"operationName\":null,\"query\":\"subscription {\\n  "
                 + "liftStatusChange {\\n    id\\n    name\\n    }\\n}\\n\"}}";
@@ -422,7 +422,7 @@ public class GraphQLRequestProcessorTest {
     @Test
     public void testHandleRequestThrottle() throws Exception {
 
-        InboundMessageContext inboundMessageContext = new InboundMessageContext();
+        InboundMessageContext inboundMessageContext = createApiMessageContext(graphQLAPI);
         String msgText = "{\"id\":\"1\",\"type\":\"start\",\"payload\":{\"variables\":{},\"extensions\":{},"
                 + "\"operationName\":null,\"query\":\"subscription {\\n  "
                 + "liftStatusChange {\\n    id\\n    name\\n    }\\n}\\n\"}}";
@@ -495,6 +495,7 @@ public class GraphQLRequestProcessorTest {
         InboundMessageContext inboundMessageContext = new InboundMessageContext();
         inboundMessageContext.setTenantDomain("carbon.super");
         inboundMessageContext.setElectedAPI(api);
+        inboundMessageContext.setJWTToken(true);
         return inboundMessageContext;
     }
 }

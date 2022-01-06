@@ -288,7 +288,6 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
             PrivilegedCarbonContext.getThreadLocalCarbonContext()
                     .setTenantDomain(inboundMessageContext.getTenantDomain(), true);
             inboundMessageContext.setVersion(getVersionFromUrl(inboundMessageContext.getUri()));
-            APIKeyValidationInfoDTO info = null;
             if (!req.headers().contains(HttpHeaders.AUTHORIZATION)) {
                 QueryStringDecoder decoder = new QueryStringDecoder(req.getUri());
                 Map<String, List<String>> requestMap = decoder.parameters();
@@ -307,9 +306,10 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                     inboundMessageContext.getHeaders().add(HttpHeaders.AUTHORIZATION, authorizationHeader));
             String[] auth = authorizationHeader.split(" ");
             if (APIConstants.CONSUMER_KEY_SEGMENT.equals(auth[0])) {
-                String cacheKey;
                 boolean isJwtToken = false;
+                inboundMessageContext.setJWTToken(isJwtToken);
                 String apiKey = auth[1];
+                inboundMessageContext.setApiKey(apiKey);
                 if (WebsocketUtil.isRemoveOAuthHeadersFromOutMessage()) {
                     req.headers().remove(HttpHeaders.AUTHORIZATION);
                 }
@@ -329,6 +329,7 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                                 .getKeyManagerNameIfJwtValidatorExist(inboundMessageContext.getSignedJWTInfo());
                         if (StringUtils.isNotEmpty(keyManager)) {
                             isJwtToken = true;
+                            inboundMessageContext.setJWTToken(isJwtToken);
                         }
                     } catch (ParseException e) {
                         log.debug("Not a JWT token. Failed to decode the token header.", e);
@@ -339,12 +340,13 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                     }
                 }
                 // Find the authentication scheme based on the token type
-                String apiVersion = inboundMessageContext.getVersion();
+                String apiVersion;
                 boolean isDefaultVersion = false;
                 if ((inboundMessageContext.getApiContextUri().startsWith("/" + inboundMessageContext.getVersion())
                         || inboundMessageContext.getApiContextUri().startsWith(
                         "/t/" + inboundMessageContext.getTenantDomain() + "/" + inboundMessageContext.getVersion()))) {
                     apiVersion = APIConstants.DEFAULT_WEBSOCKET_VERSION;
+                    inboundMessageContext.setVersion(apiVersion);
                     isDefaultVersion = true;
                 }
                 if (isJwtToken) {
@@ -357,53 +359,7 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                         responseDTO = authenticateWSJWTToken(inboundMessageContext, isDefaultVersion);
                     }
                 } else {
-                    log.debug("The token was identified as an OAuth token");
-                    //If the key have already been validated
-                    if (WebsocketUtil.isGatewayTokenCacheEnabled()) {
-                        cacheKey = WebsocketUtil.getAccessTokenCacheKey(apiKey, inboundMessageContext.getUri());
-                        info = WebsocketUtil.validateCache(apiKey, cacheKey);
-                        if (info != null) {
-
-                            //This prefix is added for synapse to dispatch this request to the specific sequence
-                            if (APIConstants.API_KEY_TYPE_PRODUCTION.equals(info.getType())) {
-                                inboundMessageContext.setUri("/_PRODUCTION_" + inboundMessageContext.getUri());
-                            } else if (APIConstants.API_KEY_TYPE_SANDBOX.equals(info.getType())) {
-                                inboundMessageContext.setUri("/_SANDBOX_" + inboundMessageContext.getUri());
-                            }
-
-                            inboundMessageContext.setInfoDTO(info);
-                            responseDTO.setError(info.isAuthorized());
-                        }
-                    }
-                    String keyValidatorClientType = APISecurityUtils.getKeyValidatorClientType();
-                    if (APIConstants.API_KEY_VALIDATOR_WS_CLIENT.equals(keyValidatorClientType)) {
-                        info = getApiKeyDataForWSClient(apiKey, inboundMessageContext.getTenantDomain(),
-                                inboundMessageContext.getApiContextUri(), apiVersion);
-                    } else {
-                        responseDTO.setError(true);
-                    }
-                    if (info == null || !info.isAuthorized()) {
-                        responseDTO.setError(true);
-                    }
-                    if (info.getApiName() != null && info.getApiName().contains("*")) {
-                        String[] str = info.getApiName().split("\\*");
-                        inboundMessageContext.setVersion(str[1]);
-                        inboundMessageContext.setUri("/" + str[1]);
-                        info.setApiName(str[0]);
-                    }
-                    if (WebsocketUtil.isGatewayTokenCacheEnabled()) {
-                        cacheKey = WebsocketUtil.getAccessTokenCacheKey(apiKey, inboundMessageContext.getUri());
-                        WebsocketUtil.putCache(info, apiKey, cacheKey);
-                    }
-                    //This prefix is added for synapse to dispatch this request to the specific sequence
-                    if (APIConstants.API_KEY_TYPE_PRODUCTION.equals(info.getType())) {
-                        inboundMessageContext.setUri("/_PRODUCTION_" + inboundMessageContext.getUri());
-                    } else if (APIConstants.API_KEY_TYPE_SANDBOX.equals(info.getType())) {
-                        inboundMessageContext.setUri("/_SANDBOX_" + inboundMessageContext.getUri());
-                    }
-                    inboundMessageContext.setToken(info.getEndUserToken());
-                    inboundMessageContext.setInfoDTO(info);
-                    responseDTO.setError(false);
+                    responseDTO = WebsocketUtil.authenticateOAuthToken(responseDTO, apiKey, inboundMessageContext);
                 }
             } else {
                 responseDTO.setError(true);
@@ -412,12 +368,6 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
             PrivilegedCarbonContext.endTenantFlow();
         }
         return responseDTO;
-    }
-
-    protected APIKeyValidationInfoDTO getApiKeyDataForWSClient(String key, String domain, String apiContextUri,
-            String apiVersion) throws APISecurityException {
-
-        return new WebsocketWSClient().getAPIKeyData(apiContextUri, apiVersion, key, domain);
     }
 
     protected APIManagerAnalyticsConfiguration getApiManagerAnalyticsConfiguration() {

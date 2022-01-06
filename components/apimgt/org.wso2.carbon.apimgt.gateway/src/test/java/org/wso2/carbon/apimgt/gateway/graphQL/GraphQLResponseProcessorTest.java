@@ -93,7 +93,7 @@ public class GraphQLResponseProcessorTest {
     @Test
     public void testHandleNonSubscribeResponse() throws APISecurityException {
 
-        InboundMessageContext inboundMessageContext = new InboundMessageContext();
+        InboundMessageContext inboundMessageContext = createApiMessageContext(graphQLAPI);
         String msgText = "{\"type\":\"connection_ack\"}";
         TextWebSocketFrame msg = new TextWebSocketFrame(msgText);
         InboundProcessorResponseDTO responseDTO = new InboundProcessorResponseDTO();
@@ -108,7 +108,7 @@ public class GraphQLResponseProcessorTest {
     @Test
     public void testHandleBadResponse() throws APISecurityException {
 
-        InboundMessageContext inboundMessageContext = new InboundMessageContext();
+        InboundMessageContext inboundMessageContext = createApiMessageContext(graphQLAPI);
         String msgText = "{\"type\":\"data\",\"payload\":{\"data\":"
                 + "{\"liftStatusChange\":{\"name\":\"Astra Express\"}}}}";
         TextWebSocketFrame msg = new TextWebSocketFrame(msgText);
@@ -134,7 +134,7 @@ public class GraphQLResponseProcessorTest {
     @Test
     public void testHandleThrottleOut() throws APISecurityException {
 
-        InboundMessageContext inboundMessageContext = new InboundMessageContext();
+        InboundMessageContext inboundMessageContext = createApiMessageContext(graphQLAPI);
         String msgText = "{\"type\":\"data\",\"id\":\"1\",\"payload\":{\"data\":"
                 + "{\"liftStatusChange\":{\"name\":\"Astra Express\"}}}}";
         TextWebSocketFrame msg = new TextWebSocketFrame(msgText);
@@ -168,7 +168,7 @@ public class GraphQLResponseProcessorTest {
     @Test
     public void testHandleInvalidScope() throws APISecurityException {
 
-        InboundMessageContext inboundMessageContext = new InboundMessageContext();
+        InboundMessageContext inboundMessageContext = createApiMessageContext(graphQLAPI);
         String msgText = "{\"type\":\"data\",\"id\":\"1\",\"payload\":{\"data\":"
                 + "{\"liftStatusChange\":{\"name\":\"Astra Express\"}}}}";
         TextWebSocketFrame msg = new TextWebSocketFrame(msgText);
@@ -202,6 +202,7 @@ public class GraphQLResponseProcessorTest {
         InboundMessageContext inboundMessageContext = new InboundMessageContext();
         inboundMessageContext.setTenantDomain("carbon.super");
         inboundMessageContext.setElectedAPI(api);
+        inboundMessageContext.setJWTToken(true);
         return inboundMessageContext;
     }
 }
