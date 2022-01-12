@@ -966,8 +966,8 @@ public class APIAdminImpl implements APIAdmin {
             policies = apiMgtDAO.getGlobalPolicies(tenantId);
         }
 
-        //Get the API Manager configurations and check whether the unlimited tier is disabled. If disabled, remove
-        // the tier from the array.
+        //Get the API Manager configurations and check whether the unlimited tier is disabled. If disabled, remove 
+        //the tier from the array.
         APIManagerConfiguration apiManagerConfiguration = ServiceReferenceHolder.getInstance()
                 .getAPIManagerConfigurationService().getAPIManagerConfiguration();
         ThrottleProperties throttleProperties = apiManagerConfiguration.getThrottleProperties();

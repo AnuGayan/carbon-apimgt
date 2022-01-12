@@ -762,7 +762,6 @@ public class ThrottlingApiServiceImpl implements ThrottlingApiService {
 
             //only super tenant is allowed to access global policies/custom rules
             checkTenantDomainForCustomRules();
-
             GlobalPolicy globalPolicy = GlobalThrottlePolicyMappingUtil.fromGlobalThrottlePolicyDTOToModel(body);
             //Check if there's a policy exists before adding the new policy
             try {
