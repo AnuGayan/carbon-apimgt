@@ -432,7 +432,7 @@ public interface APIAdmin  {
      *
      * @param tenantId  tenant ID of user
      * @param level     policy level
-     * @return
+     * @return a list of policies
      * @throws APIManagementException
      */
     Policy[] getPolicies(int tenantId, String level) throws APIManagementException;
