@@ -149,6 +149,8 @@ function DocList(props) {
     const [selectedIndexB, changeSelectedIndexB] = useState(0);
     const [width] = useWindowSize();
     const [showDocList, setShowDocList] = useState(!(width < 1400));
+    documentList.forEach((a) => a.docs.sort((b, c) => ((b.name.toUpperCase()
+     > c.name.toUpperCase()) ? 1 : -1)));
     const toggleDocList = () => {
         setShowDocList(!showDocList);
     };
