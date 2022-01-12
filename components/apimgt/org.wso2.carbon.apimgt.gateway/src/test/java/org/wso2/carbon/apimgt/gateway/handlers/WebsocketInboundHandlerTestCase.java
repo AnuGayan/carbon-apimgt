@@ -103,6 +103,7 @@ public class WebsocketInboundHandlerTestCase {
             + "fFpjrbqfzFWW-PDqXQ6T5Vx8waySvH4DtzObZu-XI_R0xYgd0zt0R1wUunHW7ZV6sQZRdDPUZETci984B7AAlODm3CW8zdlWey2ldiqd"
             + "GqAXQHIW_iv0C1udag7r5ycMhZr-nP9iJ66pC_KjN__GMYKWjD05dGNsVz4yEvzfqZ_le7_e_VzQ3PHSqiVwhK0FeX_RM9wax1kJASXF"
             + "a2PCF-Pxen60NAuQfjzjToXE98ayAKdKFV_1D1DNc9kOmZGdc8Lp1Dw6HqhSoLeesuLVNamoqrNEJ0auUqx4VrB16Q66T6A";
+    private String UPGRADE = "websocket";
     private String API_KEY = "587hfbt4i8ydno87ywq";
     private String CACHE_KEY = "587hfbt4i8ydno87ywq:https://localhost/1.0";
     private String TOKEN_CACHE_EXPIRY = "900";
@@ -112,6 +113,7 @@ public class WebsocketInboundHandlerTestCase {
     ServiceReferenceHolder serviceReferenceHolder;
     private GraphQLRequestProcessor graphQLRequestProcessor;
     private APIMgtUsageDataPublisher usageDataPublisher;
+    private FullHttpRequest fullHttpRequest;
 
     @Before
     public void setup() throws Exception {
@@ -198,6 +200,7 @@ public class WebsocketInboundHandlerTestCase {
         FullHttpRequest fullHttpRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET,
                 "ws://localhost:8080/graphql");
         fullHttpRequest.headers().set(org.apache.http.HttpHeaders.AUTHORIZATION, AUTHORIZATION);
+        fullHttpRequest.headers().set(org.apache.http.HttpHeaders.UPGRADE, UPGRADE);
         PowerMockito.when(WebsocketUtil.getApi(fullHttpRequest.uri(), SUPER_TENANT_DOMAIN)).thenReturn(websocketAPI);
         JWTValidator jwtValidator = Mockito.mock(JWTValidator.class);
         PowerMockito.whenNew(JWTValidator.class).withAnyArguments().thenReturn(jwtValidator);
@@ -260,6 +263,7 @@ public class WebsocketInboundHandlerTestCase {
         FullHttpRequest fullHttpRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET,
                 "ws://localhost:8080/graphql");
         fullHttpRequest.headers().set(org.apache.http.HttpHeaders.AUTHORIZATION, AUTHORIZATION);
+        fullHttpRequest.headers().set(org.apache.http.HttpHeaders.UPGRADE, UPGRADE);
         PowerMockito.when(WebsocketUtil.getApi(fullHttpRequest.uri(), SUPER_TENANT_DOMAIN)).thenReturn(graphQLAPI);
         JWTValidator jwtValidator = Mockito.mock(JWTValidator.class);
         PowerMockito.whenNew(JWTValidator.class).withAnyArguments().thenReturn(jwtValidator);
