@@ -4228,7 +4228,9 @@ public class ApisApiServiceImpl implements ApisApiService {
     public List<APIOperationsDTO> extractGraphQLOperationList(String schema) {
 
         GraphQLSchemaDefinition graphql = new GraphQLSchemaDefinition();
-        List<URITemplate> operationList = graphql.extractGraphQLOperationList(schema, null);
+        SchemaParser schemaParser = new SchemaParser();
+        TypeDefinitionRegistry typeRegistry = schemaParser.parse(schema);
+        List<URITemplate> operationList = graphql.extractGraphQLOperationList(typeRegistry, null);
         List<APIOperationsDTO> operationArray = APIMappingUtil.fromURITemplateListToOprationList(operationList);
         return operationArray;
     }
