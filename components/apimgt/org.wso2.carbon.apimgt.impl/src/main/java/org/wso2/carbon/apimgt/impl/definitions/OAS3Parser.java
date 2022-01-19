@@ -722,7 +722,8 @@ public class OAS3Parser extends APIDefinition {
             }
         } else {
             // Workaround to populate the null descriptions of response objects with the empty string.
-            OpenAPI openAPI = populateNullDescriptions(parseAttemptForV3.getOpenAPI());
+            populateNullDescriptions(parseAttemptForV3.getOpenAPI());
+            OpenAPI openAPI = parseAttemptForV3.getOpenAPI();
             io.swagger.v3.oas.models.info.Info info = openAPI.getInfo();
             OASParserUtil.updateValidationResponseAsSuccess(
                     validationResponse, apiDefinition, openAPI.getOpenapi(),
@@ -1311,8 +1312,8 @@ public class OAS3Parser extends APIDefinition {
             log.debug("Errors found when parsing OAS definition");
         }
         // Workaround to populate the null descriptions of response objects with the empty string.
-        OpenAPI openAPI = populateNullDescriptions(parseAttemptForV3.getOpenAPI());
-        return openAPI;
+        populateNullDescriptions(parseAttemptForV3.getOpenAPI());
+        return parseAttemptForV3.getOpenAPI();
     }
 
     /**
@@ -1321,9 +1322,8 @@ public class OAS3Parser extends APIDefinition {
      * descriptions with the empty string.
      *
      * @param openAPI OpenAPI object to be updated
-     * @return updated OpenAPI object
      */
-    OpenAPI populateNullDescriptions(OpenAPI openAPI) {
+    private void populateNullDescriptions(OpenAPI openAPI) {
 
         Paths paths = openAPI.getPaths();
         for (String pathKey : paths.keySet()) {
@@ -1338,7 +1338,6 @@ public class OAS3Parser extends APIDefinition {
                 }
             }
         }
-        return openAPI;
     }
 
     /**
