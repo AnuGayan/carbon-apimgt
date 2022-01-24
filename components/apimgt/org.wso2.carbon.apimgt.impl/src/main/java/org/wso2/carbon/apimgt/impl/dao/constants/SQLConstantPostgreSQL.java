@@ -236,7 +236,7 @@ public class SQLConstantPostgreSQL extends SQLConstants{
                     "   AM_APPLICATION " +
                     " WHERE " +
                     "   CREATED_BY = ?" +
-                    " LIMIT ? OFFSET ? ";
+                    " OFFSET ? LIMIT ? ";
 
     public static final String GET_REPLIES_SQL =
             "SELECT " +
