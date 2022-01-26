@@ -118,6 +118,18 @@ export default function Environments() {
             .finally(() => setPublishing(false));
     }
 
+    /**
+     *
+     * Check whether the GraphQL Subscriptions are available
+     */
+    function isGraphQLSubscriptionsAvailable() {
+        const operations = api.operations.filter((operation) => operation.verb === 'SUBSCRIPTION');
+        if (operations && operations.length > 0) {
+            return true;
+        }
+        return false;
+    }
+
     return (
         <>
             <Typography variant='h4' component='h2' gutterBottom>
@@ -183,7 +195,7 @@ export default function Environments() {
                                             <div>{row.endpoints.http}</div>
                                         </>
                                     )}
-                                    {api.isGraphql() && (
+                                    {api.isGraphql() && isGraphQLSubscriptionsAvailable() && (
                                         <>
                                             <div>{row.endpoints.wss}</div>
                                             <div>{row.endpoints.ws}</div>
