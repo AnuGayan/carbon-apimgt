@@ -186,19 +186,117 @@ export default function Environments() {
                                 <TableCell align='left'>
                                     {api.isWebSocket() ? (
                                         <>
-                                            <div>{row.endpoints.wss}</div>
-                                            <div>{row.endpoints.ws}</div>
+                                            <Tooltip
+                                                placement='right'
+                                                title={(
+                                                    <>
+                                                        <FormattedMessage
+                                                            id={'Apis.Details.Environments.Environments.'
+                                                                + 'APIGateways.EndpointUrls.Wss'}
+                                                            defaultMessage='Gateway WebSocket Secure URL'
+                                                        />
+                                                    </>
+                                                )}
+                                            >
+                                                <div>{row.endpoints.wss}</div>
+                                            </Tooltip>
+                                            <Tooltip
+                                                placement='right'
+                                                title={(
+                                                    <>
+                                                        <FormattedMessage
+                                                            id={'Apis.Details.Environments.Environments.'
+                                                                + 'APIGateways.EndpointUrls.Ws'}
+                                                            defaultMessage='Gateway WebSocket URL'
+                                                        />
+                                                    </>
+                                                )}
+                                            >
+                                                <div>{row.endpoints.ws}</div>
+                                            </Tooltip>
                                         </>
                                     ) : (
                                         <>
-                                            <div>{row.endpoints.https}</div>
-                                            <div>{row.endpoints.http}</div>
+                                            <Tooltip
+                                                placement='right'
+                                                title={
+                                                    (api.isGraphql())
+                                                        ? (
+                                                            <FormattedMessage
+                                                                id={'Apis.Details.Environments.Environments.'
+                                                                    + 'APIGateways.EndpointUrls.GraphQL.Https'}
+                                                                defaultMessage={'Gateway HTTPs URL for GraphQL'
+                                                                    + ' Queries and Mutations'}
+                                                            />
+                                                        )
+                                                        : (
+                                                            <FormattedMessage
+                                                                id={'Apis.Details.Environments.Environments.'
+                                                                    + 'APIGateways.EndpointUrls.Https'}
+                                                                defaultMessage='Gateway HTTPs URL'
+                                                            />
+                                                        )
+                                                }
+                                            >
+                                                <div>{row.endpoints.https}</div>
+                                            </Tooltip>
+                                            <Tooltip
+                                                placement='right'
+                                                title={
+                                                    (api.isGraphql())
+                                                        ? (
+                                                            <FormattedMessage
+                                                                id={'Apis.Details.Environments.Environments.'
+                                                                    + 'APIGateways.EndpointUrls.GraphQL.Http'}
+                                                                defaultMessage={'Gateway HTTP URL for GraphQL'
+                                                                    + ' Queries and Mutations'}
+                                                            />
+                                                        )
+                                                        : (
+                                                            <FormattedMessage
+                                                                id={'Apis.Details.Environments.Environments.'
+                                                                    + 'APIGateways.EndpointUrls.Http'}
+                                                                defaultMessage='Gateway HTTP URL'
+                                                            />
+                                                        )
+                                                }
+                                            >
+                                                <div>{row.endpoints.http}</div>
+                                            </Tooltip>
                                         </>
                                     )}
                                     {api.isGraphql() && isGraphQLSubscriptionsAvailable() && (
                                         <>
-                                            <div>{row.endpoints.wss}</div>
-                                            <div>{row.endpoints.ws}</div>
+                                            <Tooltip
+                                                placement='right'
+                                                title={(
+                                                    <>
+                                                        <FormattedMessage
+                                                            id={'Apis.Details.Environments.Environments.'
+                                                                + 'APIGateways.EndpointUrls.GraphQL.Wss'}
+                                                            defaultMessage={'Gateway WebSocket Secure'
+                                                                + ' URL for GraphQL Subscriptions'}
+                                                        />
+                                                    </>
+                                                )}
+                                            >
+                                                <div>{row.endpoints.wss}</div>
+                                            </Tooltip>
+                                            <Tooltip
+                                                placement='right'
+                                                title={(
+                                                    <>
+                                                        <FormattedMessage
+                                                            id={'Apis.Details.Environments.Environments.'
+                                                                + 'APIGateways.EndpointUrls.GraphQL.Ws'}
+                                                            defaultMessage={'Gateway WebSocket'
+                                                                + ' URL for GraphQL Subscriptions'}
+                                                        />
+                                                    </>
+                                                )}
+                                            >
+                                                <div>{row.endpoints.ws}</div>
+                                            </Tooltip>
                                         </>
                                     )}
                                 </TableCell>
