@@ -118,17 +118,9 @@ export default function Environments() {
             .finally(() => setPublishing(false));
     }
 
-    /**
-     *
-     * Check whether the GraphQL Subscriptions are available
-     */
-    function isGraphQLSubscriptionsAvailable() {
-        const operations = api.operations.filter((operation) => operation.verb === 'SUBSCRIPTION');
-        if (operations && operations.length > 0) {
-            return true;
-        }
-        return false;
-    }
+    const existSubscriptions = api.operations.find((operation) => {
+        return operation.verb === 'SUBSCRIPTION';
+    });
 
     return (
         <>
@@ -265,7 +257,7 @@ export default function Environments() {
                                             </Tooltip>
                                         </>
                                     )}
-                                    {api.isGraphql() && isGraphQLSubscriptionsAvailable() && (
+                                    {api.isGraphql() && existSubscriptions && (
                                         <>
                                             <Tooltip
                                                 placement='right'
