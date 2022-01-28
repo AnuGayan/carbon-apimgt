@@ -903,7 +903,7 @@ function TryOutController(props) {
                                                                     variant='outlined'
                                                                     InputProps={URLs && URLs.https}
                                                                 />
-                                                                {URLs && URLs.wss
+                                                                {URLs && (URLs.wss || URLs.ws)
                                                                     && (
                                                                         <TextField
                                                                             label={(
@@ -913,12 +913,12 @@ function TryOutController(props) {
                                                                                         + '.show.more.subscription.URLs'}
                                                                                 />
                                                                             )}
-                                                                            value={URLs && URLs.wss}
+                                                                            value={URLs && (URLs.wss || URLs.ws)}
                                                                             name='selectedWSURL'
                                                                             fullWidth
                                                                             margin='normal'
                                                                             variant='outlined'
-                                                                            InputProps={URLs && URLs.wss}
+                                                                            InputProps={URLs && (URLs.wss || URLs.ws)}
                                                                         />
                                                                     )}
                                                             </>

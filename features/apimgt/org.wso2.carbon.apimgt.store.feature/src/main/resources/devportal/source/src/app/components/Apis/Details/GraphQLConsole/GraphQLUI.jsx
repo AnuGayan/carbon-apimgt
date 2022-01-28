@@ -151,7 +151,7 @@ export default function GraphQLUI(props) {
                             <Box display='flex' height='800px' flexGrow={1}>
                                 <GraphiQL
                                     ref={graphiqlEl}
-                                    fetcher={(queryFetcher(URLs.wss))}
+                                    fetcher={URL.wss ? (queryFetcher(URLs.wss)) : (queryFetcher(URLs.ws))}
                                     schema={schema}
                                     query={query}
                                     onEditQuery={setQuery}
