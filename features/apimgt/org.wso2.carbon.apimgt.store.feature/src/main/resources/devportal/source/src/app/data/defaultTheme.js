@@ -330,34 +330,34 @@ const DefaultConfigurations = {
         languageSwitch: {
             active: false,
             languages: [
-                {
-                    key: 'en',
-                    image: '/site/public/images/flags/en.png',
-                    imageWidth: 24, // in pixles
-                    text: 'English',
-                    direction: 'ltr',
-                },
-                {
-                    key: 'es',
-                    image: '/site/public/images/flags/sp.png',
-                    imageWidth: 24, // in pixles
-                    text: 'Spanish',
-                    direction: 'ltr',
-                },
-                {
-                    key: 'ar',
-                    image: '/site/public/images/flags/ar.png',
-                    imageWidth: 24, // in pixles
-                    text: 'Arabic',
-                    direction: 'rtl',
-                },
-                {
-                    key: 'si',
-                    image: '/site/public/images/flags/si.png',
-                    imageWidth: 24, // in pixles
-                    text: 'Sinhala',
-                    direction: 'ltr',
-                },
+                // {
+                //     key: 'en',
+                //     image: '/site/public/images/flags/en.png',
+                //     imageWidth: 24, // in pixles
+                //     text: 'English',
+                //     direction: 'ltr',
+                // },
+                // {
+                //     key: 'es',
+                //     image: '/site/public/images/flags/sp.png',
+                //     imageWidth: 24, // in pixles
+                //     text: 'Spanish',
+                //     direction: 'ltr',
+                // },
+                // {
+                //     key: 'ar',
+                //     image: '/site/public/images/flags/ar.png',
+                //     imageWidth: 24, // in pixles
+                //     text: 'Arabic',
+                //     direction: 'rtl',
+                // },
+                // {
+                //     key: 'si',
+                //     image: '/site/public/images/flags/si.png',
+                //     imageWidth: 24, // in pixles
+                //     text: 'Sinhala',
+                //     direction: 'ltr',
+                // },
             ],
             showFlag: true,
             showText: true,
