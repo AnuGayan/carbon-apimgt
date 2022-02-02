@@ -30,7 +30,7 @@ import { withStyles } from '@material-ui/core/styles';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 import PropTypes from 'prop-types';
-import { injectIntl } from 'react-intl';
+import { injectIntl, defineMessages } from 'react-intl';
 import Select from '@material-ui/core/Select';
 import Input from '@material-ui/core/Input';
 import Box from '@material-ui/core/Box';
@@ -108,6 +108,57 @@ const AppConfiguration = (props) => {
         }
         return error;
     }
+
+    const AppConfigLabels = defineMessages({
+        application_access_token_expiry_time: {
+          id: 'Shared.AppsAndKeys.AppConfiguration.application.access.token.expiry.time',
+          defaultMessage: 'Application Access Token Expiry Time',
+        },
+        user_access_token_expiry_time: {
+          id: 'Shared.AppsAndKeys.AppConfiguration.user.access.token.expiry.time',
+          defaultMessage: 'User Access Token Expiry Time',
+        },
+        refresh_token_expiry_time: {
+           id: 'Shared.AppsAndKeys.AppConfiguration.refresh.token.expiry.time',
+           defaultMessage: 'Refresh Token Expiry Time',
+        },
+        id_token_expiry_time: {
+           id: 'Shared.AppsAndKeys.AppConfiguration.id.token.expiry.time',
+           defaultMessage: 'Id Token Expiry Time',
+        }
+    });
+
+    const AppConfigToolTips = defineMessages({
+        application_access_token_expiry_time: {
+          id: 'Shared.AppsAndKeys.AppConfiguration.application.access.token.expiry.time.tooltip',
+          defaultMessage: 'Type Application Access Token Expiry Time',
+        },
+        user_access_token_expiry_time: {
+          id: 'Shared.AppsAndKeys.AppConfiguration.user.access.token.expiry.time.tooltip',
+          defaultMessage: 'Type User Access Token Expiry Time',
+        },
+        refresh_token_expiry_time: {
+           id: 'Shared.AppsAndKeys.AppConfiguration.refresh.token.expiry.time.tooltip',
+           defaultMessage: 'Type Refresh Token Expiry Time',
+        },
+        id_token_expiry_time: {
+           id: 'Shared.AppsAndKeys.AppConfiguration.id.token.expiry.time.tooltip',
+           defaultMessage: 'Type ID Token Expiry Time',
+        }
+    });
+
+    const getAppConfigLabel = () => {
+        return AppConfigLabels[config.name]
+            ? props.intl.formatMessage(AppConfigLabels[config.name])
+            : config.label
+    }
+
+    const getAppConfigToolTip = () => {
+        return AppConfigToolTips[config.name]
+            ? props.intl.formatMessage(AppConfigToolTips[config.name])
+            : config.tooltip
+    }
+
     /**
      * Update the state when new props are available
      */
@@ -118,7 +169,7 @@ const AppConfiguration = (props) => {
         <>
             <TableRow>
                 <TableCell component='th' scope='row' className={classes.leftCol}>
-                    {config.label}
+                    {getAppConfigLabel()}
                 </TableCell>
                 <TableCell>
                     <Box maxWidth={600}>
@@ -130,11 +181,11 @@ const AppConfiguration = (props) => {
                             fullWidth
                             id={config.name}
                             select
-                            label={config.label}
+                            label={getAppConfigLabel()}
                             value={selectedValue}
                             name={config.name}
                             onChange={e => handleAppRequestChange(e)}
-                            helperText={(config.required && hasMandatoryError(selectedValue)) || config.tooltip}
+                            helperText={(config.required && hasMandatoryError(selectedValue)) || getAppConfigToolTip()}
                             margin='dense'
                             variant='outlined'
                             disabled={!isUserOwner}
@@ -174,7 +225,7 @@ const AppConfiguration = (props) => {
                                             ))}
                                         </div>
                                     )}
-                                    label={config.label}
+                                    label={getAppConfigLabel()}
                                 >
                                     {config.values.map(key => (
                                         <MenuItem key={key} value={key}>
@@ -183,7 +234,7 @@ const AppConfiguration = (props) => {
                                         </MenuItem>
                                     ))}
                                 </Select>
-                                <FormHelperText>{(config.required && hasMandatoryError(selectedValue)) || config.tooltip}</FormHelperText>                               
+                                <FormHelperText>{(config.required && hasMandatoryError(selectedValue)) || getAppConfigToolTip()}</FormHelperText>
                             </FormControl>
                         </>
                     ) : (config.type === 'input') ? (
@@ -193,11 +244,11 @@ const AppConfiguration = (props) => {
                             }}
                             fullWidth
                             id={config.name}
-                            label={config.label}
+                            label={getAppConfigLabel()}
                             value={selectedValue}
                             name={config.name}
                             onChange={e => handleAppRequestChange(e)}
-                            helperText={(config.required && hasMandatoryError(selectedValue)) || config.tooltip}
+                            helperText={(config.required && hasMandatoryError(selectedValue)) || getAppConfigToolTip()}
                             margin='dense'
                             variant='outlined'
                             disabled={!isUserOwner}
@@ -211,13 +262,13 @@ const AppConfiguration = (props) => {
                                         }}
                                         fullWidth
                                         id={config.name}
-                                        label={config.label}
+                                        label={getAppConfigLabel()}
                                         value={selectedValue}
                                         name={config.name}
                                         onChange={e => handleAppRequestChange(e)}
                                         helperText={
                                             <Typography variant='caption'>
-                                                {config.tooltip}
+                                                {getAppConfigToolTip()}
                                             </Typography>
                                         }
                                         margin='dense'
