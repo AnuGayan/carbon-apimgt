@@ -202,7 +202,20 @@ class ViewToken extends React.Component {
                             className: classes.bootstrapFormLabel,
                         }}
                     />
-                    <Tooltip title={tokenCopied ? 'Copied' : 'Copy to clipboard'} placement='right'>
+                    <Tooltip
+                        title={
+                            tokenCopied
+                                ? intl.formatMessage({
+                                    defaultMessage: 'Copied',
+                                    id: 'Shared.AppsAndKeys.ViewToken.copied',
+                                })
+                                : intl.formatMessage({
+                                    defaultMessage: 'Copy to clipboard',
+                                    id: 'Shared.AppsAndKeys.ViewToken.copy.to.clipboard',
+                                })
+                        }
+                        placement='right'
+                    >
                         <CopyToClipboard text={token.accessToken} onCopy={this.onCopy('tokenCopied')}>
                             <IconButton aria-label='Copy to clipboard'>
                                 <FileCopy color='secondary'>file_copy</FileCopy>

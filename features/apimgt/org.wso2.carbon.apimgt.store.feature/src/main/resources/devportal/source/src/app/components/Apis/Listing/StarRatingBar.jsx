@@ -242,7 +242,7 @@ class StarRatingBar extends React.Component {
                                         ) : (
                                             <Box>
                                                 <Box fontSize={22} ml={1} mb={0.5}>{userRating}</Box>
-                                                <Box>You</Box>
+                                                <Box><FormattedMessage defaultMessage='You' id='Apis.Listing.StarRatingBar.you' /></Box>
                                             </Box>
                                         )}
                                     </Typography>

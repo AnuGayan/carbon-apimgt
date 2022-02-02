@@ -163,7 +163,20 @@ class ViewSecret extends React.Component {
                             className: classes.bootstrapFormLabel,
                         }}
                     />
-                    <Tooltip title={secretCopied ? 'Copied' : 'Copy to clipboard'} placement='right'>
+                    <Tooltip
+                        title={
+                            secretCopied
+                                ? intl.formatMessage({
+                                    defaultMessage: 'Copied',
+                                    id: 'Shared.AppsAndKeys.ViewSecret.copied',
+                                })
+                                : intl.formatMessage({
+                                    defaultMessage: 'Copy to clipboard',
+                                    id: 'Shared.AppsAndKeys.ViewSecret.copy.to.clipboard',
+                                })
+                        }
+                        placement='right'
+                    >
                         <CopyToClipboard text={secret.consumerSecret} onCopy={this.onCopy('secretCopied')}>
                             <FileCopy color='secondary'>file_copy</FileCopy>
                         </CopyToClipboard>

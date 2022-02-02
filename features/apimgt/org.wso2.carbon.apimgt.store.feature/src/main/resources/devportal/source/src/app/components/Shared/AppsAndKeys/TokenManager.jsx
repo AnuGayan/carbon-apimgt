@@ -845,7 +845,15 @@ class TokenManager extends React.Component {
                                                     }
                                                     disabled={!isUserOwner || isLoading || !keymanager.enableOAuthAppCreation}
                                                 >
-                                                    {key ? 'Update keys' : 'Generate Keys'}
+                                                    {key ?
+                                                        this.props.intl.formatMessage({
+                                                            id: 'Shared.AppsAndKeys.TokenManager.update.keys',
+                                                            defaultMessage: 'Update Keys'})
+                                                    :
+                                                    this.props.intl.formatMessage({
+                                                            id: 'Shared.AppsAndKeys.TokenManager.generate.keys',
+                                                            defaultMessage: 'Generate Keys'})
+                                                    }
                                                     {isLoading && <CircularProgress size={20} />}
                                                 </Button>
                                                 <Typography variant='caption'>
@@ -864,7 +872,15 @@ class TokenManager extends React.Component {
                                                     onClick={key ? this.updateKeys : this.generateKeys}
                                                     disabled={hasError || (isLoading || !keymanager.enableOAuthAppCreation) || (mode && mode === 'MAPPED')}
                                                 >
-                                                    {key ? 'Update' : 'Generate Keys'}
+                                                    {key ?
+                                                        this.props.intl.formatMessage({
+                                                            id: 'Shared.AppsAndKeys.TokenManager.update',
+                                                            defaultMessage: 'Update'})
+                                                    :
+                                                        this.props.intl.formatMessage({
+                                                            id: 'Shared.AppsAndKeys.TokenManager.generate.keys',
+                                                            defaultMessage: 'Generate Keys'})
+                                                    }
                                                     {isLoading && <CircularProgress size={20} />}
                                                 </Button>
                                                 {!keymanager.enableOAuthAppCreation && (
