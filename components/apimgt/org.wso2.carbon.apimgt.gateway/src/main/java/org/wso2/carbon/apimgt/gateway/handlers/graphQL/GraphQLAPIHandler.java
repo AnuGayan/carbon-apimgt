@@ -295,7 +295,7 @@ public class GraphQLAPIHandler extends AbstractHandler {
      * @param description description of the error
      * @return the OMElement
      */
-    public OMElement getFaultPayload(String description) {
+    private OMElement getFaultPayload(String description) {
         OMFactory fac = OMAbstractFactory.getOMFactory();
         OMNamespace ns = fac.createOMNamespace(APISecurityConstants.API_SECURITY_NS,
                 APISecurityConstants.API_SECURITY_NS_PREFIX);
