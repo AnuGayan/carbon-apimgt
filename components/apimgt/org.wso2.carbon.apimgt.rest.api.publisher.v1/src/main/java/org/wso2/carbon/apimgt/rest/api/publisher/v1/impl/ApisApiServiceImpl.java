@@ -239,6 +239,12 @@ public class ApisApiServiceImpl implements ApisApiService {
         offset = offset != null ? offset : RestApiConstants.PAGINATION_OFFSET_DEFAULT;
         query = query == null ? "" : query;
         expand = expand != null && expand;
+
+        if (expand) {
+            String errorMessage = "Query parameter 'expand' is not supported";
+            RestApiUtil.handleBadRequest(errorMessage, log);
+        }
+
         try {
 
             //revert content search back to normal search by name to avoid doc result complexity and to comply with REST api practices
