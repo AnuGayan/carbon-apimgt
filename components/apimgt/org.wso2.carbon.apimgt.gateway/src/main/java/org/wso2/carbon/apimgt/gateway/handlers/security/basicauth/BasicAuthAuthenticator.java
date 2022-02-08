@@ -190,7 +190,8 @@ public class BasicAuthAuthenticator implements Authenticator {
             return new AuthenticationResponse(false, isMandatory, true,
                     APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
                     APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE);
-        } else { // username password matches
+        } else {
+            // username password matches
             if (log.isDebugEnabled()) {
                 log.debug("Basic Authentication: Username and Password authenticated");
             }
