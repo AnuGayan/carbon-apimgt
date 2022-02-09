@@ -25,7 +25,7 @@ import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import IconButton from '@material-ui/core/IconButton';
-import { FormattedMessage } from 'react-intl';
+import { FormattedMessage, injectIntl } from 'react-intl';
 import InlineMessage from '../InlineMessage';
 import ViewSecret from './ViewSecret';
 /**
@@ -135,7 +135,7 @@ class ViewToken extends React.Component {
      */
     render() {
         const {
-            classes, token, consumerSecret,
+            classes, token, consumerSecret, intl,
         } = this.props;
         const { tokenCopied } = this.state;
         return (
@@ -267,4 +267,4 @@ ViewToken.propTypes = {
     consumerSecret: PropTypes.string,
 };
 
-export default withStyles(styles)(ViewToken);
+export default injectIntl(withStyles(styles)(ViewToken));

@@ -850,7 +850,7 @@ class TokenManager extends React.Component {
                                                             id: 'Shared.AppsAndKeys.TokenManager.update.keys',
                                                             defaultMessage: 'Update Keys'})
                                                     :
-                                                    this.props.intl.formatMessage({
+                                                        this.props.intl.formatMessage({
                                                             id: 'Shared.AppsAndKeys.TokenManager.generate.keys',
                                                             defaultMessage: 'Generate Keys'})
                                                     }

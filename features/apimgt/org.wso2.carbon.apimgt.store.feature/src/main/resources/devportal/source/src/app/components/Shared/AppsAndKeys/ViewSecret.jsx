@@ -23,7 +23,7 @@ import Tooltip from '@material-ui/core/Tooltip';
 import FileCopy from '@material-ui/icons/FileCopy';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
-import { FormattedMessage } from 'react-intl';
+import { FormattedMessage, injectIntl } from 'react-intl';
 import InlineMessage from '../InlineMessage';
 /**
  *
@@ -120,7 +120,7 @@ class ViewSecret extends React.Component {
      * @memberof ViewSecret
      */
     render() {
-        const { classes, secret } = this.props;
+        const { classes, secret, intl } = this.props;
         const { secretCopied } = this.state;
         return (
             <div className={classes.root}>
@@ -194,4 +194,4 @@ ViewSecret.propTypes = {
     }).isRequired,
 };
 
-export default withStyles(styles)(ViewSecret);
+export default injectIntl(withStyles(styles)(ViewSecret));
