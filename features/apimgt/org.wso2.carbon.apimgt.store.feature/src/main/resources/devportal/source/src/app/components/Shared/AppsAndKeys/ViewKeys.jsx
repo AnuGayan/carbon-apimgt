@@ -292,10 +292,10 @@ class ViewKeys extends React.Component {
                     this.setState({ notFound: true });
                 } else if (status === 400) {
                     Alert1.error(error.description
-                         || intl.formatMessage({
-                             id: 'Shared.AppsAndKeys.TokenManager.key.generate.bad.request.error',
-                             defaultMessage: 'Error occurred when generating Access Token',
-                         }));
+                        || intl.formatMessage({
+                            id: 'Shared.AppsAndKeys.TokenManager.key.generate.bad.request.error',
+                            defaultMessage: 'Error occurred when generating Access Token',
+                        }));
                 }
                 this.setState({ isUpdating: false });
                 const { response } = error;
@@ -520,7 +520,7 @@ class ViewKeys extends React.Component {
         }
         // Get the grant types for the generated keys
         const { supportedGrantTypes: supportedGrantTypesUnchanged } = keys.get(selectedTab);
-        
+
         return consumerKey && (
             <div className={classes.inputWrapper}>
                 <Grid container spacing={3}>
