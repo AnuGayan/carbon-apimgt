@@ -3433,14 +3433,15 @@ public class ApisApiServiceImpl implements ApisApiService {
             apiToAdd.setWsdlUrl(url);
             API createdApi = null;
             if (isSoapAPI) {
-                createdApi = importSOAPAPI(fileInputStream, fileDetail, url, apiToAdd);
+                createdApi = importSOAPAPI(validationResponse.getWsdlProcessor().getWSDL(), fileDetail, url, apiToAdd);
             } else if (isSoapToRestConvertedAPI) {
                 String wsdlArchiveExtractedPath = null;
                 if (validationResponse.getWsdlArchiveInfo() != null) {
                     wsdlArchiveExtractedPath = validationResponse.getWsdlArchiveInfo().getLocation()
                             + File.separator + APIConstants.API_WSDL_EXTRACTED_DIRECTORY;
                 }
-                createdApi = importSOAPToRESTAPI(fileInputStream, fileDetail, url, wsdlArchiveExtractedPath, apiToAdd);
+                createdApi = importSOAPToRESTAPI(validationResponse.getWsdlProcessor().getWSDL(), fileDetail, url,
+                        wsdlArchiveExtractedPath, apiToAdd);
             } else {
                 RestApiUtil.handleBadRequest("Invalid implementationType parameter", log);
             }
@@ -3471,22 +3472,6 @@ public class ApisApiServiceImpl implements ApisApiService {
         if (validationResponse.getWsdlInfo() == null) {
             // Validation failure
             RestApiUtil.handleBadRequest(validationResponse.getError(), log);
-        }
-
-        if (fileInputStream != null) {
-            if (fileInputStream.markSupported()) {
-                // For uploading the WSDL below will require re-reading from the input stream hence resetting
-                try {
-                    fileInputStream.reset();
-                } catch (IOException e) {
-                    throw new APIManagementException("Error occurred while trying to reset the content stream of the " +
-                            "WSDL", e);
-                }
-            } else {
-                log.warn("Marking is not supported in 'fileInputStream' InputStream type: "
-                        + fileInputStream.getClass() + ". Skipping validating WSDL to avoid re-reading from the " +
-                        "input stream.");
-            }
         }
         return validationResponse;
     }
