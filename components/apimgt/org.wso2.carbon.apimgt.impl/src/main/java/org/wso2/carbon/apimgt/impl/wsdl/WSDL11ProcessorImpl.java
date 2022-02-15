@@ -485,6 +485,15 @@ public class WSDL11ProcessorImpl extends AbstractWSDLProcessor {
                 log.debug("Gateway endpoint for environment:" + environmentName + " is: "
                         + ((HTTPAddressImpl) exElement).getLocationURI());
             }
+        } else if (exElement instanceof UnknownExtensibilityElement) {
+            Element unknownExtensibilityElement = ((UnknownExtensibilityElement) exElement).getElement();
+            if (unknownExtensibilityElement != null) {
+                NodeList nodeList = unknownExtensibilityElement.getElementsByTagNameNS(APIConstants.WSDL_NAMESPACE_URI,
+                        APIConstants.WSDL_ELEMENT_LOCAL_NAME);
+                if (nodeList != null && nodeList.getLength() > 0) {
+                    nodeList.item(0).setTextContent(APIUtil.getGatewayendpoint(transports) + context);
+                }
+            }
         } else {
             if (log.isDebugEnabled()) {
                 log.debug("WSDL address element type is not supported for WSDL element type: " + exElement
