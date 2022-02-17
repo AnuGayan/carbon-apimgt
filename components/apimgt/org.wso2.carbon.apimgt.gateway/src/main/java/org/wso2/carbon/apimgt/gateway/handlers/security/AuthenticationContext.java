@@ -17,7 +17,10 @@
 package org.wso2.carbon.apimgt.gateway.handlers.security;
 
 import org.wso2.carbon.apimgt.gateway.MethodStats;
+
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Contains some context information related to an authenticated request. This can be used
@@ -37,6 +40,7 @@ public class AuthenticationContext {
     private String applicationId;
     private String applicationUUID;
     private String applicationName;
+    private Set<String> applicationGroupIds;
     private String consumerKey;
     private String subscriber;
     private List<String> throttlingDataList;
@@ -252,5 +256,13 @@ public class AuthenticationContext {
 
     public void setApplicationUUID(String applicationUUID) {
         this.applicationUUID = applicationUUID;
+    }
+
+    public Set<String> getApplicationGroupIds() {
+        return applicationGroupIds;
+    }
+
+    public void setApplicationGroupIds(Set<String> applicationGroupIds) {
+        this.applicationGroupIds = applicationGroupIds;
     }
 }
