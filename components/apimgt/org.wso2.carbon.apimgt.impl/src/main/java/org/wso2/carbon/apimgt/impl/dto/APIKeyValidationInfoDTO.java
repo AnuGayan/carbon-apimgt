@@ -19,7 +19,10 @@
 package org.wso2.carbon.apimgt.impl.dto;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * This class represent the API key validation Info DTO.
