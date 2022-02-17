@@ -37,7 +37,7 @@ public class Application implements CacheableEntity<Integer> {
     private String subName = null;
     private String policy = null;
     private String tokenType = null;
-    private List<String> groupIds = new ArrayList<>();
+    private List<GroupId> groupIds = new ArrayList<>();
     private Map<String, String> attributes = new ConcurrentHashMap<>();
 
     public Integer getId() {
@@ -95,14 +95,19 @@ public class Application implements CacheableEntity<Integer> {
         return getId();
     }
 
-    public List<String> getGroupIds() {
+    public List<GroupId> getGroupIds() {
 
         return groupIds;
     }
 
-    public void addGroupId(String groupId) {
+    public void addGroupId(GroupId groupId) {
 
         this.groupIds.add(groupId);
+    }
+
+    public void setGroupIds(List<GroupId> groupIds) {
+
+        this.groupIds = groupIds;
     }
 
     public void removeGroupId(String groupId) {
