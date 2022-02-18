@@ -33,7 +33,7 @@ import Api from 'AppData/api';
 import AuthManager from 'AppData/AuthManager';
 import StarRatingSummary from 'AppComponents/Apis/Details/StarRatingSummary';
 import Rating from '@material-ui/lab/Rating';
-import { FormattedMessage } from 'react-intl';
+import { FormattedMessage, injectIntl } from 'react-intl';
 
 const styles = (theme) => ({
     starRate: {
@@ -163,7 +163,7 @@ class StarRatingBar extends React.Component {
      * @memberof StarRatingBar
      */
     doRate(rateIndex) {
-        const { apiId } = this.props;
+        const { apiId, intl } = this.props;
         const api = new Api();
         const ratingInfo = { rating: rateIndex };
         const promise = api.addRating(apiId, ratingInfo);
@@ -172,7 +172,10 @@ class StarRatingBar extends React.Component {
                 this.getApiRating();
             })
             .catch((error) => {
-                Alert.error('Error occurred while adding ratings');
+                Alert.error(intl.formatMessage({
+                    defaultMessage: 'Error occurred while adding ratings',
+                    id: 'Apis.Listing.StarRatingBar.error.occurred.adding',
+                }));
                 if (process.env.NODE_ENV !== 'production') {
                     console.log(error);
                 }
@@ -186,7 +189,7 @@ class StarRatingBar extends React.Component {
      * @memberof StarRatingBar
      */
     removeUserRating() {
-        const { apiId, setRatingUpdate } = this.props;
+        const { apiId, setRatingUpdate, intl } = this.props;
         const api = new Api();
         // remove user rating
         api.removeRatingOfUser(apiId, null)
@@ -195,7 +198,10 @@ class StarRatingBar extends React.Component {
                 setRatingUpdate();
             })
             .catch((error) => {
-                Alert.error('Error occurred while removing ratings');
+                Alert.error(intl.formatMessage({
+                    defaultMessage: 'Error occurred while removing ratings',
+                    id: 'Apis.Listing.StarRatingBar.error.occurred',
+                }));
                 if (process.env.NODE_ENV !== 'production') {
                     console.log(error);
                 }
@@ -325,4 +331,4 @@ StarRatingBar.propTypes = {
     setRatingUpdate: PropTypes.func,
 };
 
-export default withStyles(styles, { withTheme: true })(StarRatingBar);
+export default injectIntl(withStyles(styles, { withTheme: true })(StarRatingBar));
