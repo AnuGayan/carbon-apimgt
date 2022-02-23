@@ -106,7 +106,6 @@ public class Application implements CacheableEntity<Integer> {
     }
 
     public void setGroupIds(List<GroupId> groupIds) {
-
         this.groupIds = groupIds;
     }
 
