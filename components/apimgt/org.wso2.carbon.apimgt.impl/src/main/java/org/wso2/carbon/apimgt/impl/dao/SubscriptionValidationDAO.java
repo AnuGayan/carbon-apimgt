@@ -135,8 +135,7 @@ public class SubscriptionValidationDAO {
                 if (StringUtils.isNotEmpty(attributeName) && StringUtils.isNotEmpty(attributeValue)) {
                     application.addAttribute(attributeName, attributeValue);
                 }
-                // todo read from the aplication_group_mapping table and make it a set
-
+                //read from the aplication_group_mapping table and make it a set
                 String groupId = resultSet.getString("GROUP_ID");
                 if (StringUtils.isNotEmpty(groupId)) {
                     application.addGroupId(groupId);

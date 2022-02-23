@@ -18,7 +18,6 @@ package org.wso2.carbon.apimgt.gateway.handlers.security;
 
 import org.wso2.carbon.apimgt.gateway.MethodStats;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 

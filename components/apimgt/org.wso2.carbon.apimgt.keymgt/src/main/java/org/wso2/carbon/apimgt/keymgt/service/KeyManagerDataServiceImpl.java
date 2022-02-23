@@ -354,7 +354,7 @@ public class KeyManagerDataServiceImpl implements KeyManagerDataService {
         application.setUUID(event.getUuid());
         event.getAttributes().forEach(application::addAttribute);
         application.setSubName(event.getSubscriber());
-        //TODO add group ids list to application
+        //add group ids list to application
         if (!StringUtils.isEmpty(event.getGroupId())) {
             String[] groupIdArray = event.getGroupId().split(",");
             List<GroupId> groupIdList = Arrays.asList(groupIdArray).stream().map(id -> {
@@ -363,8 +363,6 @@ public class KeyManagerDataServiceImpl implements KeyManagerDataService {
                 groupId.setGroupId(id);
                 return groupId;
             }).collect(Collectors.toList());
-
-
         }
         if (log.isDebugEnabled()) {
             log.debug("Event: " + event.toString());
