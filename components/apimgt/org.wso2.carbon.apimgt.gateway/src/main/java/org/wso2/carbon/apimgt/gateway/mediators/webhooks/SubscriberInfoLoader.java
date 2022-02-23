@@ -176,7 +176,8 @@ public class SubscriberInfoLoader extends AbstractMediator {
         authContext.setApplicationName(app.getName());
         authContext.setSubscriber(app.getSubName());
         authContext.setKeyType(app.getTokenType());
-        authContext.setApplicationGroupIds(app.getGroupIds().stream().map(GroupId::getGroupId).collect(Collectors.toSet()));
+        authContext.setApplicationGroupIds(app.getGroupIds().stream().map(GroupId::getGroupId)
+                .collect(Collectors.toSet()));
     }
 
 }
