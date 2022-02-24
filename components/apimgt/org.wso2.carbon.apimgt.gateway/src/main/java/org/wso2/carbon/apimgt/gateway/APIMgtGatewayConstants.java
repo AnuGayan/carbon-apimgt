@@ -187,6 +187,7 @@ public class APIMgtGatewayConstants {
     public static final String REQUESTBODIES = "requestBodies";
     public static final String JSONPATH_SCHEMAS = "$..components.schemas.";
     public static final String JSON_SCHEMA = ".content.application/json.schema";
+    public static final String SCHEMA_VALIDATION_REPORT = "schema-validation-report";
 
     /**
      * Constants for trust store access
