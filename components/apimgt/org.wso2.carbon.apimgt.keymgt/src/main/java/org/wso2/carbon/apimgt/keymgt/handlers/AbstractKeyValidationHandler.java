@@ -18,7 +18,6 @@
 
 package org.wso2.carbon.apimgt.keymgt.handlers;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.apimgt.api.APIManagementException;
@@ -34,6 +33,7 @@ import org.wso2.carbon.apimgt.keymgt.model.entity.ApiPolicy;
 import org.wso2.carbon.apimgt.keymgt.model.entity.Application;
 import org.wso2.carbon.apimgt.keymgt.model.entity.ApplicationKeyMapping;
 import org.wso2.carbon.apimgt.keymgt.model.entity.ApplicationPolicy;
+import org.wso2.carbon.apimgt.keymgt.model.entity.GroupId;
 import org.wso2.carbon.apimgt.keymgt.model.entity.Subscription;
 import org.wso2.carbon.apimgt.keymgt.model.entity.SubscriptionPolicy;
 import org.wso2.carbon.apimgt.keymgt.model.exception.DataLoadingException;
@@ -46,6 +46,7 @@ import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public abstract class AbstractKeyValidationHandler implements KeyValidationHandler {
 
@@ -388,6 +389,7 @@ public abstract class AbstractKeyValidationHandler implements KeyValidationHandl
         infoDTO.setApplicationName(app.getName());
         infoDTO.setApplicationTier(app.getPolicy());
         infoDTO.setApplicationUUID(app.getUUID());
+        infoDTO.setApplicationGroupIds(app.getGroupIds().stream().map(GroupId::getGroupId).collect(Collectors.toSet()));
         infoDTO.setAppAttributes(app.getAttributes());
         infoDTO.setType(type);
 
@@ -497,6 +499,8 @@ public abstract class AbstractKeyValidationHandler implements KeyValidationHandl
         infoDTO.setApplicationName(app.getName());
         infoDTO.setApplicationTier(app.getPolicy());
         infoDTO.setApplicationUUID(app.getUUID());
+        infoDTO.setApplicationGroupIds(app.getGroupIds().stream().map(GroupId::getGroupId)
+                .collect(Collectors.toSet()));
         infoDTO.setAppAttributes(app.getAttributes());
         infoDTO.setType(type);
 
