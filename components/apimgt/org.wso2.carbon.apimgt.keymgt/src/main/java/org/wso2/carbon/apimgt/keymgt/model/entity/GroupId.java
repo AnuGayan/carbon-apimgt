@@ -1,7 +1,7 @@
 package org.wso2.carbon.apimgt.keymgt.model.entity;
 
 /**
- * Entity for keeping GroupId and application id details
+ * Entity for keeping Group ID and Application ID details
  */
 public class GroupId {
     private String groupId = null;
