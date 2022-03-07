@@ -68,8 +68,8 @@ public class APIKeyValidationInfoDTO implements Serializable {
     private int graphQLMaxComplexity;
     private String apiVersion;
     private String applicationUUID;
-    private Set<String> applicationGroupIds = new HashSet<>();
     private Map<String, String> appAttributes;
+    private Set<String> applicationGroupIds = new HashSet<>();
 
     public List<String> getThrottlingDataList() {
         return throttlingDataList;
@@ -382,14 +382,6 @@ public class APIKeyValidationInfoDTO implements Serializable {
         this.applicationUUID = applicationUUID;
     }
 
-    public Set<String> getApplicationGroupIds() {
-        return applicationGroupIds;
-    }
-
-    public void setApplicationGroupIds(Set<String> applicationGroupIds) {
-        this.applicationGroupIds = applicationGroupIds;
-    }
-
     public Map<String, String> getAppAttributes() {
 
         return appAttributes;
@@ -398,6 +390,14 @@ public class APIKeyValidationInfoDTO implements Serializable {
     public void setAppAttributes(Map<String, String> appAttributes) {
 
         this.appAttributes = appAttributes;
+    }
+
+    public Set<String> getApplicationGroupIds() {
+        return applicationGroupIds;
+    }
+
+    public void setApplicationGroupIds(Set<String> applicationGroupIds) {
+        this.applicationGroupIds = applicationGroupIds;
     }
 }
 
