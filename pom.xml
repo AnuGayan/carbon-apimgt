@@ -19,7 +19,7 @@
         <url>https://github.com/wso2-support/carbon-apimgt</url>
         <developerConnection>scm:git:https://github.com/wso2-support/carbon-apimgt</developerConnection>
         <connection>scm:git:https://github.com/wso2-support/carbon-apimgt</connection>
-        
+
       <tag>HEAD</tag>
   </scm>
 
