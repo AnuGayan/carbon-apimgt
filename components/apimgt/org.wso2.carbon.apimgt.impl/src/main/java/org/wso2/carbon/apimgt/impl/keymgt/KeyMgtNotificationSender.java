@@ -31,7 +31,7 @@ public class KeyMgtNotificationSender {
                         .getEventHubConfigurationDto();
 
         if (eventHubConfigurationDto.isEnabled()) {
-            APIUtil.publishEventToTrafficManager(Collections.EMPTY_MAP, keyManagerEvent);
+            APIUtil.publishEventToEventHub(Collections.EMPTY_MAP, keyManagerEvent);
         }
     }
 }

@@ -6833,7 +6833,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         ThrottleProperties throttleProperties = getAPIManagerConfiguration().getThrottleProperties();
 
         if (throttleProperties.getDataPublisher() != null && throttleProperties.getDataPublisher().isEnabled()) {
-            APIUtil.publishEventToTrafficManager(Collections.EMPTY_MAP, blockingMessage);
+            APIUtil.publishEventToEventHub(Collections.EMPTY_MAP, blockingMessage);
         }
     }
 
@@ -6846,7 +6846,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
 
 
         if (throttleProperties.getDataPublisher() != null && throttleProperties.getDataPublisher().isEnabled()) {
-            APIUtil.publishEventToTrafficManager(Collections.EMPTY_MAP, keyTemplateMessage);
+            APIUtil.publishEventToEventHub(Collections.EMPTY_MAP, keyTemplateMessage);
         }
     }
 
