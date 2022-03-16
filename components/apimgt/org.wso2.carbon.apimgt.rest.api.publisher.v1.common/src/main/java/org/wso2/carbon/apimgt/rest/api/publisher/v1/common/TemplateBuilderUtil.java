@@ -513,17 +513,20 @@ public class TemplateBuilderUtil {
                 productResource.setEndpointConfig(api.getEndpointConfig());
                 if (StringUtils.isNotEmpty(api.getInSequence())) {
                     String sequenceName = APIUtil.getSequenceExtensionName(apiProduct.getId().getName(),
-                            apiProduct.getId().getVersion()) + APIConstants.API_CUSTOM_SEQ_IN_EXT;
+                            apiProduct.getId().getVersion()).concat("--").concat(apiId)
+                            + APIConstants.API_CUSTOM_SEQ_IN_EXT;
                     productResource.setInSequenceName(sequenceName);
                 }
                 if (StringUtils.isNotEmpty(api.getOutSequence())) {
                     String sequenceName = APIUtil.getSequenceExtensionName(apiProduct.getId().getName(),
-                            apiProduct.getId().getVersion()) + APIConstants.API_CUSTOM_SEQ_OUT_EXT;
+                            apiProduct.getId().getVersion()).concat("--").concat(apiId)
+                            + APIConstants.API_CUSTOM_SEQ_OUT_EXT;
                     productResource.setOutSequenceName(sequenceName);
                 }
                 if (StringUtils.isNotEmpty(api.getFaultSequence())) {
                     String sequenceName = APIUtil.getSequenceExtensionName(apiProduct.getId().getName(),
-                            apiProduct.getId().getVersion()) + APIConstants.API_CUSTOM_SEQ_FAULT_EXT;
+                            apiProduct.getId().getVersion()).concat("--").concat(apiId)
+                            + APIConstants.API_CUSTOM_SEQ_FAULT_EXT;
                     productResource.setFaultSequenceName(sequenceName);
                 }
                 productResource.setProductIdentifier(apiProduct.getId());
