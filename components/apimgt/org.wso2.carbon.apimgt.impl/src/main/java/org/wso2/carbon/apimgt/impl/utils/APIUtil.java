@@ -8035,16 +8035,6 @@ public final class APIUtil {
 
     }
 
-    public static String getSubscriberRecipient() {
-        return ServiceReferenceHolder.getInstance().getAPIManagerConfigurationService().getAPIManagerConfiguration().
-                getFirstProperty(APIConstants.SUBSCRIBER_CONFIGURATION_RECIPIENT);
-    }
-
-    public static String getSubscriberDelimeter() {
-        return ServiceReferenceHolder.getInstance().getAPIManagerConfigurationService().getAPIManagerConfiguration().
-                getFirstProperty(APIConstants.SUBSCRIBER_CONFIGURATION_DELIMITER);
-    }
-
     /**
      * Used to get CORSConfiguration according to the API artifact
      *
@@ -8074,11 +8064,6 @@ public final class APIUtil {
         List<String> allowMethodsStringSet = Arrays.asList(getAllowedMethods().split(","));
         List<String> allowOriginsStringSet = Arrays.asList(getAllowedOrigins().split(","));
         return new CORSConfiguration(false, allowOriginsStringSet, false, allowHeadersStringSet, allowMethodsStringSet);
-    }
-
-    public static JSONObject getSubscriberAttributes() {
-        return ServiceReferenceHolder.getInstance().getAPIManagerConfigurationService().getAPIManagerConfiguration()
-                .getSubscriberAttributes();
     }
 
     /**
