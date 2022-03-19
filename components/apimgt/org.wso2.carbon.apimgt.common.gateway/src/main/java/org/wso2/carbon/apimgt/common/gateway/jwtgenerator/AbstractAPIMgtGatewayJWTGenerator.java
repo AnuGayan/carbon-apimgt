@@ -20,7 +20,6 @@ package org.wso2.carbon.apimgt.common.gateway.jwtgenerator;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jwt.JWTClaimsSet;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.apimgt.common.gateway.constants.JWTConstants;
@@ -32,7 +31,6 @@ import org.wso2.carbon.apimgt.common.gateway.util.JWTUtil;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.util.Date;
@@ -200,8 +198,7 @@ public abstract class AbstractAPIMgtGatewayJWTGenerator {
     }
 
     public String encode(byte[] stringToBeEncoded) throws JWTGeneratorException {
-        return new String(new Base64(0, null, true).
-                encode(stringToBeEncoded), StandardCharsets.UTF_8);
+        return java.util.Base64.getUrlEncoder().encodeToString(stringToBeEncoded);
     }
 
     public String getDialectURI() {
