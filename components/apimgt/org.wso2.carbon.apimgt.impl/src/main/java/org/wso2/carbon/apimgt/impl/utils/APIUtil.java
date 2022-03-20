@@ -8066,6 +8066,21 @@ public final class APIUtil {
         return new CORSConfiguration(false, allowOriginsStringSet, false, allowHeadersStringSet, allowMethodsStringSet);
     }
 
+    public static String getSubscriberRecipient() {
+        return ServiceReferenceHolder.getInstance().getAPIManagerConfigurationService().getAPIManagerConfiguration().
+                getFirstProperty(APIConstants.SUBSCRIBER_CONFIGURATION_RECIPIENT);
+    }
+
+    public static String getSubscriberDelimeter() {
+        return ServiceReferenceHolder.getInstance().getAPIManagerConfigurationService().getAPIManagerConfiguration().
+                getFirstProperty(APIConstants.SUBSCRIBER_CONFIGURATION_DELIMITER);
+    }
+
+    public static JSONObject getSubscriberAttributes() {
+        return ServiceReferenceHolder.getInstance().getAPIManagerConfigurationService().getAPIManagerConfiguration()
+                .getSubscriberAttributes();
+    }
+
     /**
      * Used to get API name from synapse API Name
      *
