@@ -728,7 +728,9 @@ public class APIManagerConfiguration {
                 subscriberAttributes.put(APIConstants.SUBSCRIBER_CONFIGURATION_RECIPIENT,
                         emailRecipientElement.getText());
             } else {
-                log.debug("Subscriber recipient field is set to default (cc).");
+                if (log.isDebugEnabled()) {
+                    log.debug("Subscriber recipient field is set to default (cc).");
+                }
             }
 
             OMElement emailDelimiterElement = subscriberContactConfigurationElement
@@ -737,7 +739,9 @@ public class APIManagerConfiguration {
                 subscriberAttributes.put(APIConstants.SUBSCRIBER_CONFIGURATION_DELIMITER,
                         emailDelimiterElement.getText());
             } else {
-                log.debug("Subscriber email delimiter field is set to default (,).");
+                if (log.isDebugEnabled()) {
+                    log.debug("Subscriber email delimiter field is set to default (,).");
+                }
             }
         }
     }
