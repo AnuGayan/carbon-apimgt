@@ -8076,6 +8076,10 @@ public final class APIUtil {
                 getFirstProperty(APIConstants.SUBSCRIBER_CONFIGURATION_DELIMITER);
     }
 
+    /**
+     * Used to get Subscriber attributes from config
+     *
+     */
     public static JSONObject getSubscriberAttributes() {
         return ServiceReferenceHolder.getInstance().getAPIManagerConfigurationService().getAPIManagerConfiguration()
                 .getSubscriberAttributes();
