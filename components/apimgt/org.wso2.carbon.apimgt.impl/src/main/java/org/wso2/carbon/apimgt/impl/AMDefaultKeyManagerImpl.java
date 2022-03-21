@@ -101,7 +101,7 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
     private ScopeClient scopeClient;
     private UserClient userClient;
     private Boolean encoded;
-    private String isConsumerKeyEncoded;
+    private Boolean isConsumerKeyEncoded;
 
     @Override
     public OAuthApplicationInfo createApplication(OAuthAppRequest oauthAppRequest) throws APIManagementException {
@@ -374,7 +374,7 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
 
         try {
             encoded = false;
-            if (isConsumerKeyEncoded.equalsIgnoreCase("true")) {
+            if (isConsumerKeyEncoded) {
                 encoded = true;
                 consumerKey = Base64.getUrlEncoder().encodeToString(consumerKey.getBytes(StandardCharsets.UTF_8));
             }
@@ -519,7 +519,7 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
         ClientInfo clientInfo;
         try {
             encoded = false;
-            if (isConsumerKeyEncoded.equalsIgnoreCase("true")) {
+            if (isConsumerKeyEncoded) {
                 encoded = true;
                 consumerKey = Base64.getUrlEncoder().encodeToString(consumerKey.getBytes(StandardCharsets.UTF_8));
             }
@@ -685,7 +685,7 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
                 .requestInterceptor(new TenantHeaderInterceptor(tenantDomain))
                 .errorDecoder(new KMClientErrorDecoder())
                 .target(UserClient.class, userInfoEndpoint);
-        isConsumerKeyEncoded = System.getProperty(ENCODE_CONSUMER_KEY, "false");
+        isConsumerKeyEncoded = Boolean.parseBoolean(System.getProperty(ENCODE_CONSUMER_KEY, "false"));
     }
 
     @Override
