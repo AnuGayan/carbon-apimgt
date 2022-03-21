@@ -77,7 +77,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -99,6 +101,7 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
     private ScopeClient scopeClient;
     private UserClient userClient;
     private Boolean encoded;
+    private String isConsumerKeyEncoded;
 
     @Override
     public OAuthApplicationInfo createApplication(OAuthAppRequest oauthAppRequest) throws APIManagementException {
@@ -371,7 +374,6 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
 
         try {
             encoded = false;
-            String isConsumerKeyEncoded = System.getProperty(ENCODE_CONSUMER_KEY, "false");
             if (isConsumerKeyEncoded.equalsIgnoreCase("true")) {
                 encoded = true;
                 consumerKey = Base64.getUrlEncoder().encodeToString(consumerKey.getBytes(StandardCharsets.UTF_8));
@@ -517,7 +519,6 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
         ClientInfo clientInfo;
         try {
             encoded = false;
-            String isConsumerKeyEncoded = System.getProperty(ENCODE_CONSUMER_KEY, "false");
             if (isConsumerKeyEncoded.equalsIgnoreCase("true")) {
                 encoded = true;
                 consumerKey = Base64.getUrlEncoder().encodeToString(consumerKey.getBytes(StandardCharsets.UTF_8));
@@ -684,6 +685,7 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
                 .requestInterceptor(new TenantHeaderInterceptor(tenantDomain))
                 .errorDecoder(new KMClientErrorDecoder())
                 .target(UserClient.class, userInfoEndpoint);
+        isConsumerKeyEncoded = System.getProperty(ENCODE_CONSUMER_KEY, "false");
     }
 
     @Override
