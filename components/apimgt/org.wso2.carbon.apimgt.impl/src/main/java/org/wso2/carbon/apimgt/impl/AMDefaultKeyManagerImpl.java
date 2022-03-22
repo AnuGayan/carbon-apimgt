@@ -77,7 +77,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -91,12 +93,15 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
 
     private static final Log log = LogFactory.getLog(AMDefaultKeyManagerImpl.class);
     private static final String GRANT_TYPE_VALUE = "client_credentials";
+    private static final String ENCODE_CONSUMER_KEY = "encodeConsumerKey";
 
     private DCRClient dcrClient;
     private IntrospectionClient introspectionClient;
     private AuthClient authClient;
     private ScopeClient scopeClient;
     private UserClient userClient;
+    private Boolean encoded;
+    private Boolean isConsumerKeyEncoded;
 
     @Override
     public OAuthApplicationInfo createApplication(OAuthAppRequest oauthAppRequest) throws APIManagementException {
@@ -368,7 +373,12 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
         }
 
         try {
-            ClientInfo clientInfo = dcrClient.getApplication(consumerKey);
+            encoded = false;
+            if (isConsumerKeyEncoded) {
+                encoded = true;
+                consumerKey = Base64.getUrlEncoder().encodeToString(consumerKey.getBytes(StandardCharsets.UTF_8));
+            }
+            ClientInfo clientInfo = dcrClient.getApplication(consumerKey, encoded);
             return buildDTOFromClientInfo(clientInfo, new OAuthApplicationInfo());
         } catch (KeyManagerClientException e) {
             if (e.getStatusCode() == 404) {
@@ -508,7 +518,12 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
         //check whether given consumer key and secret match or not. If it does not match throw an exception.
         ClientInfo clientInfo;
         try {
-            clientInfo = dcrClient.getApplication(consumerKey);
+            encoded = false;
+            if (isConsumerKeyEncoded) {
+                encoded = true;
+                consumerKey = Base64.getUrlEncoder().encodeToString(consumerKey.getBytes(StandardCharsets.UTF_8));
+            }
+            clientInfo = dcrClient.getApplication(consumerKey, encoded);
             buildDTOFromClientInfo(clientInfo, oAuthApplicationInfo);
         } catch (KeyManagerClientException e) {
             handleException("Some thing went wrong while getting OAuth application for given consumer key " +
@@ -670,6 +685,7 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
                 .requestInterceptor(new TenantHeaderInterceptor(tenantDomain))
                 .errorDecoder(new KMClientErrorDecoder())
                 .target(UserClient.class, userInfoEndpoint);
+        isConsumerKeyEncoded = Boolean.parseBoolean(System.getProperty(ENCODE_CONSUMER_KEY, "false"));
     }
 
     @Override
