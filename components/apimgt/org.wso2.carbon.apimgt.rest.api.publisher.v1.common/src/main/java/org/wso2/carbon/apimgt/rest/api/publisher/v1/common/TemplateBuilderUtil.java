@@ -617,7 +617,11 @@ public class TemplateBuilderUtil {
         gatewayAPIDTO.setTenantDomain(tenantDomain);
 
         String definition;
-        org.json.JSONObject endpointConfig = new org.json.JSONObject(api.getEndpointConfig());
+        String endpointConfigString = api.getEndpointConfig();
+        org.json.JSONObject endpointConfig = null;
+        if (StringUtils.isNotBlank(endpointConfigString)) {
+            endpointConfig = new org.json.JSONObject(endpointConfigString);
+        }
 
         if (api.getType() != null && APIConstants.APITransportType.GRAPHQL.toString().equals(api.getType())) {
             //Build schema with additional info
@@ -671,7 +675,7 @@ public class TemplateBuilderUtil {
         // If the API exists in the Gateway and If the Gateway type is 'production' and a production url has not been
         // specified Or if the Gateway type is 'sandbox' and a sandbox url has not been specified
 
-        if (!APIConstants.ENDPOINT_TYPE_AWSLAMBDA
+        if (endpointConfig != null && !APIConstants.ENDPOINT_TYPE_AWSLAMBDA
                 .equals(endpointConfig.get(APIConstants.API_ENDPOINT_CONFIG_PROTOCOL_TYPE)) && ((
                 APIConstants.GATEWAY_ENV_TYPE_PRODUCTION.equals(environment.getType()) && !APIUtil
                         .isProductionEndpointsExists(api.getEndpointConfig())) || (
@@ -700,7 +704,7 @@ public class TemplateBuilderUtil {
         } else if (APIConstants.IMPLEMENTATION_TYPE_ENDPOINT.equalsIgnoreCase(api.getImplementation())) {
             String apiConfig = builder.getConfigStringForTemplate(environment);
             gatewayAPIDTO.setApiDefinition(apiConfig);
-            if (!endpointConfig.get(APIConstants.API_ENDPOINT_CONFIG_PROTOCOL_TYPE)
+            if (endpointConfig != null && !endpointConfig.get(APIConstants.API_ENDPOINT_CONFIG_PROTOCOL_TYPE)
                     .equals(APIConstants.ENDPOINT_TYPE_AWSLAMBDA)) {
                 if (!isWsApi) {
                     addEndpoints(api, builder, gatewayAPIDTO);
