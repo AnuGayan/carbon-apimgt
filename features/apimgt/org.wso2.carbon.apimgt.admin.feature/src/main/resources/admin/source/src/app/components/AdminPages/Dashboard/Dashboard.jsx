@@ -24,7 +24,6 @@ import RateLimitingCard from 'AppComponents/AdminPages/Dashboard/RateLimitingCar
 import TasksWorkflowCard from 'AppComponents/AdminPages/Dashboard/TasksWorkflowCard';
 import { useAppContext } from 'AppComponents/Shared/AppContext';
 
-
 /**
  * Render progress inside a container centering in the container.
  * @returns {JSX} Loading animation.
