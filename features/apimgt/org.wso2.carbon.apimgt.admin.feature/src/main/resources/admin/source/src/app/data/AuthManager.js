@@ -145,7 +145,10 @@ class AuthManager {
         if (scopes.includes('apim:admin')) {
             return true;
         } else {
-            const { minScopesToLogin } = Configurations.app;
+            let { minScopesToLogin } = Configurations.app;
+            if (!minScopesToLogin) {
+                minScopesToLogin = CONSTS.DEFAULT_MIN_SCOPES_TO_LOGIN;
+            }
             for (let i = 0; i < minScopesToLogin.length; i++) {
                 if (!scopes.includes(minScopesToLogin[i])) {
                     return false;
