@@ -140,7 +140,7 @@ public class WorkflowUtils {
                     apiStateWFDto.getTenantDomain(), apiStateWFDto.getMetadata("ApiName"),
                     Integer.parseInt(apiStateWFDto.getWorkflowReference()), apiStateWFDto.getApiUUID(),
                     apiStateWFDto.getMetadata("ApiVersion"),
-                    apiStateWFDto.getApiType(), apiStateWFDto.getApiContext(),
+                    apiStateWFDto.getApiType(), apiStateWFDto.getMetadata( "ApiContext"),
                     apiStateWFDto.getMetadata("ApiProvider"),
                     apiStateWFDto.getMetadata("Action"));
             APIUtil.sendNotification(apiEvent, APIConstants.NotifierType.API.name());
