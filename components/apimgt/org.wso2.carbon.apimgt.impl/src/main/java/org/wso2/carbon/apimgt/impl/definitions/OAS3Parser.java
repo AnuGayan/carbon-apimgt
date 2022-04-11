@@ -514,6 +514,7 @@ public class OAS3Parser extends APIDefinition {
                 }
             } else if (openAPI.getExtensions() != null
                     && openAPI.getExtensions().containsKey(APIConstants.SWAGGER_X_WSO2_SECURITY)) {
+                // get scopes from legacy extensions when schemes are not present
                 return OASParserUtil.sortScopes(getScopesFromExtensions(openAPI));
             }
             return OASParserUtil.sortScopes(scopeSet);
