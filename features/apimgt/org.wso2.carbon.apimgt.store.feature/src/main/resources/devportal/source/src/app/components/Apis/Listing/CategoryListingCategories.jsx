@@ -17,6 +17,7 @@
  */
 import React from 'react';
 import PropTypes from 'prop-types';
+import classNames from 'classnames';
 import { useTheme, makeStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import List from '@material-ui/core/List';
@@ -46,7 +47,8 @@ const useStyles = makeStyles((theme) => ({
         fontWeight: 200,
         paddingLeft: theme.spacing(2),
         background: theme.custom.tagCloud.leftMenu.titleBackground,
-        color: theme.palette.getContrastText(theme.custom.tagCloud.leftMenu.titleBackground),
+        color: theme.custom.tagCloud.leftMenu.sliderColor
+            || theme.palette.getContrastText(theme.custom.tagCloud.leftMenu.titleBackground),
         height: theme.custom.infoBar.height,
         alignItems: 'center',
         display: 'flex',
@@ -84,10 +86,10 @@ function CategoryListingCategories(props) {
     return allCategories && allCategories.length > 0 ? (
         (
             <>
-                <Typography variant='h6' gutterBottom className={classes.filterTitle}>
+                <Typography variant='h6' gutterBottom className={classNames(classes.filterTitle, 'api-cat-title')}>
                     <FormattedMessage defaultMessage='API Categories' id='Apis.Listing.CategoryListingCategories.title' />
                 </Typography>
-                <List component='nav' aria-label='main mailbox folders'>
+                <List component='nav' aria-label='main mailbox folders' className='category-listing-categories'>
                     {Object.keys(allCategories).map((key) => {
                         return <APICategoryThumb key={key} category={allCategories[key]} path={tagWiseURL} style={style} />;
                     })}
@@ -95,7 +97,7 @@ function CategoryListingCategories(props) {
             </>
         )
     ) : (
-        <div className={classes.mainTitle}>
+        <div className={classNames(classes.mainTitle, 'category-listing-categories-empty')}>
             <Typography variant='subtitle1' gutterBottom align='center'>
                 <FormattedMessage
                     defaultMessage='Categories cannot be found'

@@ -276,6 +276,7 @@ const DefaultConfigurations = {
                 titleBackground: '#222',
                 sliderBackground: '#222',
                 sliderWidth: 25,
+                sliderColor: '#000',
                 hasIcon: false,
             },
         },

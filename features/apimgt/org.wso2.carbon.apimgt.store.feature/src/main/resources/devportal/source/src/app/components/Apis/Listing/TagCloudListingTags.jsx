@@ -56,7 +56,8 @@ const useStyles = makeStyles((theme) => ({
         fontWeight: 200,
         paddingLeft: theme.spacing(2),
         background: theme.custom.tagCloud.leftMenu.titleBackground,
-        color: theme.palette.getContrastText(theme.custom.tagCloud.leftMenu.titleBackground),
+        color: theme.custom.tagCloud.leftMenu.sliderColor
+        || theme.palette.getContrastText(theme.custom.tagCloud.leftMenu.titleBackground),
         height: theme.custom.infoBar.height,
         alignItems: 'center',
         display: 'flex',
@@ -109,11 +110,16 @@ function TagCloudListingTags(props) {
     return apisTagCloudGroup && apisTagCloudGroup.length > 0 ? (
         <>
             {!mainPage && (
-                <Typography variant='h6' gutterBottom className={classes.filterTitle}>
+                <Typography variant='h6' gutterBottom className={classNames(classes.filterTitle, 'api-listing-tags-title')}>
                     <FormattedMessage defaultMessage='API Groups' id='Apis.Listing.TagCloudListingTags.title' />
                 </Typography>
             )}
-            <List component='nav' aria-label='main mailbox folders' className={classNames({ [classes.mainPageList]: mainPage })}>
+            <List
+                component='nav'
+                aria-label='main mailbox folders'
+                className={classNames({ [classes.mainPageAllApis]: mainPage },
+                    'tag-cloud-listing-wrapper')}
+            >
                 {Object.keys(apisTagCloudGroup).map((keyInner) => {
                     return (
                         <ApiTagThumb
@@ -152,18 +158,18 @@ function TagCloudListingTags(props) {
     ) : (
         <>
             {!mainPage && (
-                <Typography variant='h6' gutterBottom className={classes.filterTitle}>
+                <Typography variant='h6' gutterBottom className={classNames(classes.filterTitle, 'apis-listing-tags-group')}>
                     <FormattedMessage defaultMessage='API Groups' id='Apis.Listing.TagCloudListingTags.title' />
                 </Typography>
             )}
-            <div className={classes.mainTitle}>
+            <div className={classNames(classes.mainTitle, 'apis-listing-tags-empty')}>
                 <Typography variant='subtitle1' gutterBottom align='center'>
                     <FormattedMessage
                         defaultMessage='API groups cannot be found'
                         id='Apis.Listing.TagCloudListingTags.tagsNotFound'
                     />
                 </Typography>
-                <Link to='apis/' className={classes.linkTextWrapper}>
+                <Link to='apis/' className={classNames(classes.linkTextWrapper, 'apis-listing-tags-group-all-apis-link')}>
                     <Typography variant='subtitle1' gutterBottom align='center'>
                         <FormattedMessage
                             defaultMessage='All Apis'

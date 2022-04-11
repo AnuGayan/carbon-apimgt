@@ -33,7 +33,8 @@ const useStyles = makeStyles((theme) => ({
         fontWeight: 200,
         paddingLeft: theme.spacing(2),
         background: theme.custom.tagCloud.leftMenu.titleBackground,
-        color: theme.palette.getContrastText(theme.custom.tagCloud.leftMenu.titleBackground),
+        color: theme.custom.tagCloud.leftMenu.sliderColor
+        || theme.palette.getContrastText(theme.custom.tagCloud.leftMenu.titleBackground),
         height: theme.custom.infoBar.height,
         alignItems: 'center',
         display: 'flex',

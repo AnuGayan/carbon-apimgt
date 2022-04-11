@@ -18,6 +18,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
+import classNames from 'classnames';
 import { createMuiTheme, MuiThemeProvider, withStyles } from '@material-ui/core/styles';
 import MUIDataTable from 'mui-datatables';
 import { FormattedMessage, injectIntl } from 'react-intl';
@@ -347,7 +348,7 @@ class ApiTableView extends React.Component {
                                     return (
                                         <Link
                                             to={'/apis/' + artifact.apiUUID + '/documents'}
-                                            className={classes.apiNameLink}
+                                            className={classNames(classes.apiNameLink, 'api-listing-name-link-docs')}
                                         >
                                             <Icon>library_books</Icon>
 
@@ -367,9 +368,11 @@ class ApiTableView extends React.Component {
                                 return (
                                     <Link
                                         to={'/apis/' + apiId + '/overview'}
-                                        className={classes.apiNameLink}
+                                        className={classNames(classes.apiNameLink, 'api-listing-name-link')}
                                     >
-                                        <CustomIcon width={16} height={16} icon='api' strokeColor={strokeColor} />
+                                        <span className='api-listing-name-icon-wrapper'>
+                                            <CustomIcon width={16} height={16} icon='api' strokeColor={strokeColor} />
+                                        </span>
 
                                         <span>{apiName}</span>
                                     </Link>

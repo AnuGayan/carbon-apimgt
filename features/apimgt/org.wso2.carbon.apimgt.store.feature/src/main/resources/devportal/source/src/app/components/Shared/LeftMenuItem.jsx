@@ -156,6 +156,7 @@ function LeftMenuItem(props) {
                     {
                         [classes.leftLink_IconLeft]: leftMenu === 'icon left',
                         [classes.submenu]: submenu,
+                        'selected': selected,
                     },
                     'leftLInk',
                 )}
@@ -170,7 +171,8 @@ function LeftMenuItem(props) {
                     // allow customers theme
                     // the product without compiling.
                     Icon ? (
-                        React.cloneElement(Icon, {
+                        <span className={`${route.replace(/[^a-zA-Z ]/g, '-')}-left-menu-icon`}>
+                            {React.cloneElement(Icon, {
                             className: classNames(
                                 classes.leftLink_Icon,
                                 {
@@ -179,23 +181,24 @@ function LeftMenuItem(props) {
                                 },
                                 'leftLink_Icon',
                             ),
-                        })
+                        })}</span>
                     ) : (
                             // We can also add custom icons
-                            <CustomIcon
-                                strokeColor={submenu ? '#cccccc' : strokeColor}
-                                width={submenu ? iconSize - 10 : iconSize}
-                                height={submenu ? iconSize - 10 : iconSize}
-                                icon={props.iconText}
-                                className={classNames(
-                                    classes.leftLInk,
-                                    {
-                                        [classes.noIcon]: leftMenu.style === 'no icon',
-                                    },
-                                    'leftLink_Icon',
-                                )}
-                            />
-
+                            <span className={`${route.replace(/[^a-zA-Z ]/g, '-')}-left-menu-icon`}>
+                                <CustomIcon
+                                    strokeColor={submenu ? '#cccccc' : strokeColor}
+                                    width={submenu ? iconSize - 10 : iconSize}
+                                    height={submenu ? iconSize - 10 : iconSize}
+                                    icon={props.iconText}
+                                    className={classNames(
+                                        classes.leftLInk,
+                                        {
+                                            [classes.noIcon]: leftMenu.style === 'no icon',
+                                        },
+                                        'leftLink_Icon',
+                                    )}
+                                />
+                            </span>
                         )}
                 {open && (
                     <Typography
