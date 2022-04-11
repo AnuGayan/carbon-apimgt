@@ -18,6 +18,7 @@
  */
 import React, { useContext, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
+import classNames from 'classnames';
 import Paper from '@material-ui/core/Paper';
 import InputBase from '@material-ui/core/InputBase';
 import IconButton from '@material-ui/core/IconButton';
@@ -59,6 +60,7 @@ const useStyles = makeStyles((theme) => ({
         },
         borderRadius: 10,
         marginRight: theme.spacing(),
+        position: 'relative',
     },
     input: {
         marginLeft: theme.spacing(1),
@@ -207,7 +209,7 @@ function Environments(props) {
                                     || selectedEndpoint.URLs.ws
                                     || selectedEndpoint.URLs.wss}
                             />
-                            <Avatar className={classes.avatar} sizes={30}>
+                            <Avatar className={classNames(classes.avatar, 'endpoint-url-copy-btn')} sizes={30}>
                                 <Tooltip
                                     title={
                                         urlCopied

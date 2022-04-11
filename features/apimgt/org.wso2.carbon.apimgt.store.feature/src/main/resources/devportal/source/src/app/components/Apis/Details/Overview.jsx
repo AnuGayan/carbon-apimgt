@@ -457,7 +457,7 @@ function Overview() {
                         </Box>
                         {(showCredentials && subscribedApplications.length > 0) && (
                             <>
-                                <Box mt={6}>
+                                <Box mt={6} className='overview-subscriptions-title'>
                                     <Typography variant='subtitle2' component='h3' className={classes.sectionTitle}>
                                         <FormattedMessage
                                             id='Apis.Details.Overview.subscriptions.title'
@@ -466,8 +466,11 @@ function Overview() {
                                     </Typography>
                                 </Box>
                                 <Box mt={2} ml={1} pr={6}>
-                                    <TableContainer component={Paper}>
-                                        <Table className={classes.table} aria-label='simple table'>
+                                    <TableContainer component={Paper} className='overview-subscription-list'>
+                                        <Table
+                                            className={classes.table}
+                                            aria-label='simple table'
+                                        >
                                             <TableHead>
                                                 <TableRow>
                                                     <TableCell>
@@ -511,7 +514,7 @@ function Overview() {
                                 </Box>
                             </>
                         )}
-                        <Box mt={6}>
+                        <Box mt={6} className='overview-comments-section'>
                             {(!api.advertiseInfo.advertised && showComments) && (
                                 <>
                                     <Typography variant='subtitle2' component='h3' className={classes.sectionTitle}>

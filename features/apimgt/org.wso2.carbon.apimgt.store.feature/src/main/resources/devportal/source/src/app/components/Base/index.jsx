@@ -174,6 +174,7 @@ const styles = (theme) => {
         links: {
             display: 'flex',
             justifyContent: 'center',
+            alignItems: 'center',
         },
         selected: {
             background: theme.custom.appBar.activeBackground,
@@ -339,9 +340,10 @@ class Layout extends React.Component {
                 },
                 appBar: {
                     showSearch,
+                    logoHeight,
                 },
                 footer: {
-                    active: footerActive, text: footerText, footerHTML,
+                    active: footerActive, text: footerText, footerHTML, dangerMode,
                 },
                 languageSwitch: { active: languageSwitchActive },
                 publicTenantStore,
@@ -408,7 +410,7 @@ class Layout extends React.Component {
                                         <Icon className={classes.menuIcon}>menu</Icon>
                                     </IconButton>
                                 </Hidden>
-                                <Link to='/' id='logoLink' aria-label='Go to home page'>
+                                <Link to='/' id='logoLink' aria-label='Go to home page' style={{ height: logoHeight || 'auto' }}>
                                     <img
                                         alt={(
                                             <FormattedMessage
@@ -585,7 +587,13 @@ class Layout extends React.Component {
                         <footer className={classes.footer} id='footer'>
                             {footerHTML && footerHTML !== '' ? (
                                 <>
-                                    <ReactSafeHtml html={footerHTML} />
+                                    {!dangerMode && (<ReactSafeHtml html={footerHTML} />)}
+                                    {dangerMode && (
+                                        <div
+                                            // The following line is not used by default.
+                                            dangerouslySetInnerHTML={{ __html: footerHTML }}
+                                        />
+                                    )}
                                 </>
                             ) : (
                                 <Typography noWrap>

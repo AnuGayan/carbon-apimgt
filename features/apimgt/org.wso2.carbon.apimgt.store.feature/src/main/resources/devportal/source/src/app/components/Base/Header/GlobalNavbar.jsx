@@ -47,11 +47,17 @@ function GlobalNavBar(props) {
                         to='/home'
                         className={classNames({
                             [classes.selected]: selected === 'home',
+                            // eslint-disable-next-line quote-props
+                            'selected': selected === 'home',
                             [classes.links]: true,
-                        })}
+                        }, 'header-link')}
                     >
                         <ListItem component='div' classes={{ root: classes.listItemRoot }}>
-                            <ListItemIcon classes={{ root: classNames({ [classes.smallIcon]: !drawerView }) }}>
+                            <ListItemIcon classes={{
+                                root: classNames({ [classes.smallIcon]: !drawerView },
+                                    'header-menu-icon-home', 'header-menu-icon'),
+                            }}
+                            >
                                 <Icon
                                     style={{
                                         fontSize: iconWidth,
@@ -69,7 +75,7 @@ function GlobalNavBar(props) {
                                     primary: classNames({
                                         [classes.selectedText]: selected === 'home',
                                         [classes.listText]: selected !== 'home',
-                                    }),
+                                    }, 'header-menu-text-home'),
                                 }}
                                 primary={intl.formatMessage({
                                     id: 'Base.Header.GlobalNavbar.menu.home',
@@ -82,10 +88,17 @@ function GlobalNavBar(props) {
                 ) }
             <Link
                 to={(theme.custom.tagWise.active && theme.custom.tagWise.style === 'page') ? '/api-groups' : '/apis'}
-                className={classNames({ [classes.selected]: selected === 'apis', [classes.links]: true })}
+                className={classNames({
+                    [classes.selected]: selected === 'apis',
+                    // eslint-disable-next-line quote-props
+                    'selected': selected === 'apis',
+                    [classes.links]: true,
+                }, 'header-link')}
             >
                 <ListItem component='div' classes={{ root: classes.listItemRoot }}>
-                    <ListItemIcon classes={{ root: classNames({ [classes.smallIcon]: !drawerView }) }}>
+                    <ListItemIcon
+                        classes={{ root: classNames({ [classes.smallIcon]: !drawerView }, 'header-menu-icon-apis', 'header-menu-icon') }}
+                    >
                         <CustomIcon
                             width={iconWidth}
                             height={iconWidth}
@@ -100,7 +113,7 @@ function GlobalNavBar(props) {
                             primary: classNames({
                                 [classes.selectedText]: selected === 'apis',
                                 [classes.listText]: selected !== 'apis',
-                            }),
+                            }, 'header-menu-text-apis'),
                         }}
                         primary={intl.formatMessage({
                             id: 'Base.Header.GlobalNavbar.menu.apis',
@@ -115,11 +128,17 @@ function GlobalNavBar(props) {
                 to='/applications'
                 className={classNames({
                     [classes.selected]: selected === 'applications',
+                    // eslint-disable-next-line quote-props
+                    'selected': selected === 'applications',
                     [classes.links]: true,
-                })}
+                }, 'header-link')}
             >
                 <ListItem component='div' classes={{ root: classes.listItemRoot }}>
-                    <ListItemIcon classes={{ root: classNames({ [classes.smallIcon]: !drawerView }) }}>
+                    <ListItemIcon classes={{
+                        root: classNames({ [classes.smallIcon]: !drawerView },
+                            'header-menu-icon-applications', 'header-menu-icon'),
+                    }}
+                    >
                         <CustomIcon
                             width={iconWidth}
                             height={iconWidth}
@@ -134,7 +153,7 @@ function GlobalNavBar(props) {
                             primary: classNames({
                                 [classes.selectedText]: selected === 'applications',
                                 [classes.listText]: selected !== 'applications',
-                            }),
+                            }, 'header-menu-text-applications'),
                         }}
                         primary={intl.formatMessage({
                             id: 'Base.Header.GlobalNavbar.menu.applications',

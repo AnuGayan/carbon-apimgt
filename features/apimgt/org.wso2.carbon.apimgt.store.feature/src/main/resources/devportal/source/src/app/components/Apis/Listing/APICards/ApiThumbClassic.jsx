@@ -336,10 +336,10 @@ class ApiThumbClassic extends React.Component {
         }
         if (!showInfo) {
             return (
-                <>
+                <div className='api-thumb-image-view'>
                     {!defaultImage && ImageView}
                     {defaultImage && <img src={app.context + defaultImage} alt='img' />}
-                </>
+                </div>
             );
         }
         return (
@@ -352,16 +352,20 @@ class ApiThumbClassic extends React.Component {
                 className={classNames('image-thumbnail', classes.card)}
             >
                 {isMonetizationEnabled && (
-                    <div className={classes.textblock}>{api.monetizationLabel}</div>
+                    <div className={classNames(classes.textblock, 'image-thumb-text-block')}>{api.monetizationLabel}</div>
                 )}
-                <Link className={classes.actionArea} to={detailsLink} area-label={'Go to ' + name}>
-                    <CardMedia area-hidden='true'>
+                <Link
+                    className={classNames(classes.actionArea, 'image-thumb-action-area')}
+                    to={detailsLink}
+                    area-label={'Go to ' + name}
+                >
+                    <CardMedia area-hidden='true' classes={{ root: 'image-thumb-card-root' }}>
                         {!defaultImage && ImageView}
                         {defaultImage && <img src={app.context + defaultImage} alt='img' />}
                     </CardMedia>
-                    <CardContent classes={{ root: classes.apiDetails }}>
+                    <CardContent classes={{ root: classNames(classes.apiDetails, 'image-thumb-card-content') }}>
                         <Typography
-                            className={classes.thumbHeader}
+                            className={classNames(classes.thumbHeader, 'image-thumb-card-thumb-header')}
                             variant='h5'
                             component='h2'
                             gutterBottom
@@ -370,29 +374,34 @@ class ApiThumbClassic extends React.Component {
                         >
                             {name}
                         </Typography>
-                        <div className={classes.row}>
-                            <Typography variant='caption' gutterBottom align='left' className={classes.thumbBy}>
+                        <div className={classNames(classes.row, 'image-thumb-provider-wrapper')}>
+                            <Typography
+                                variant='caption'
+                                gutterBottom
+                                align='left'
+                                className={classNames(classes.thumbBy, 'image-thumb-provider')}
+                            >
                                 <FormattedMessage defaultMessage='By' id='Apis.Listing.ApiThumb.by' />
                                 <FormattedMessage defaultMessage=' : ' id='Apis.Listing.ApiThumb.by.colon' />
                                 {provider}
                             </Typography>
                         </div>
-                        <div className={classes.thumbInfo}>
-                            <div className={classes.row}>
-                                <div className={classes.thumbLeft}>
+                        <div className={classNames(classes.thumbInfo, 'image-thumb-info')}>
+                            <div className={classNames(classes.row, 'image-thumb-row')}>
+                                <div className={classNames(classes.thumbLeft, 'image-thumb-left-version')}>
                                     <Typography variant='subtitle1' component='div'>{version}</Typography>
                                     <Typography variant='caption' component='div' gutterBottom align='left'>
                                         <FormattedMessage defaultMessage='Version' id='Apis.Listing.ApiThumb.version' />
                                     </Typography>
                                 </div>
                             </div>
-                            <div className={classes.row}>
+                            <div className={classNames(classes.row, 'image-thumb-context')}>
                                 <div className={classes.thumbRight}>
                                     <Typography
                                         variant='subtitle1'
                                         component='div'
                                         align='right'
-                                        className={classes.contextBox}
+                                        className={classNames(classes.contextBox, 'api-thumb-context-value')}
                                     >
                                         {context}
                                     </Typography>
@@ -400,7 +409,7 @@ class ApiThumbClassic extends React.Component {
                                         variant='caption'
                                         gutterBottom
                                         align='right'
-                                        className={classes.context}
+                                        className={classNames(classes.context, 'api-thumb-context-label')}
                                         Component='div'
                                     >
                                         <FormattedMessage defaultMessage='Context' id='Apis.Listing.ApiThumb.context' />
@@ -428,7 +437,7 @@ class ApiThumbClassic extends React.Component {
                                     </Typography>
                                 </div>
                             )}
-                            <div className={classes.thumbRight}>
+                            <div className={classNames(classes.thumbRight, 'api-thumb-chip-main')}>
                                 <Typography
                                     variant='subtitle1'
                                     component='div'
@@ -440,12 +449,14 @@ class ApiThumbClassic extends React.Component {
                                         <Chip
                                             label={api.transportType === undefined ? api.type : api.transportType}
                                             color='primary'
+                                            classes={{ root: 'graphql-chip' }}
                                         />
                                     )}
                                     {(api.lifeCycleStatus === 'PROTOTYPED') && (
                                         <Chip
                                             label={api.apiType === 'APIProduct' ? api.state : api.lifeCycleStatus}
                                             color='default'
+                                            classes={{ root: 'prototyped-chip' }}
                                         />
                                     )}
                                 </Typography>
