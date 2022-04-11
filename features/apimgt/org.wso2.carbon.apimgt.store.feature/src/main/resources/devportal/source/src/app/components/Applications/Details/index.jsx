@@ -306,7 +306,9 @@ class Details extends Component {
                 >
                     {rootIconVisible && (
                         <Link to='/applications' className={classes.leftLInkMain} aria-label='All applications'>
-                            <CustomIcon width={rootIconSize} height={rootIconSize} icon='applications' />
+                            <span className='applications-icon-wrapper'>
+                                <CustomIcon width={rootIconSize} height={rootIconSize} icon='applications' />
+                            </span>
                             {rootIconTextVisible && (
                                 <Typography className={classes.leftLInkMainText}>
                                     <FormattedMessage
