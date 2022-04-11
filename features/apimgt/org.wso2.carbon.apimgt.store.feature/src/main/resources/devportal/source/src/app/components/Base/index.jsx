@@ -19,6 +19,7 @@
  */
 
 import React from 'react';
+import classNames from 'classnames';
 import { Link, withRouter } from 'react-router-dom';
 import { injectIntl, FormattedMessage } from 'react-intl';
 import AppBar from '@material-ui/core/AppBar';
@@ -539,7 +540,10 @@ class Layout extends React.Component {
                                                                 <MenuList>
                                                                     {this.getPasswordChangeEnabled()
                                                                         ? (
-                                                                            <MenuItem className={classes.logoutLink}>
+                                                                            <MenuItem
+                                                                                className={classNames(classes.logoutLink,
+                                                                                    'user-menu-change-password-link')}
+                                                                            >
                                                                                 <Link
                                                                                     to='/settings/change-password/'
                                                                                     onClick={this.handleCloseUserMenu}
@@ -552,7 +556,10 @@ class Layout extends React.Component {
                                                                             </MenuItem>
                                                                         )
                                                                         : null}
-                                                                    <MenuItem onClick={this.doOIDCLogout} className={classes.logoutLink}>
+                                                                    <MenuItem
+                                                                        onClick={this.doOIDCLogout}
+                                                                        className={classNames(classes.logoutLink, 'user-menu-logout-link')}
+                                                                    >
                                                                         <FormattedMessage
                                                                             id='Base.index.logout'
                                                                             defaultMessage='Logout'

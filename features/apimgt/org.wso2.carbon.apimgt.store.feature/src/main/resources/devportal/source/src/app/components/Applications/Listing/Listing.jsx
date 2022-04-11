@@ -18,6 +18,7 @@
  */
 
 import React, { Component } from 'react';
+import classNames from 'classnames';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
@@ -420,7 +421,7 @@ class Listing extends Component {
             <div className={classes.content}>
                 <div className={classes.root}>
                     <Box display='flex' flexDirection='row' justifyContent='flex-start' alignItems='center'>
-                        <div className={classes.mainIconWrapper}>
+                        <div className={classNames(classes.mainIconWrapper, 'application-listing-icon-wrapper')}>
                             <CustomIcon strokeColor={strokeColorMain} width={42} height={42} icon='applications' />
                         </div>
                         <div className={classes.mainTitleWrapper}>

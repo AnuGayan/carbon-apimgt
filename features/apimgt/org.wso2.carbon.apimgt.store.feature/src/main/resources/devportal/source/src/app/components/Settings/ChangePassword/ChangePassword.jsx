@@ -17,6 +17,7 @@
  */
 
 import React, { useReducer } from 'react';
+import classNames from 'classnames';
 import { FormattedMessage } from 'react-intl';
 import AuthManager from 'AppData/AuthManager';
 import Settings from 'Settings';
@@ -280,10 +281,10 @@ const ChangePassword = () => {
     // otherwise, display page not found.
     if (IsPasswordChangeEnabled) {
         return (
-            <ChangePasswordBase title={title}>
+            <ChangePasswordBase title={title} className='change-password-form-wrapper'>
                 <Box py={2} display='flex' justifyContent='center'>
                     <Grid item xs={10} md={9}>
-                        <Box component='div' m={2}>
+                        <Box component='div' m={2} className='change-password-form'>
                             <Grid
                                 container
                                 mt={2}
@@ -294,7 +295,7 @@ const ChangePassword = () => {
                             >
                                 <TextField
                                     classes={{
-                                        root: classes.mandatoryStarText,
+                                        root: classNames(classes.mandatoryStarText, 'change-password-current'),
                                     }}
                                     required
                                     id='current-password'
@@ -312,7 +313,7 @@ const ChangePassword = () => {
                                 />
                                 <TextField
                                     classes={{
-                                        root: classes.mandatoryStarText,
+                                        root: classNames(classes.mandatoryStarText, 'change-password-new'),
                                     }}
                                     margin='dense'
                                     id='new-password'
@@ -332,7 +333,7 @@ const ChangePassword = () => {
                                 />
                                 <TextField
                                     classes={{
-                                        root: classes.mandatoryStarText,
+                                        root: classNames(classes.mandatoryStarText, 'change-password-new-repeat'),
                                     }}
                                     margin='dense'
                                     id='repeated-new-password'
@@ -357,7 +358,7 @@ const ChangePassword = () => {
                                             color='primary'
                                             variant='contained'
                                             onClick={handleSave}
-                                            className={classes.passwordChangeForm}
+                                            className={classNames(classes.passwordChangeForm, 'change-password-save')}
                                         >
                                             <FormattedMessage
                                                 id='Settings.ChangePasswordForm.Save.Button.text'
@@ -368,6 +369,7 @@ const ChangePassword = () => {
                                     <Box mx={1}>
                                         <Button
                                             onClick={() => window.history.back()}
+                                            className='change-password-cancel'
                                         >
                                             <FormattedMessage
                                                 id='Settings.ChangePasswordForm.Cancel.Button.text'

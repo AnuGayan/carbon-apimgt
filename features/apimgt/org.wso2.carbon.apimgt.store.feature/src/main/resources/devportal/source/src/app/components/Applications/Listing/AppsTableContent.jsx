@@ -128,7 +128,7 @@ class AppsTableContent extends Component {
                             <StyledTableRow className={classes.tableRow} key={app.applicationId}>
                                 <StyledTableCell align='left' className={classes.appName}>
                                     {app.status === this.APPLICATION_STATES.APPROVED ? (
-                                        <Link to={'/applications/' + app.applicationId}>{app.name}</Link>
+                                        <Link to={'/applications/' + app.applicationId} className='app-listing-name-link'>{app.name}</Link>
                                     ) : (
                                         app.name
                                     )}
@@ -190,7 +190,7 @@ class AppsTableContent extends Component {
                                                     />
                                                 )}
                                             >
-                                                <span>
+                                                <span className='app-edit-button-wrapper'>
                                                     <Link
                                                         to={`/applications/${app.applicationId}/edit/`}
                                                         className={!isAppOwner && classes.appOwner}
@@ -221,7 +221,7 @@ class AppsTableContent extends Component {
                                             />
                                         )}
                                         >
-                                            <span>
+                                            <span className='app-delete-button-wrapper'>
                                                 <IconButton
                                                     className='itest-application-delete-button'
                                                     disabled={app.deleting || !isAppOwner}

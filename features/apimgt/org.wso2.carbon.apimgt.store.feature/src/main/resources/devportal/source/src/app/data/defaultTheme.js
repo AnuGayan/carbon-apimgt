@@ -318,6 +318,7 @@ const DefaultConfigurations = {
         },
         footer: {
             active: true,
+            dangerMode: false,
             footerHTML: '',
             text: '', // Leave empty to show the default WSO2 Text. Provide custom text to display your own thing.
             background: '#000',
