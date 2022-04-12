@@ -37,6 +37,7 @@ import org.wso2.carbon.apimgt.impl.APIManagerConfiguration;
 import org.wso2.carbon.apimgt.impl.dto.BasicAuthValidationInfoDTO;
 import org.wso2.carbon.apimgt.gateway.internal.ServiceReferenceHolder;
 
+import java.util.Map;
 import java.util.TreeMap;
 
 @RunWith(PowerMockRunner.class)
@@ -47,6 +48,7 @@ public class BasicAuthAuthenticatorTest {
     private org.apache.axis2.context.MessageContext axis2MsgCntxt;
     private BasicAuthAuthenticator basicAuthAuthenticator;
     private final String CUSTOM_AUTH_HEADER = "AUTH-HEADER";
+    private APIManagerConfiguration apiManagerConfiguration;
 
     @Before
     public void setup() throws Exception {
@@ -103,7 +105,7 @@ public class BasicAuthAuthenticatorTest {
 
         PowerMockito.mockStatic(ServiceReferenceHolder.class);
         ServiceReferenceHolder serviceReferenceHolder = Mockito.mock(ServiceReferenceHolder.class);
-        APIManagerConfiguration apiManagerConfiguration = Mockito.mock(APIManagerConfiguration.class);
+        apiManagerConfiguration = Mockito.mock(APIManagerConfiguration.class);
         Mockito.when(ServiceReferenceHolder.getInstance()).thenReturn(serviceReferenceHolder);
         Mockito.when(serviceReferenceHolder.getAPIManagerConfiguration()).thenReturn(apiManagerConfiguration);
         Mockito.when(apiManagerConfiguration.getFirstProperty(APIConstants.REMOVE_OAUTH_HEADERS_FROM_MESSAGE))
@@ -173,6 +175,8 @@ public class BasicAuthAuthenticatorTest {
         Mockito.when(axis2MsgCntxt.getProperty(org.apache.axis2.context.MessageContext.TRANSPORT_HEADERS)).thenReturn(transportHeaders);
 
         Assert.assertTrue(basicAuthAuthenticator.authenticate(messageContext).isAuthenticated());
+        transportHeaders = (TreeMap) axis2MsgCntxt.getProperty(org.apache.axis2.context.MessageContext.TRANSPORT_HEADERS);
+        Assert.assertNull(transportHeaders.get(CUSTOM_AUTH_HEADER));
     }
 
     @Test
@@ -187,5 +191,22 @@ public class BasicAuthAuthenticatorTest {
         AuthenticationResponse authenticationResponse = basicAuthAuthenticator.authenticate(messageContext);
         Assert.assertFalse(authenticationResponse.isAuthenticated());
         Assert.assertEquals(authenticationResponse.getErrorCode(), APISecurityConstants.API_AUTH_MISSING_CREDENTIALS);
+    }
+
+    @Test
+    public void testAuthenticateWithRemoveOAuthHeadersFromOutMessageSetToFalse() {
+        TreeMap transportHeaders = new TreeMap();
+        // encode64(test_username:test_password)='dGVzdF91c2VybmFtZTp0ZXN0X3Bhc3N3b3Jk'
+        transportHeaders.put(CUSTOM_AUTH_HEADER, "Basic dGVzdF91c2VybmFtZTp0ZXN0X3Bhc3N3b3Jk");
+        Mockito.when(axis2MsgCntxt.getProperty(org.apache.axis2.context.MessageContext.TRANSPORT_HEADERS))
+                .thenReturn(transportHeaders);
+        Mockito.when(apiManagerConfiguration.getFirstProperty(APIConstants.REMOVE_OAUTH_HEADERS_FROM_MESSAGE))
+                .thenReturn("false");
+
+        Assert.assertTrue(basicAuthAuthenticator.authenticate(messageContext).isAuthenticated());
+        transportHeaders =
+                (TreeMap) axis2MsgCntxt.getProperty(org.apache.axis2.context.MessageContext.TRANSPORT_HEADERS);
+        Assert.assertNotNull(transportHeaders.get(CUSTOM_AUTH_HEADER));
+        Assert.assertEquals(transportHeaders.get(CUSTOM_AUTH_HEADER), "Basic dGVzdF91c2VybmFtZTp0ZXN0X3Bhc3N3b3Jk");
     }
 }
