@@ -422,7 +422,6 @@ class Details extends React.Component {
         const pageUrl = new URL(window.location);
         const isWidget = pageUrl.searchParams.get('widget');
         const isAsyncApi = this.isAsyncAPI(api);
-
         return api ? (
             <ApiContext.Provider value={this.state}>
                 <Helmet>
@@ -449,6 +448,7 @@ class Details extends React.Component {
                             {
                                 [classes.leftMenuVerticalRight]: position === 'vertical-right',
                             },
+                            { minimized: (position === 'vertical-left' && !open) },
                             'left-menu',
 
                         )}
@@ -594,6 +594,8 @@ class Details extends React.Component {
                     className={classNames(
                         { [classes.content]: open },
                         { [classes.contentExpandView]: !open },
+                        { fullView: !open },
+                        'content-area',
                     )}
                 >
                     <Breadcrumb />
