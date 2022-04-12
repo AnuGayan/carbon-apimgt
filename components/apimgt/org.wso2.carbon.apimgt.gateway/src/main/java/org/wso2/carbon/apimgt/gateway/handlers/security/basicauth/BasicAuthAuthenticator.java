@@ -62,7 +62,6 @@ public class BasicAuthAuthenticator implements Authenticator {
     private BasicAuthCredentialValidator basicAuthCredentialValidator;
     private OpenAPI openAPI = null;
     private boolean isMandatory;
-    private APIManagerConfiguration config = null;
 
     /**
      * Initialize the authenticator with the required parameters.
@@ -290,9 +289,9 @@ public class BasicAuthAuthenticator implements Authenticator {
         final String authHeaderSplitter = ",";
         Map headers = (Map) ((Axis2MessageContext) synCtx).getAxis2MessageContext().
                 getProperty(org.apache.axis2.context.MessageContext.TRANSPORT_HEADERS);
-        config = getApiManagerConfiguration();
         boolean removeBasicAuthHeadersFromOutMessage =
-                Boolean.parseBoolean(config.getFirstProperty(APIConstants.REMOVE_OAUTH_HEADERS_FROM_MESSAGE));
+                Boolean.parseBoolean(ServiceReferenceHolder.getInstance().getAPIManagerConfiguration()
+                        .getFirstProperty(APIConstants.REMOVE_OAUTH_HEADERS_FROM_MESSAGE));
         if (headers != null) {
             String authHeader = (String) headers.get(getSecurityHeader());
             if (authHeader == null) {
@@ -327,10 +326,6 @@ public class BasicAuthAuthenticator implements Authenticator {
             }
         }
         return null;
-    }
-
-    protected APIManagerConfiguration getApiManagerConfiguration() {
-        return ServiceReferenceHolder.getInstance().getAPIManagerConfiguration();
     }
 
     /**
