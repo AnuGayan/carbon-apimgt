@@ -38,6 +38,15 @@ public class IntrospectInfo {
     private String tokenType;
     @SerializedName("username")
     private String username;
+    @SerializedName("aut")
+    private String aut;
+
+    public String getAut() {
+        return aut;
+    }
+    public void setAut(String aut) {
+        this.aut = aut;
+    }
 
     public boolean isActive() {
 
