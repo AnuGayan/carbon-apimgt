@@ -477,7 +477,11 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
             if (!StringUtils.isEmpty(username)) {
                 tokenInfo.setEndUserName(username);
             }
-
+            String authorizedUserType = introspectInfo.getAut();
+            if (!StringUtils.isEmpty(authorizedUserType) && StringUtils.equalsIgnoreCase(authorizedUserType,
+                    APIConstants.ACCESS_TOKEN_USER_TYPE_APPLICATION)) {
+                tokenInfo.setApplicationToken(true);
+            }
             return tokenInfo;
         } catch (KeyManagerClientException e) {
             throw new APIManagementException("Error occurred in token introspection!", e);
