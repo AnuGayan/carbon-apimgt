@@ -811,9 +811,11 @@ public class WebsocketUtil extends GraphQLProcessor {
 					inboundMessageContext.getApiContextUri(), inboundMessageContext.getVersion());
 		} else {
 			responseDTO.setError(true);
+			return responseDTO;
 		}
 		if (info == null || !info.isAuthorized()) {
 			responseDTO.setError(true);
+			return responseDTO;
 		}
 		if (info.getApiName() != null && info.getApiName().contains("*")) {
 			String[] str = info.getApiName().split("\\*");
@@ -857,5 +859,21 @@ public class WebsocketUtil extends GraphQLProcessor {
 		return graphQLMsg.getString(GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_TYPE) != null
 				&& GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_ARRAY_FOR_DATA.contains(
 				graphQLMsg.getString(GraphQLConstants.SubscriptionConstants.PAYLOAD_FIELD_NAME_TYPE));
+	}
+
+	/**
+	 * Get GraphQL Subscriptions handshake error DTO for error code and message. The closeConnection parameter is false.
+	 *
+	 * @param errorCode    Error code
+	 * @param errorMessage Error message
+	 * @return InboundProcessorResponseDTO
+	 */
+	public static InboundProcessorResponseDTO getHandshakeErrorDTO(int errorCode, String errorMessage) {
+
+		InboundProcessorResponseDTO inboundProcessorResponseDTO = new InboundProcessorResponseDTO();
+		inboundProcessorResponseDTO.setError(true);
+		inboundProcessorResponseDTO.setErrorCode(errorCode);
+		inboundProcessorResponseDTO.setErrorMessage(errorMessage);
+		return inboundProcessorResponseDTO;
 	}
 }
