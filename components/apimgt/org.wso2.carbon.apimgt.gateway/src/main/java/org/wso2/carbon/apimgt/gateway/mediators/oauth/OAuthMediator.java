@@ -211,4 +211,9 @@ public class OAuthMediator extends AbstractMediator implements ManagedLifecycle 
 
         this.password = password;
     }
+
+    @Override
+    public boolean isContentAware() {
+        return false;
+    }
 }
