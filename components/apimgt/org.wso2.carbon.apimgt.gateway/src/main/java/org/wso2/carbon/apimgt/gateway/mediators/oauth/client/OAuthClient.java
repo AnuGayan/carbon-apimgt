@@ -137,7 +137,7 @@ public class OAuthClient {
                 if (refreshToken != null && response.getStatusLine().getStatusCode() == HttpStatus.SC_BAD_REQUEST) {
                     // If refresh token expired generate token with Password grant
                     return generateToken(url,clientId,clientSecret,username,password,"PASSWORD",
-                            customParameters,null);
+                            customParameters,null, tokenEndpointAuthMethod);
                 } else {
                     return getTokenResponse(response);
                 }
