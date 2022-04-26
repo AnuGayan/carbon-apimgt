@@ -134,7 +134,12 @@ public class OAuthClient {
             httpPost.setEntity(new StringEntity(payload.toString()));
 
             try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
-                return getTokenResponse(response);
+                if (refreshToken != null && response.getStatusLine().getStatusCode() == HttpStatus.SC_BAD_REQUEST) {
+                    return generateToken(url,clientId,clientSecret,username,password,"PASSWORD",
+                            customParameters,null);
+                } else {
+                    return getTokenResponse(response);
+                }
             } finally {
                 httpPost.releaseConnection();
             }
