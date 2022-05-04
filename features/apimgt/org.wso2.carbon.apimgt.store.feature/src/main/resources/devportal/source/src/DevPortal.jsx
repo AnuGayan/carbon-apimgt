@@ -92,7 +92,7 @@ class DevPortal extends React.Component {
                     this.setState({ isNonAnonymous: true });
                 }
                 if (Settings.app.isPassive && !AuthManager.getUser()
-                    && !sessionStorage.getItem(CONSTS.ISLOGINPERMITTED) && !this.state.isNonAnonymous) {
+                    && !sessionStorage.getItem(CONSTS.ISLOGINPERMITTED) && this.state.isNonAnonymous !== false) {
                     this.checkLoginUser();
                 }
             })
