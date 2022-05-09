@@ -890,6 +890,9 @@ public class PublisherCommonUtils {
             throws APIManagementException {
 
         String context = body.getContext();
+        if (context == null || context.isEmpty()) {
+            throw new APIManagementException("API context is required.");
+        }
         //Make sure context starts with "/". ex: /pizza
         context = context.startsWith("/") ? context : ("/" + context);
 
