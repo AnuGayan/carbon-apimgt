@@ -582,6 +582,10 @@ public final class APIUtil {
         do {
             try {
                 httpResponse = (CloseableHttpResponse) httpClient.execute(method);
+                if (httpResponse != null && httpResponse.getStatusLine() != null
+                        && httpResponse.getStatusLine().getStatusCode() == 404) {
+                    throw new IOException("404 response when invoking endpoint!");
+                }
                 retry = false;
             } catch (IOException ex) {
                 retryCount++;
