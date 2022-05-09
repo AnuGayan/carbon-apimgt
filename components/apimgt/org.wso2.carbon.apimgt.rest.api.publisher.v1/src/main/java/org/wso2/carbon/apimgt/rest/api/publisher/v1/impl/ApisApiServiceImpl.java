@@ -4854,6 +4854,7 @@ public class ApisApiServiceImpl implements ApisApiService {
         // Validate and retrieve the OpenAPI definition
         Map validationResponseMap = null;
         boolean isServiceAPI = false;
+        API addedAPI = null;
         try {
             if (service != null) {
                 isServiceAPI = true;
@@ -4920,7 +4921,7 @@ public class ApisApiServiceImpl implements ApisApiService {
 
             // adding the API and definition
             apiToAdd.setSwaggerDefinition(definitionToAdd);
-            API addedAPI = apiProvider.addAPI(apiToAdd);
+            addedAPI = apiProvider.addAPI(apiToAdd);
             //apiProvider.saveSwaggerDefinition(apiToAdd, definitionToAdd);
 
             // retrieving the added API for returning as the response
@@ -4928,8 +4929,8 @@ public class ApisApiServiceImpl implements ApisApiService {
             addedAPI = apiProvider.getAPIbyUUID(addedAPI.getUuid(), RestApiCommonUtil.getLoggedInUserTenantDomain());
             return APIMappingUtil.fromAPItoDTO(addedAPI);
         } catch (APIManagementException e) {
-            String errorMessage = "Error while adding new API : " + apiDTOFromProperties.getProvider() + "-" +
-                    apiDTOFromProperties.getName() + "-" + apiDTOFromProperties.getVersion() + " - " + e.getMessage();
+            String errorMessage = "Error while adding new API : " + addedAPI.getId().getProviderName() + "-" +
+                    addedAPI.getId().getName() + "-" + addedAPI.getId().getVersion() + " - " + e.getMessage();
             RestApiUtil.handleInternalServerError(errorMessage, e, log);
         }
         return null;
