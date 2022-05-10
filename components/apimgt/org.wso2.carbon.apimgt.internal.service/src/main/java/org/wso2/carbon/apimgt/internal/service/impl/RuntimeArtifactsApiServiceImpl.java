@@ -73,10 +73,7 @@ public class RuntimeArtifactsApiServiceImpl implements RuntimeArtifactsApiServic
                         .header(RestApiConstants.HEADER_CONTENT_TYPE, RestApiConstants.APPLICATION_JSON).build();
             }
         } else {
-            return Response
-                    .status(Response.Status.NOT_FOUND)
-                    .entity(RestApiUtil.getErrorDTO(ExceptionCodes.NO_API_ARTIFACT_FOUND))
-                    .build();
+            return Response.status(Response.Status.NO_CONTENT).build();
         }
     }
 }

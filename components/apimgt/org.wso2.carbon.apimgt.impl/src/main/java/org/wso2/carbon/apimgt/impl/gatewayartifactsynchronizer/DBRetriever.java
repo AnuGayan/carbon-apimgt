@@ -97,7 +97,7 @@ public class DBRetriever implements ArtifactRetriever {
             throws IOException, ArtifactSynchronizerException {
 
         String gatewayRuntimeArtifact;
-        if (httpResponse.getStatusLine().getStatusCode() == 404) {
+        if (httpResponse.getStatusLine().getStatusCode() == 204) {
             log.info("No artifacts available to deploy");
             return new JSONArray();
         } else if (httpResponse.getStatusLine().getStatusCode() == 200) {
