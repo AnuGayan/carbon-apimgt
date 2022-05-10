@@ -584,16 +584,15 @@ public final class APIUtil {
                 httpResponse = (CloseableHttpResponse) httpClient.execute(method);
                 if (httpResponse != null && httpResponse.getStatusLine() != null
                         && httpResponse.getStatusLine().getStatusCode() == 404) {
-                    throw new IOException("404 response when invoking endpoint!");
+                    throw new APIManagementException("Service not available. 404 response when invoking endpoint!");
                 }
                 retry = false;
-            } catch (IOException ex) {
+            } catch (IOException | APIManagementException ex) {
                 retryCount++;
                 if (retryCount < retries) {
                     retry = true;
-                    log.warn("Failed retrieving from remote endpoint: " + ex.getMessage()
-                            + ". Retrying after " + timeoutInSeconds +
-                            " seconds.");
+                    log.warn("Failed retrieving from remote endpoint: " + ex.getMessage() + ". Retrying after "
+                            + timeoutInSeconds + " seconds.");
                     try {
                         Thread.sleep(timeoutInSeconds * 1000);
                     } catch (InterruptedException e) {
