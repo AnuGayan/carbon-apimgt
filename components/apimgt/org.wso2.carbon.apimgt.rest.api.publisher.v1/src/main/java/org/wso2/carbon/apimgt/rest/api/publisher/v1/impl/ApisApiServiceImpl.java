@@ -4930,8 +4930,8 @@ public class ApisApiServiceImpl implements ApisApiService {
             return APIMappingUtil.fromAPItoDTO(addedAPI);
 
         } catch (APIManagementException e) {
-            String errorMessage = "Error while adding new API : " + addedAPI.getId().getProviderName() + "-" +
-                    addedAPI.getId().getName() + "-" + addedAPI.getId().getVersion() + " - " + e.getMessage();
+            String errorMessage = "Error while adding new API : " + apiDTOFromProperties.getProvider() + "-" +
+                    apiDTOFromProperties.getName() + "-" + apiDTOFromProperties.getVersion() + " - " + e.getMessage();
             RestApiUtil.handleInternalServerError(errorMessage, e, log);
         }
         return null;
