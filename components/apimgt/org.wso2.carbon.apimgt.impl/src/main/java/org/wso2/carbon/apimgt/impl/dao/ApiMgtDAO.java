@@ -6984,10 +6984,7 @@ public class ApiMgtDAO {
             prepStmt.close();//If exception occurs at execute, this statement will close in finally else here
 
             //Delete all comments associated with given API
-            prepStmt = connection.prepareStatement(deleteCommentQuery);
-            prepStmt.setInt(1, id);
-            prepStmt.execute();
-            prepStmt.close();//If exception occurs at execute, this statement will close in finally else here
+            deleteAPIComments(id, apiId, connection);
 
             prepStmt = connection.prepareStatement(deleteRatingsQuery);
             prepStmt.setInt(1, id);
@@ -7849,6 +7846,24 @@ public class ApiMgtDAO {
             handleException("Error while deleting comment " + commentId + " from the database", e);
         }
         return false;
+    }
+
+    private void deleteAPIComments(int apiId, APIIdentifier apiIdentifier, Connection connection) throws APIManagementException {
+        try {
+            connection.setAutoCommit(false);
+            try (PreparedStatement childCommentPreparedStmt = connection.prepareStatement(
+                    SQLConstants.DELETE_API_CHILD_COMMENTS);
+                 PreparedStatement parentCommentPreparedStmt = connection.prepareStatement(
+                         SQLConstants.DELETE_API_PARENT_COMMENTS)) {
+                childCommentPreparedStmt.setInt(1, apiId);
+                childCommentPreparedStmt.execute();
+
+                parentCommentPreparedStmt.setInt(1, apiId);
+                parentCommentPreparedStmt.execute();
+            }
+        } catch (SQLException e) {
+            handleException("Error while deleting comments for API " + apiIdentifier, e);
+        }
     }
 
     /**
