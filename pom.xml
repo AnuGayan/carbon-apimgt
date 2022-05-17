@@ -1988,5 +1988,6 @@
         <maven.spotbugsplugin.version>3.1.10</maven.spotbugsplugin.version>
         <maven.checkstyle.plugin.version>3.0.0</maven.checkstyle.plugin.version>
         <version.checkstyle>8.34</version.checkstyle>
+        <com.nimbusds.version>[7.3,8)</com.nimbusds.version>
     </properties>
 </project>
