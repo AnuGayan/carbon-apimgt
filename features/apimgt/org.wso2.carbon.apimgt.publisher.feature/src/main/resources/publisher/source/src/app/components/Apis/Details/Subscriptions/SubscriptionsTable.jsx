@@ -25,6 +25,8 @@ import KeyboardArrowLeft from '@material-ui/icons/KeyboardArrowLeft';
 import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
 import LastPageIcon from '@material-ui/icons/LastPage';
 import Paper from '@material-ui/core/Paper';
+import Box from '@material-ui/core/Box';
+import TextField from '@material-ui/core/TextField';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Grid from '@material-ui/core/Grid';
 import TablePagination from '@material-ui/core/TablePagination';
@@ -44,6 +46,7 @@ const styles = (theme) => ({
     heading: {
         marginTop: theme.spacing(3),
         marginBottom: theme.spacing(2),
+        display: 'flex',
     },
     button: {
         margin: theme.spacing(1),
@@ -627,9 +630,9 @@ class SubscriptionsTable extends Component {
     render() {
         const {
             subscriptions, page, rowsPerPage, totalSubscription, rowsPerPageOptions, emptyColumnHeight,
-            subscriberClaims,
+            subscriberClaims, searchQuery,
         } = this.state;
-        const { classes, api } = this.props;
+        const { classes, api, intl } = this.props;
         if (!subscriptions) {
             return (
                 <Grid container direction='row' justify='center' alignItems='center'>
@@ -841,36 +844,64 @@ class SubscriptionsTable extends Component {
         return (
             <>
                 <div className={classes.heading}>
-                    <Typography variant='h4'>
-                        <FormattedMessage
-                            id='Apis.Details.Subscriptions.SubscriptionsTable.manage.subscriptions'
-                            defaultMessage='Manage Subscriptions'
+                    <Box flex={1}>
+                        <Typography variant='h4'>
+                            <FormattedMessage
+                                id='Apis.Details.Subscriptions.SubscriptionsTable.manage.subscriptions'
+                                defaultMessage='Manage Subscriptions'
+                            />
+                            {'   '}
+                            {subscriptions.length > 0 && (
+                                <Tip title='No contact details' placement='top'>
+                                    <span>
+                                        <Button
+                                            target='_blank'
+                                            rel='noopener'
+                                            href={`mailto:?subject=Message from the API Publisher&cc=${emails}`
+                                                + `&body=Hi ${names},`}
+                                            size='small'
+                                            disabled={!names}
+                                            variant='outlined'
+                                        >
+                                            Contact Subscribers
+                                        </Button>
+                                    </span>
+                                </Tip>
+                            )}
+                        </Typography>
+                        <Typography variant='caption' gutterBottom>
+                            <FormattedMessage
+                                id='Apis.Details.Subscriptions.SubscriptionsTable.sub.heading'
+                                defaultMessage='Manage subscriptions of the API'
+                            />
+                        </Typography>
+                    </Box>
+                    <Box>
+                        <TextField
+                            style={{ width: 400 }}
+                            autoFocus
+                            id='subscription-search-box'
+                            label={intl.formatMessage({
+                                id: 'Apis.Details.Subscriptions.SubscriptionsTable.search.label',
+                                defaultMessage: 'Search',
+                            })}
+                            placeholder={intl.formatMessage({
+                                id: 'Apis.Details.Subscriptions.SubscriptionsTable.search.placeholder',
+                                defaultMessage: 'Subscriber Name',
+                            })}
+                            margin='dense'
+                            variant='outlined'
+                            value={searchQuery || ''}
+                            onChange={this.filterSubscriptions}
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                            helperText={intl.formatMessage({
+                                id: 'Apis.Details.Subscriptions.SubscriptionsTable.search.help',
+                                defaultMessage: 'Filter subscriptions by subscriber name',
+                            })}
                         />
-                        {'   '}
-                        {subscriptions.length > 0 && (
-                            <Tip title='No contact details' placement='top'>
-                                <span>
-                                    <Button
-                                        target='_blank'
-                                        rel='noopener'
-                                        href={`mailto:?subject=Message from the API Publisher&cc=${emails}`
-                                            + `&body=Hi ${names},`}
-                                        size='small'
-                                        disabled={!names}
-                                        variant='outlined'
-                                    >
-                                        Contact Subscribers
-                                    </Button>
-                                </span>
-                            </Tip>
-                        )}
-                    </Typography>
-                    <Typography variant='caption' gutterBottom>
-                        <FormattedMessage
-                            id='Apis.Details.Subscriptions.SubscriptionsTable.sub.heading'
-                            defaultMessage='Manage subscriptions of the API'
-                        />
-                    </Typography>
+                    </Box>
                 </div>
                 <Paper elevation={0}>
                     {subscriptions.length > 0 ? (
