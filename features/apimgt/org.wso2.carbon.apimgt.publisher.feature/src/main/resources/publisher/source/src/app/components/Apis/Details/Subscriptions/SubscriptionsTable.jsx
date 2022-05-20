@@ -876,34 +876,32 @@ class SubscriptionsTable extends Component {
                             />
                         </Typography>
                     </Box>
-                    {subscriptions.length > 0 && (
-                        <Box>
-                            <TextField
-                                style={{ width: 400 }}
-                                autoFocus
-                                id='subscription-search-box'
-                                label={intl.formatMessage({
-                                    id: 'Apis.Details.Subscriptions.SubscriptionsTable.search.label',
-                                    defaultMessage: 'Search',
-                                })}
-                                placeholder={intl.formatMessage({
-                                    id: 'Apis.Details.Subscriptions.SubscriptionsTable.search.placeholder',
-                                    defaultMessage: 'Subscriber Name',
-                                })}
-                                margin='dense'
-                                variant='outlined'
-                                value={searchQuery || ''}
-                                onChange={this.filterSubscriptions}
-                                InputLabelProps={{
-                                    shrink: true,
-                                }}
-                                helperText={intl.formatMessage({
-                                    id: 'Apis.Details.Subscriptions.SubscriptionsTable.search.help',
-                                    defaultMessage: 'Filter subscriptions by subscriber name',
-                                })}
-                            />
-                        </Box>
-                    )}
+                    <Box>
+                        <TextField
+                            style={{ width: 400 }}
+                            autoFocus
+                            id='subscription-search-box'
+                            label={intl.formatMessage({
+                                id: 'Apis.Details.Subscriptions.SubscriptionsTable.search.label',
+                                defaultMessage: 'Search',
+                            })}
+                            placeholder={intl.formatMessage({
+                                id: 'Apis.Details.Subscriptions.SubscriptionsTable.search.placeholder',
+                                defaultMessage: 'Subscriber Name',
+                            })}
+                            margin='dense'
+                            variant='outlined'
+                            value={searchQuery || ''}
+                            onChange={this.filterSubscriptions}
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                            helperText={intl.formatMessage({
+                                id: 'Apis.Details.Subscriptions.SubscriptionsTable.search.help',
+                                defaultMessage: 'Filter subscriptions by subscriber name',
+                            })}
+                        />
+                    </Box>
                 </div>
                 <Paper elevation={0}>
                     {subscriptions.length > 0 ? (
