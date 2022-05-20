@@ -6175,6 +6175,24 @@
       "value": "No subscriptions data available"
     }
   ],
+  "Apis.Details.Subscriptions.SubscriptionsTable.search.help": [
+    {
+      "type": 0,
+      "value": "Filter subscriptions by subscriber name"
+    }
+  ],
+  "Apis.Details.Subscriptions.SubscriptionsTable.search.label": [
+    {
+      "type": 0,
+      "value": "Search"
+    }
+  ],
+  "Apis.Details.Subscriptions.SubscriptionsTable.search.placeholder": [
+    {
+      "type": 0,
+      "value": "Subscriber Name"
+    }
+  ],
   "Apis.Details.Subscriptions.SubscriptionsTable.sub.heading": [
     {
       "type": 0,

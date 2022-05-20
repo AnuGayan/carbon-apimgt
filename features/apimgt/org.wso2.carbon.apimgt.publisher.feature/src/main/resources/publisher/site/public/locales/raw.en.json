@@ -2940,6 +2940,15 @@
   "Apis.Details.Subscriptions.SubscriptionsTable.no.subscriptions": {
     "defaultMessage": "No subscriptions data available"
   },
+  "Apis.Details.Subscriptions.SubscriptionsTable.search.help": {
+    "defaultMessage": "Filter subscriptions by subscriber name"
+  },
+  "Apis.Details.Subscriptions.SubscriptionsTable.search.label": {
+    "defaultMessage": "Search"
+  },
+  "Apis.Details.Subscriptions.SubscriptionsTable.search.placeholder": {
+    "defaultMessage": "Subscriber Name"
+  },
   "Apis.Details.Subscriptions.SubscriptionsTable.sub.heading": {
     "defaultMessage": "Manage subscriptions of the API"
   },
