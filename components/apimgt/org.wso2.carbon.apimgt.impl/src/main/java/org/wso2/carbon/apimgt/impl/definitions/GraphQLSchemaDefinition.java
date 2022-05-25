@@ -68,10 +68,19 @@ public class GraphQLSchemaDefinition {
      * @param schema graphQL Schema
      * @return the arrayList of APIOperationsDTOextractGraphQLOperationList
      */
-    public List<URITemplate> extractGraphQLOperationList(String schema, String type) {
-        List<URITemplate> operationArray = new ArrayList<>();
+    public List<URITemplate> extractGraphQLOperationList(String schema) {
         SchemaParser schemaParser = new SchemaParser();
         TypeDefinitionRegistry typeRegistry = schemaParser.parse(schema);
+        return extractGraphQLOperationList(null, typeRegistry);
+    }
+
+    /**
+     * Extract GraphQL Operations from given schema
+     *
+     * @return the arrayList of APIOperationsDTOextractGraphQLOperationList
+     */
+    public List<URITemplate> extractGraphQLOperationList(String type, TypeDefinitionRegistry typeRegistry) {
+        List<URITemplate> operationArray = new ArrayList<>();
         Map<java.lang.String, TypeDefinition> operationList = typeRegistry.types();
         for (Map.Entry<String, TypeDefinition> entry : operationList.entrySet()) {
             Optional<SchemaDefinition> schemaDefinition = typeRegistry.schemaDefinition();
@@ -100,6 +109,7 @@ public class GraphQLSchemaDefinition {
         }
         return operationArray;
     }
+
 
     /**
      * @param entry          Entry
