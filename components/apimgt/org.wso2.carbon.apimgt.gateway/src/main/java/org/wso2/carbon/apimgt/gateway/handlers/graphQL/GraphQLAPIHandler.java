@@ -31,10 +31,7 @@ import graphql.schema.idl.TypeDefinitionRegistry;
 import graphql.schema.idl.UnExecutableSchemaGenerator;
 import graphql.validation.ValidationError;
 import graphql.validation.Validator;
-import org.apache.axiom.om.OMAbstractFactory;
 import org.apache.axiom.om.OMElement;
-import org.apache.axiom.om.OMFactory;
-import org.apache.axiom.om.OMNamespace;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
@@ -47,7 +44,6 @@ import org.apache.synapse.rest.AbstractHandler;
 import org.apache.synapse.transport.passthru.util.RelayUtils;
 import org.wso2.carbon.apimgt.api.model.URITemplate;
 import org.wso2.carbon.apimgt.gateway.handlers.Utils;
-import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityConstants;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.definitions.GraphQLSchemaDefinition;
 
@@ -74,6 +70,7 @@ public class GraphQLAPIHandler extends AbstractHandler {
     private static Validator validator;
     private String apiUUID;
     private String schemaDefinition;
+    private TypeDefinitionRegistry registry;
 
     public GraphQLAPIHandler() {
 
@@ -172,8 +169,7 @@ public class GraphQLAPIHandler extends AbstractHandler {
         GraphQLSchemaDefinition graphql = new GraphQLSchemaDefinition();
         ArrayList<String> operationArray = new ArrayList<>();
 
-        List<URITemplate> list = graphql.extractGraphQLOperationList(schemaDefinition,
-                operation.getOperation().toString());
+        List<URITemplate> list = graphql.extractGraphQLOperationList(operation.getOperation().toString(), registry);
         ArrayList<String> supportedFields = getSupportedFields(list);
 
         getNestedLevelOperations(operation.getSelectionSet().getSelections(), supportedFields, operationArray);
@@ -325,7 +321,7 @@ public class GraphQLAPIHandler extends AbstractHandler {
                 if (localEntryObj != null) {
                     SchemaParser schemaParser = new SchemaParser();
                     schemaDefinition = localEntryObj.getValue().toString();
-                    TypeDefinitionRegistry registry = schemaParser.parse(schemaDefinition);
+                    registry = schemaParser.parse(schemaDefinition);
                     schema = UnExecutableSchemaGenerator.makeUnExecutableSchema(registry);
                 }
             }
