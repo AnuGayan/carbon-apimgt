@@ -37,6 +37,7 @@ import Progress from 'AppComponents/Shared/Progress';
 import Configurations from 'Config';
 import Scopes from 'AppComponents/Scopes/Scopes';
 import merge from 'lodash/merge';
+import { Helmet } from 'react-helmet';
 
 const Apis = lazy(() => import('AppComponents/Apis/Apis' /* webpackChunkName: "DeferredAPIs" */));
 const DeferredAPIs = () => (
@@ -143,14 +144,16 @@ export default class Protected extends Component {
      * @param {object} theme object.
      * @returns {JSX} link dom tag.
      */
-    getTitle(localTheme) {
-        const {
-            custom: {
-                title: {
-                    prefix, suffix,
-                },
-            },
-        } = localTheme;
+    getTitle() {
+        let prefix;
+        let suffix;
+        if (userThemes.custom && userThemes.custom.title) {
+            prefix = userThemes.custom.title.prefix;
+            suffix = userThemes.custom.title.suffix;
+        } else {
+            prefix = defaultTheme.custom.title.prefix;
+            suffix = defaultTheme.custom.title.suffix;
+        }
         return (prefix + suffix);
     }
 
@@ -202,6 +205,9 @@ export default class Protected extends Component {
                     merge(currentTheme, (typeof theme === 'function' ? theme(currentTheme) : theme)),
                 )}
                 >
+                    <Helmet>
+                        <title>{this.getTitle()}</title>
+                    </Helmet>
                     <AppErrorBoundary>
                         <Base user={user}>
                             {settings ? (
