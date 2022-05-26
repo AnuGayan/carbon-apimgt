@@ -327,7 +327,7 @@ const DefaultConfigurations = {
         },
         title: {
             prefix: '[Devportal]',
-            sufix: '- WSO2 APIM',
+            suffix: '- WSO2 APIM',
         },
         languageSwitch: {
             active: false,
