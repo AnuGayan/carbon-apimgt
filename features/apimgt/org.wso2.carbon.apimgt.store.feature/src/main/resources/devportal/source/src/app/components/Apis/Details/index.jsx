@@ -409,7 +409,7 @@ class Details extends React.Component {
                     showCredentials, showComments, showTryout, showDocuments, showSdks, showAsyncSpecification,
                 },
                 title: {
-                    prefix, sufix,
+                    prefix, suffix,
                 },
             },
         } = theme;
@@ -425,7 +425,7 @@ class Details extends React.Component {
         return api ? (
             <ApiContext.Provider value={this.state}>
                 <Helmet>
-                    <title>{`${prefix} ${api.name}${sufix}`}</title>
+                    <title>{`${prefix} ${api.name}${suffix}`}</title>
                 </Helmet>
                 <style>{globalStyle}</style>
                 {!isWidget && (

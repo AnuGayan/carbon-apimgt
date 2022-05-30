@@ -146,11 +146,11 @@ class DevPortal extends React.Component {
         const {
             custom: {
                 title: {
-                    prefix, sufix,
+                    prefix, suffix,
                 },
             },
         } = theme;
-        return (prefix + sufix);
+        return (prefix + suffix);
     }
 
     /**

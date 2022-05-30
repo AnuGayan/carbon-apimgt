@@ -270,7 +270,7 @@ class Details extends Component {
                     rootIconSize, rootIconTextVisible, rootIconVisible, position,
                 },
                 title: {
-                    prefix, sufix,
+                    prefix, suffix,
                 },
             },
         } = theme;
@@ -282,7 +282,7 @@ class Details extends Component {
         return (
             <>
                 <Helmet>
-                    <title>{`${prefix} ${application.name}${sufix}`}</title>
+                    <title>{`${prefix} ${application.name}${suffix}`}</title>
                 </Helmet>
                 <nav
                     role='navigation'
