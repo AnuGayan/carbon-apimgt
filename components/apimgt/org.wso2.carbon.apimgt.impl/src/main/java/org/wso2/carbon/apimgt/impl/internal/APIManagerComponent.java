@@ -659,8 +659,8 @@ public class APIManagerComponent {
         }
     }
 
-    private void addDefaultAdvancedThrottlePolicies() throws APIManagementException {
-        APIUtil.addDefaultSuperTenantAdvancedThrottlePolicies();
+    private void addDefaultAdvancedThrottlePolicies(String tenantDomain, int tenantId) throws APIManagementException {
+        APIUtil.addDefaultTenantAdvancedThrottlePolicies(tenantDomain, tenantId);
     }
 
     @Reference(
