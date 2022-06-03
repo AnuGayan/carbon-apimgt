@@ -2551,6 +2551,14 @@ public final class APIConstants {
 
     // Constants related to basic health check APIs
     public static final String WEB_SOCKET_HEALTH_CHECK_PATH = "/health";
-
-    public static final String CASE_SENSITIVE_CHECK_PATH =    "caeSensitiveRoleValidation";
+    
+    public static class APILogHandler {
+        public static final String DELETE = "delete";
+        public static final String DELETE_ALL = "deleteAll";
+        public static final String HEADERS = "headers";
+        public static final String ALL = "all";
+        public static final String BODY = "body";
+    }
+        
+    public static final String CASE_SENSITIVE_CHECK_PATH =    "caseSensitiveRoleValidation";
 }
