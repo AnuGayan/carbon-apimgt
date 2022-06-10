@@ -18,6 +18,7 @@
  */
 
 include("/services/constants.jag");
+var utils = Packages.org.wso2.carbon.apimgt.impl.utils.APIUtil;
 var appUtils = require("/services/utils.js");
 var settings = require("/site/public/theme/settings.js");
 response.contentType = "application/javascript";
@@ -37,7 +38,10 @@ if (settings.Settings.app.customUrl.enabled && forwarded_for) {
 } else {
     customIDPCheckSessionEndpoint = appUtils.getIDPCheckSessionEndpoint();
 }
-
+var idpConfig = utils.getIdentityProviderConfig();
+if (idpConfig != null) {
+    customIDPCheckSessionEndpoint = appUtils.getIDPCheckSessionEndpoint();
+}
 settings.Settings.idp = {
     origin: serverUrl,
     checkSessionEndpoint: customIDPCheckSessionEndpoint,
