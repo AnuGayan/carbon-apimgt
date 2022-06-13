@@ -36,7 +36,6 @@ import io.swagger.models.parameters.RefParameter;
 import io.swagger.models.properties.RefProperty;
 import io.swagger.parser.SwaggerParser;
 import io.swagger.util.Yaml;
-import io.swagger.v3.oas.models.media.ArraySchema;
 import io.swagger.v3.core.util.Json;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -44,6 +43,8 @@ import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.Paths;
 import io.swagger.v3.oas.models.headers.Header;
+import io.swagger.v3.oas.models.media.ArraySchema;
+import io.swagger.v3.oas.models.media.ComposedSchema;
 import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.Schema;
@@ -80,9 +81,9 @@ import org.wso2.carbon.apimgt.api.ErrorItem;
 import org.wso2.carbon.apimgt.api.ExceptionCodes;
 import org.wso2.carbon.apimgt.api.model.API;
 import org.wso2.carbon.apimgt.api.model.APIIdentifier;
-import org.wso2.carbon.apimgt.api.model.APIRevision;
 import org.wso2.carbon.apimgt.api.model.APIProductIdentifier;
 import org.wso2.carbon.apimgt.api.model.APIProductResource;
+import org.wso2.carbon.apimgt.api.model.APIRevision;
 import org.wso2.carbon.apimgt.api.model.CORSConfiguration;
 import org.wso2.carbon.apimgt.api.model.Identifier;
 import org.wso2.carbon.apimgt.api.model.Scope;
@@ -96,26 +97,25 @@ import org.wso2.carbon.registry.api.RegistryException;
 import org.wso2.carbon.registry.api.Resource;
 import org.wso2.carbon.registry.core.session.UserRegistry;
 
-import java.io.IOException;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.FileNotFoundException;
-import java.io.FilenameFilter;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashMap;
-import java.util.stream.Collectors;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.Arrays;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
 import static org.wso2.carbon.apimgt.impl.utils.APIUtil.handleException;
 
 /**
@@ -674,6 +674,29 @@ public class OASParserUtil {
             if (properties != null) {
                 for (Object propertySchema : properties.values()) {
                     extractReferenceFromSchema((Schema) propertySchema, context);
+                }
+            }
+
+            if (schema instanceof ComposedSchema) {
+                List<Schema> allOfSchemas = ((ComposedSchema) schema).getAllOf();
+                if (allOfSchemas != null) {
+                    for (Schema allOfSchema : allOfSchemas) {
+                        extractReferenceFromSchema(allOfSchema, context);
+                    }
+                }
+
+                List<Schema> anyOfSchemas = ((ComposedSchema) schema).getAnyOf();
+                if (anyOfSchemas != null) {
+                    for (Schema anyOfSchema : anyOfSchemas) {
+                        extractReferenceFromSchema(anyOfSchema, context);
+                    }
+                }
+
+                List<Schema> oneOfSchemas = ((ComposedSchema) schema).getOneOf();
+                if (oneOfSchemas != null) {
+                    for (Schema oneOfSchema : oneOfSchemas) {
+                        extractReferenceFromSchema(oneOfSchema, context);
+                    }
                 }
             }
         }
