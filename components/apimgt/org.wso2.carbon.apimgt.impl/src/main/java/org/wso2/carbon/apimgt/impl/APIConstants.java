@@ -568,6 +568,8 @@ public final class APIConstants {
     public static final String ORGANIZATION_CLAIM_ATTRIBUTE = "OrganizationClaimAttribute";
     public static final String DEFAULT_ORGANIZATION_CLAIM_NAME = "http://wso2.org/claims/organization";
     public static final String DEFAULT_TOKEN_TYPE = "DEFAULT";
+
+    public static final String DEFAULT_TOKEN_TYPE_NEW = "Default";
     public static final String TOKEN_TYPE_JWT = "JWT";
     public static final String TOKEN_TYPE_OAUTH = "OAUTH";
 
