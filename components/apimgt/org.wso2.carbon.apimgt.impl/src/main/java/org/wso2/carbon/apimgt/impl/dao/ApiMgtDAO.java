@@ -4650,6 +4650,7 @@ public class ApiMgtDAO {
                 application.setUUID(rs.getString("UUID"));
                 application.setIsBlackListed(rs.getBoolean("ENABLED"));
                 application.setOwner(rs.getString("CREATED_BY"));
+                application.setTokenType(rs.getString("TOKEN_TYPE"));
 
                 if (multiGroupAppSharingEnabled) {
                     setGroupIdInApplication(application);
