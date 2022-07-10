@@ -27,6 +27,7 @@ import org.wso2.carbon.apimgt.impl.APIManagerConfigurationService;
 import org.wso2.carbon.apimgt.impl.jwt.JWTValidator;
 import org.wso2.carbon.apimgt.impl.jwt.JWTValidatorImpl;
 import org.wso2.carbon.apimgt.rest.api.common.APIMConfigUtil;
+import org.wso2.carbon.apimgt.rest.api.common.ISKMAuthenticationImpl;
 import org.wso2.carbon.apimgt.rest.api.common.RestAPIAuthenticator;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,15 +45,8 @@ public class APIMRestAPICommonComponent {
 
     @Activate
     protected void activate(ComponentContext context) {
-
-        Map<String, JWTValidator> jwtValidatorMap = new HashMap<>();
-        Map<String, TokenIssuerDto> tokenIssuerMap = APIMConfigUtil.getTokenIssuerMap();
-        tokenIssuerMap.forEach((issuer, tokenIssuer) -> {
-            JWTValidator jwtValidator = new JWTValidatorImpl();
-            jwtValidator.loadTokenIssuerConfiguration(tokenIssuer);
-            jwtValidatorMap.put(issuer, jwtValidator);
-        });
-        ServiceReferenceHolder.getInstance().setJwtValidatorMap(jwtValidatorMap);
+        serviceRegistration = context.getBundleContext().registerService(RestAPIAuthenticator.class.getName(),
+                new ISKMAuthenticationImpl(), null);
     }
 
     @Deactivate

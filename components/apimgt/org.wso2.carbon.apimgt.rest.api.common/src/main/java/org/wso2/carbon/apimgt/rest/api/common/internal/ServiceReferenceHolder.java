@@ -19,12 +19,10 @@ package org.wso2.carbon.apimgt.rest.api.common.internal;
 
 import org.wso2.carbon.apimgt.impl.APIManagerConfiguration;
 import org.wso2.carbon.apimgt.impl.APIManagerConfigurationService;
-import org.wso2.carbon.apimgt.impl.jwt.JWTValidator;
 import org.wso2.carbon.apimgt.rest.api.common.RestAPIAuthenticator;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * This class implemented for retrieving APIM configurations related to REST APIs
@@ -34,8 +32,6 @@ public class ServiceReferenceHolder {
     private static ServiceReferenceHolder instance = new ServiceReferenceHolder();
 
     private APIManagerConfiguration apimConfiguration;
-
-    private Map<String, JWTValidator> jwtValidatorMap;
 
     private List<RestAPIAuthenticator> authenticators = new ArrayList<>();
 
@@ -56,14 +52,6 @@ public class ServiceReferenceHolder {
         } else {
             this.apimConfiguration = configurationService.getAPIManagerConfiguration();
         }
-    }
-
-    public Map<String, JWTValidator> getJwtValidatorMap() {
-        return jwtValidatorMap;
-    }
-
-    public void setJwtValidatorMap(Map<String, JWTValidator> jwtValidatorMap) {
-        this.jwtValidatorMap = jwtValidatorMap;
     }
 
     public void addAuthenticator(RestAPIAuthenticator authenticator) {

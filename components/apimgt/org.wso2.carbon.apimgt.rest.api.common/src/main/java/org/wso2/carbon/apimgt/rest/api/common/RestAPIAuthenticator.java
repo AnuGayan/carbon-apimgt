@@ -16,7 +16,6 @@
 
 package org.wso2.carbon.apimgt.rest.api.common;
 
-import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.APIMgtAuthorizationFailedException;
 
 import java.util.HashMap;

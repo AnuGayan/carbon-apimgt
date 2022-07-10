@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (c) 2021, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *  Copyright (c) 2022, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,20 +22,11 @@ import org.wso2.carbon.apimgt.rest.api.common.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.common.gateway.dto.TokenIssuerDto;
 import org.wso2.carbon.apimgt.impl.jwt.JWTValidator;
 
-import java.util.List;
 import java.util.Map;
 
 public class APIMConfigUtil {
 
     private static APIManagerConfiguration configuration = getApiManagerConfiguration();
-
-    /**
-     * This is to get JWT issuer details from deployment.toml file
-     * @return Map<issuer, tokenIssuerDto>
-     */
-    public static Map<String, TokenIssuerDto> getTokenIssuerMap() {
-        return configuration.getJwtConfigurationDto().getTokenIssuerDtoMap();
-    }
 
     /**
      * @return APIManagerConfiguration
@@ -44,7 +35,4 @@ public class APIMConfigUtil {
         return ServiceReferenceHolder.getInstance().getAPIMConfiguration();
     }
 
-    public static  Map<String, JWTValidator> getJWTValidatorMap (){
-        return ServiceReferenceHolder.getInstance().getJwtValidatorMap();
-    }
 }
