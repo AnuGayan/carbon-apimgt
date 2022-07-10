@@ -25,7 +25,6 @@ import java.util.HashMap;
 public class RestAPIAuthenticationManager {
 
     private static final Log log = LogFactory.getLog(RestAPIAuthenticationManager.class);
-    private static RestAPIAuthenticator authenticator = null;
 
     public static RestAPIAuthenticator getAuthenticator(HashMap<String, Object> authContext) {
         ServiceReferenceHolder serviceReferenceHolder = ServiceReferenceHolder.getInstance();
