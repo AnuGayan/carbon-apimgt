@@ -19,6 +19,7 @@ package org.wso2.carbon.apimgt.common.analytics.collectors.impl;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.apimgt.common.analytics.Constants;
+import org.wso2.carbon.apimgt.common.analytics.collectors.AnalyticsCustomDataProvider;
 import org.wso2.carbon.apimgt.common.analytics.collectors.AnalyticsDataProvider;
 import org.wso2.carbon.apimgt.common.analytics.collectors.RequestDataCollector;
 import org.wso2.carbon.apimgt.common.analytics.exceptions.AnalyticsException;
@@ -39,6 +40,7 @@ public class SuccessRequestDataCollector extends CommonRequestDataCollector impl
     private static final Log log = LogFactory.getLog(SuccessRequestDataCollector.class);
     private RequestDataPublisher processor;
     private AnalyticsDataProvider provider;
+    private AnalyticsCustomDataProvider customDataProvider;
 
     public SuccessRequestDataCollector(AnalyticsDataProvider provider, RequestDataPublisher processor) {
         super(provider);
@@ -57,6 +59,7 @@ public class SuccessRequestDataCollector extends CommonRequestDataCollector impl
         String offsetDateTime = getTimeInISO(requestInTime);
 
         Event event = new Event();
+        event.setCustomProperties(provider.getProperties());
         API api = provider.getApi();
         Operation operation = provider.getOperation();
         Target target = provider.getTarget();

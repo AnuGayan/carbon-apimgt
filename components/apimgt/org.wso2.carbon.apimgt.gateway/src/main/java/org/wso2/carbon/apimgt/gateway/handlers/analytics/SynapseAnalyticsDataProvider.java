@@ -24,6 +24,7 @@ import org.apache.synapse.SynapseConstants;
 import org.apache.synapse.commons.CorrelationConstants;
 import org.apache.synapse.core.axis2.Axis2MessageContext;
 import org.apache.synapse.rest.RESTConstants;
+import org.wso2.carbon.apimgt.common.analytics.collectors.AnalyticsCustomDataProvider;
 import org.wso2.carbon.apimgt.common.analytics.collectors.AnalyticsDataProvider;
 import org.wso2.carbon.apimgt.common.analytics.exceptions.DataNotFoundException;
 import org.wso2.carbon.apimgt.common.analytics.publishers.dto.API;
@@ -55,10 +56,18 @@ public class SynapseAnalyticsDataProvider implements AnalyticsDataProvider {
 
     private static final Log log = LogFactory.getLog(SynapseAnalyticsDataProvider.class);
     private MessageContext messageContext;
+    AnalyticsCustomDataProvider analyticsCustomDataProvider;
 
     public SynapseAnalyticsDataProvider(MessageContext messageContext) {
 
         this.messageContext = messageContext;
+    }
+
+    public SynapseAnalyticsDataProvider(MessageContext messageContext,
+            AnalyticsCustomDataProvider analyticsCustomDataProvider) {
+
+        this.messageContext = messageContext;
+        this.analyticsCustomDataProvider = analyticsCustomDataProvider;
     }
 
     public static String sortGraphQLOperations(String apiResourceTemplates) {
@@ -301,6 +310,17 @@ public class SynapseAnalyticsDataProvider implements AnalyticsDataProvider {
             return (String) messageContext.getProperty(Constants.USER_IP_PROPERTY);
         }
         return null;
+    }
+
+    @Override
+    public Map getProperties() {
+
+        if (analyticsCustomDataProvider == null) {
+            return null;
+        }
+
+        return analyticsCustomDataProvider.getCustomProperties(messageContext);
+
     }
 
     private boolean isSuccessRequest() {
