@@ -96,7 +96,7 @@ export default function APICategoriesCard() {
             + 'develop/customizations/customizing-the-developer-portal/'
             + 'customize-api-listing/categorizing-and-grouping-apis/'
             + 'api-category-based-grouping'}
-           >
+    >
         Go to Category Documentation
         <LaunchIcon fontSize='inherit' />
     </a>,

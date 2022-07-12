@@ -125,9 +125,9 @@ export default function RateLimitingCard() {
                                 </Box>
                                 <Box flexGrow={1}>
                                     <Link component={RouterLink} to={policy.path} color='inherit'>
-                                        <Typography 
+                                        <Typography
                                             variant='body1'
-                                            style={{fontWeight: 'bold'}}
+                                            style={{ fontWeight: 'bold' }}
                                         >
                                             {policy.name}
                                         </Typography>
