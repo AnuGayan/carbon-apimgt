@@ -37,6 +37,7 @@ public final class RestApiConstants {
     public static final String APPLICATION_XML = "application/xml";
     public static final String AUTHENTICATION_REQUIRED = "authentication_required";
     public static final String HEADER_X_WSO2_TENANT = "x-wso2-tenant";
+    public static final String MASKED_TOKEN = "maskedToken";
 
     public static final String REQUEST_AUTHENTICATION_SCHEME = "request_authentication_scheme";
     public static final String OAUTH2_AUTHENTICATION = "oauth2";
@@ -179,6 +180,8 @@ public final class RestApiConstants {
     public static final String AUTH_COOKIE_NAME = "AM_ACC_TOKEN_DEFAULT_P2"; // This cookie name should be used when setting the cookie for SPA app in SPA app user authentication response to REST API context as path directive
 
     public static final String API_VERSION = "API_VERSION";
+    public static final String BASE_PATH = "org.apache.cxf.message.Message.BASE_PATH";
+    public static final String URI_TEMPLATES = "TEMPLATES";
 
     public static final int PAGINATION_LIMIT_DEFAULT = 25;
     public static final int PAGINATION_OFFSET_DEFAULT = 0;
