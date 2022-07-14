@@ -66,6 +66,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -95,8 +96,6 @@ import java.io.IOException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.io.FileNotFoundException;
-import java.io.FilenameFilter;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.HashSet;
@@ -137,6 +136,8 @@ public class OASParserUtil {
     private static final String REF_PREFIX = "#/components/";
     private static final String ARRAY_DATA_TYPE = "array";
     private static final String OBJECT_DATA_TYPE = "object";
+    private static final String OPENAPI_RESOURCE_KEY = "paths";
+    private static final String[] UNSUPPORTED_RESOURCE_BLOCKS = new String[]{"servers"};
 
     static class SwaggerUpdateContext {
         private final Paths paths = new Paths();
@@ -1624,6 +1625,46 @@ public class OASParserUtil {
             appSecurityState = Boolean.parseBoolean(String.valueOf(appSecurityTypesNode.get("optional")));
         }
         return appSecurityState;
+    }
+
+    /**
+     * This method removes the unsupported json blocks from the given json string.
+     *
+     * @param jsonString
+     * @return String
+     */
+    public static String removeUnsupportedBlocksFromResources(String jsonString) {
+        JSONObject jsonObject = new JSONObject(jsonString);
+        if (jsonObject.has(OPENAPI_RESOURCE_KEY)) {
+            JSONObject paths = jsonObject.optJSONObject(OPENAPI_RESOURCE_KEY);
+            if (paths != null ) {
+                for (String unsupportedBlockKey : UNSUPPORTED_RESOURCE_BLOCKS) {
+                    removeBlocksRecursivelyFromJsonObject(unsupportedBlockKey, paths);
+                }
+            }
+        }
+        return jsonObject.toString();
+    }
+
+    /**
+     * This method removes provided key from the json object recursively.
+     *
+     * @param keyToBeRemoved
+     * @param jsonObject
+     */
+    private static void removeBlocksRecursivelyFromJsonObject(String keyToBeRemoved, JSONObject jsonObject) {
+        if (jsonObject == null) {
+            return;
+        }
+        if (jsonObject.has(keyToBeRemoved)) {
+            jsonObject.remove(keyToBeRemoved);
+        }
+        for (Object key : jsonObject.keySet()) {
+            JSONObject subObj = jsonObject.optJSONObject(key.toString());
+            if (subObj != null) {
+                removeBlocksRecursivelyFromJsonObject(keyToBeRemoved, subObj);
+            }
+        }
     }
 
 }
