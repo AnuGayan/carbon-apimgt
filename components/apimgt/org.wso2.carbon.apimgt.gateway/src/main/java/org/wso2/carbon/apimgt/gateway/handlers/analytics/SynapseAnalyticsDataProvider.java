@@ -56,7 +56,7 @@ public class SynapseAnalyticsDataProvider implements AnalyticsDataProvider {
 
     private static final Log log = LogFactory.getLog(SynapseAnalyticsDataProvider.class);
     private MessageContext messageContext;
-    AnalyticsCustomDataProvider analyticsCustomDataProvider;
+    private AnalyticsCustomDataProvider analyticsCustomDataProvider;
 
     public SynapseAnalyticsDataProvider(MessageContext messageContext) {
 
@@ -314,13 +314,32 @@ public class SynapseAnalyticsDataProvider implements AnalyticsDataProvider {
 
     @Override
     public Map getProperties() {
+        Map<String, Object> customProperties;
 
         if (analyticsCustomDataProvider == null) {
             return null;
         }
+        customProperties = analyticsCustomDataProvider.getCustomProperties(messageContext);
+        customProperties.put("userName", getUserName());
+        customProperties.put("apiContext",getApiContext());
 
-        return analyticsCustomDataProvider.getCustomProperties(messageContext);
+        return customProperties;
+    }
 
+    private String getUserName() {
+
+        if (messageContext.getPropertyKeySet().contains(Constants.USER_NAME_CUSTOM_PROPERTY)) {
+            return (String) messageContext.getProperty(Constants.USER_NAME_CUSTOM_PROPERTY);
+        }
+        return null;
+    }
+
+    private String getApiContext() {
+
+        if (messageContext.getPropertyKeySet().contains(Constants.API_CONTEXT_CUSTOM_PROPERTY)) {
+            return (String) messageContext.getProperty(Constants.API_CONTEXT_CUSTOM_PROPERTY);
+        }
+        return null;
     }
 
     private boolean isSuccessRequest() {
