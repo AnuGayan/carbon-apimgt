@@ -37,6 +37,7 @@ public class AsyncAnalyticsDataProvider extends SynapseAnalyticsDataProvider {
     private MessageContext messageContext;
 
     public AsyncAnalyticsDataProvider(MessageContext messageContext) {
+//        super(messageContext, analyticsCustomDataProvider);
         super(messageContext);
         org.apache.axis2.context.MessageContext axisCtx =
                 ((Axis2MessageContext) messageContext).getAxis2MessageContext();

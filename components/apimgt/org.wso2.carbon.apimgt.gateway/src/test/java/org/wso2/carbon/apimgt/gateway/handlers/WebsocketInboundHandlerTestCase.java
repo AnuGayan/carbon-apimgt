@@ -64,6 +64,7 @@ import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.net.SocketAddress;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -171,7 +172,9 @@ public class WebsocketInboundHandlerTestCase {
     * Tests channelRead method for tenant when msg is FullHttpRequest
     * */
     @Test
-    public void testChannelRead() throws AxisFault {
+    public void testChannelRead()
+            throws AxisFault, ClassNotFoundException, InvocationTargetException, InstantiationException,
+            IllegalAccessException {
         PowerMockito.mockStatic(DataPublisherUtil.class);
         //test when the request is a handshake
         WebsocketInboundHandler websocketInboundHandler = new WebsocketInboundHandler() {
@@ -599,7 +602,9 @@ public class WebsocketInboundHandlerTestCase {
     *
     * */
     @Test
-    public void testDoThrottle() throws APIManagementException {
+    public void testDoThrottle()
+            throws APIManagementException, ClassNotFoundException, InvocationTargetException, InstantiationException,
+            IllegalAccessException {
         PowerMockito.mockStatic(DataPublisherUtil.class);
         //todo
         ChannelHandlerContext channelHandlerContext = Mockito.mock(ChannelHandlerContext.class);
@@ -622,7 +627,8 @@ public class WebsocketInboundHandlerTestCase {
     *
     * */
     @Test
-    public void testDoThrottle1() {
+    public void testDoThrottle1()
+            throws ClassNotFoundException, InvocationTargetException, InstantiationException, IllegalAccessException {
         PowerMockito.mockStatic(DataPublisherUtil.class);
         //todo
         ChannelHandlerContext channelHandlerContext = Mockito.mock(ChannelHandlerContext.class);

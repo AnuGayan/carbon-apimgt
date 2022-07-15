@@ -75,6 +75,7 @@ import org.wso2.carbon.ganalytics.publisher.GoogleAnalyticsData;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
+import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -109,11 +110,13 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
     private WebSocketAnalyticsMetricsHandler metricsHandler;
     private org.wso2.carbon.apimgt.keymgt.model.entity.API electedAPI;
 
-    public WebsocketInboundHandler() {
+    public WebsocketInboundHandler()
+            throws ClassNotFoundException, InstantiationException, IllegalAccessException, InvocationTargetException {
         initializeDataPublisher();
     }
 
-    private void initializeDataPublisher() {
+    private void initializeDataPublisher()
+            throws ClassNotFoundException, InvocationTargetException, InstantiationException, IllegalAccessException {
         if (APIUtil.isAnalyticsEnabled()) {
             metricsHandler = new WebSocketAnalyticsMetricsHandler();
         }
