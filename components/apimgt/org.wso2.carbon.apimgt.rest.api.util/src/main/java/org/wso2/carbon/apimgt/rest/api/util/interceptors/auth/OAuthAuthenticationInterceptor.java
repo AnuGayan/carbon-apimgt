@@ -95,8 +95,6 @@ public class OAuthAuthenticationInterceptor extends AbstractPhaseInterceptor {
             //set the request_authentication_scheme property in the message as oauth2.
             String accessToken = RestApiUtil.extractOAuthAccessTokenFromMessage(inMessage,
                     RestApiConstants.REGEX_BEARER_PATTERN, RestApiConstants.AUTH_HEADER_NAME);
-            //add masked token to the Message
-            inMessage.put(RestApiConstants.MASKED_TOKEN, APIUtil.getMaskedToken(accessToken));
             if (accessToken == null) {
                 return;
             }
