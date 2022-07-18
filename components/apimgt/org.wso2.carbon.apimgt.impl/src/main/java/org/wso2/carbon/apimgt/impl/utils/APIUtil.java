@@ -8752,6 +8752,12 @@ public final class APIUtil {
                 getDasReceiverServerPassword();
     }
 
+    public static String getAnalyticsCustomDataPublisherClass() {
+
+        return ServiceReferenceHolder.getInstance().getAPIManagerConfigurationService().getAPIAnalyticsConfiguration()
+                .getReporterProperties().get(APIConstants.API_ANALYTICS_CUSTOM_DATA_PROVIDER_CLASS);
+    }
+
     /**
      * Create the Cache object from the given parameters
      *
