@@ -23,9 +23,9 @@ import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
 import org.apache.cxf.phase.Phase;
 import org.wso2.carbon.apimgt.api.APIManagementException;
-import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.rest.api.common.RestAPIAuthenticationManager;
 import org.wso2.carbon.apimgt.rest.api.common.RestAPIAuthenticator;
+import org.wso2.carbon.apimgt.rest.api.common.RestApiCommonUtil;
 import org.wso2.carbon.apimgt.rest.api.common.RestApiConstants;
 import org.wso2.carbon.apimgt.rest.api.util.authenticators.AbstractOAuthAuthenticator;
 import org.wso2.carbon.apimgt.rest.api.util.impl.OAuthOpaqueAuthenticatorImpl;
@@ -74,7 +74,7 @@ public class OAuthAuthenticationInterceptor extends AbstractPhaseInterceptor {
                 inMessage.put(RestApiConstants.REQUEST_AUTHENTICATION_SCHEME, authenticator.getAuthenticationType());
                 String basePath = (String) inMessage.get(RestApiConstants.BASE_PATH);
                 String version = (String) inMessage.get(RestApiConstants.API_VERSION);
-                authContext.put(RestApiConstants.URI_TEMPLATES, RestApiUtil.getURITemplatesForBasePath(basePath + version));
+                authContext.put(RestApiConstants.URI_TEMPLATES, RestApiCommonUtil.getURITemplatesForBasePath(basePath + version));
                 if (authenticator.authenticate(authContext)) {
                     inMessage = addToMessageContext(inMessage, authContext);
                     if (logger.isDebugEnabled()) {

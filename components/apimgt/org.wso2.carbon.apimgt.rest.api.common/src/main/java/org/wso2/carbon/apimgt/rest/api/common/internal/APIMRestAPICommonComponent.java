@@ -23,6 +23,7 @@ import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.*;
 import org.wso2.carbon.apimgt.impl.APIManagerConfigurationService;
+import org.wso2.carbon.apimgt.rest.api.common.ISKMAuthenticationImpl;
 import org.wso2.carbon.apimgt.rest.api.common.RestAPIAuthenticator;
 
 /**
@@ -38,6 +39,8 @@ public class APIMRestAPICommonComponent {
 
     @Activate
     protected void activate(ComponentContext context) {
+        serviceRegistration = context.getBundleContext().registerService(RestAPIAuthenticator.class.getName(),
+                new ISKMAuthenticationImpl(), null);
     }
 
     @Deactivate
