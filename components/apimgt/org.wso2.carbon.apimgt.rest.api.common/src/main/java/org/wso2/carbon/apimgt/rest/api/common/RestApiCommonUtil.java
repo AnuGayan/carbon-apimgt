@@ -4,7 +4,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.cxf.message.Message;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
@@ -13,7 +12,11 @@ import org.wso2.carbon.apimgt.api.APIDefinition;
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.APIMgtAuthorizationFailedException;
 import org.wso2.carbon.apimgt.api.APIProvider;
-import org.wso2.carbon.apimgt.api.model.*;
+import org.wso2.carbon.apimgt.api.model.API;
+import org.wso2.carbon.apimgt.api.model.APIIdentifier;
+import org.wso2.carbon.apimgt.api.model.URITemplate;
+import org.wso2.carbon.apimgt.api.model.Scope;
+import org.wso2.carbon.apimgt.api.model.AccessTokenInfo;
 import org.wso2.carbon.apimgt.impl.APIManagerFactory;
 import org.wso2.carbon.apimgt.impl.definitions.OASParserUtil;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
@@ -23,7 +26,13 @@ import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 import org.wso2.uri.template.URITemplateException;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.Set;
+import java.util.List;
+import java.util.HashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -491,12 +500,12 @@ public class RestApiCommonUtil {
      * @return return true if we found matching scope in resource and token information
      * else false(means scope validation failed).
      */
-    public static boolean validateScopes(Message message, AccessTokenInfo tokenInfo) {
-        String basePath = (String) message.get(Message.BASE_PATH);
+    public static boolean validateScopes(HashMap<String, Object> message, AccessTokenInfo tokenInfo) {
+        String basePath = (String) message.get("org.apache.cxf.message.Message.BASE_PATH");
         // path is obtained from Message.REQUEST_URI instead of Message.PATH_INFO, as Message.PATH_INFO contains
         // decoded values of request parameters
-        String path = (String) message.get(Message.REQUEST_URI);
-        String verb = (String) message.get(Message.HTTP_REQUEST_METHOD);
+        String path = (String) message.get("org.apache.cxf.request.uri");
+        String verb = (String) message.get("org.apache.cxf.request.method");
         String resource = path.substring(basePath.length() - 1);
         String[] scopes = tokenInfo.getScopes();
 
@@ -727,6 +736,4 @@ public class RestApiCommonUtil {
             return serviceCatalogAPIResourceMappings;
         }
     }
-
-
 }

@@ -65,16 +65,17 @@ public class OAuthAuthenticationInterceptor extends AbstractPhaseInterceptor {
             return;
         }
 
-        HashMap<String, Object> authContext = addToJWTAuthenticationContext(inMessage);
+        HashMap<String, Object> authContext = RestApiUtil.addToJWTAuthenticationContext(inMessage);
         RestAPIAuthenticator authenticator = RestAPIAuthenticationManager.getAuthenticator(authContext);
+        String basePath = (String) inMessage.get(RestApiConstants.BASE_PATH);
+        String version = (String) inMessage.get(RestApiConstants.API_VERSION);
 
         if (authenticator != null) {
             try {
                 String authenticationType = authenticator.getAuthenticationType();
                 inMessage.put(RestApiConstants.REQUEST_AUTHENTICATION_SCHEME, authenticator.getAuthenticationType());
-                String basePath = (String) inMessage.get(RestApiConstants.BASE_PATH);
-                String version = (String) inMessage.get(RestApiConstants.API_VERSION);
-                authContext.put(RestApiConstants.URI_TEMPLATES, RestApiCommonUtil.getURITemplatesForBasePath(basePath + version));
+                authContext.put(RestApiConstants.URI_TEMPLATES, RestApiCommonUtil.getURITemplatesForBasePath(basePath
+                        + version));
                 if (authenticator.authenticate(authContext)) {
                     inMessage = addToMessageContext(inMessage, authContext);
                     if (logger.isDebugEnabled()) {
@@ -91,16 +92,12 @@ public class OAuthAuthenticationInterceptor extends AbstractPhaseInterceptor {
         }
 
         if (authenticator == null) {
-            //check if "Authorization: Bearer" header is present in the request. If not, by-passes the interceptor. If yes,
-            //set the request_authentication_scheme property in the message as oauth2.
             String accessToken = RestApiUtil.extractOAuthAccessTokenFromMessage(inMessage,
                     RestApiConstants.REGEX_BEARER_PATTERN, RestApiConstants.AUTH_HEADER_NAME);
             if (accessToken == null) {
                 return;
             }
-            //identify Oauth2 and JWT tokens
             inMessage.put(RestApiConstants.REQUEST_AUTHENTICATION_SCHEME, RestApiConstants.OAUTH2_AUTHENTICATION);
-
             try {
                 if (logger.isDebugEnabled()) {
                     logger.debug("Authenticating request with : "
@@ -108,7 +105,9 @@ public class OAuthAuthenticationInterceptor extends AbstractPhaseInterceptor {
                 }
                 AbstractOAuthAuthenticator abstractOAuthAuthenticator = authenticatorMap
                         .get(inMessage.get(RestApiConstants.REQUEST_AUTHENTICATION_SCHEME));
-                logger.debug("Selected Authenticator for the token validation " + abstractOAuthAuthenticator);
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Selected Authenticator for the token validation " + abstractOAuthAuthenticator);
+                }
                 if (abstractOAuthAuthenticator.authenticate(inMessage)) {
                     if (logger.isDebugEnabled()) {
                         logger.debug("User logged into Web app using OAuth Authentication");
@@ -120,17 +119,6 @@ public class OAuthAuthenticationInterceptor extends AbstractPhaseInterceptor {
                 logger.error("Error while authenticating incoming request to API Manager REST API", e);
             }
         }
-    }
-
-    /**
-     * To getting a message properties as a Map
-     * @param message - current inbound message
-     * @return Map object that contains all properties of cxf inbound message
-     */
-    public static HashMap<String,Object> addToJWTAuthenticationContext(Message message) {
-        HashMap<String,Object> hashMap = new HashMap<>();
-        message.forEach(hashMap::put);
-        return hashMap;
     }
 
     public static Message addToMessageContext(Message inMessage, HashMap<String,Object> authContext) {

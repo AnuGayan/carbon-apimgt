@@ -42,6 +42,7 @@ import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 import org.wso2.carbon.apimgt.rest.api.util.authenticators.AbstractOAuthAuthenticator;
 
 import java.util.Arrays;
+import java.util.HashMap;
 
 /**
  * This OAuthOpaqueAuthenticatorImpl class specifically implemented for API Manager store and publisher rest APIs'
@@ -59,7 +60,7 @@ public class OAuthOpaqueAuthenticatorImpl extends AbstractOAuthAuthenticator {
      * @throws APIManagementException when error in authentication process
      */
     @Override
-    public boolean authenticate(Message message) throws APIManagementException {
+    public boolean authenticate(Message message) {
         boolean retrievedFromInvalidTokenCache = false;
         boolean retrievedFromTokenCache = false;
         String accessToken = RestApiUtil.extractOAuthAccessTokenFromMessage(message,
@@ -107,10 +108,16 @@ public class OAuthOpaqueAuthenticatorImpl extends AbstractOAuthAuthenticator {
                 getRESTAPITokenCache().put(accessToken, tokenInfo);
             }
 
+            HashMap<String, Object> authContext = RestApiUtil.addToJWTAuthenticationContext(message);
+            String basePath = (String) message.get(RestApiConstants.BASE_PATH);
+            String version = (String) message.get(RestApiConstants.API_VERSION);
+            authContext.put(RestApiConstants.URI_TEMPLATES, RestApiCommonUtil.getURITemplatesForBasePath(basePath
+                    + version));
+
             // If token is valid then we have to do other validations and set user and tenant to carbon context.
             // Scope validation should come here.
             // If access token is valid then we will perform scope check for given resource.
-            if (RestApiCommonUtil.validateScopes(message, tokenInfo)) {
+            if (RestApiCommonUtil.validateScopes(authContext, tokenInfo)) {
                 //Add the user scopes list extracted from token to the cxf message
                 message.getExchange().put(RestApiConstants.USER_REST_API_SCOPES, tokenInfo.getScopes());
                 //If scope validation successful then set tenant name and user name to current context
