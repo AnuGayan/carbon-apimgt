@@ -60,8 +60,6 @@ public class WebSocketAnalyticsDataProvider implements AnalyticsDataProvider {
     private ChannelHandlerContext ctx;
     private AnalyticsCustomDataProvider analyticsCustomDataProvider;
 
-
-
     public WebSocketAnalyticsDataProvider(ChannelHandlerContext ctx) {
         this.ctx = ctx;
     }
