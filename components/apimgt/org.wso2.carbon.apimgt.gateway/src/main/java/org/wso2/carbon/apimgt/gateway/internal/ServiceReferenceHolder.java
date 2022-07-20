@@ -25,6 +25,7 @@ import org.wso2.carbon.apimgt.gateway.handlers.analytics.Constants;
 import org.wso2.carbon.apimgt.gateway.throttling.ThrottleDataHolder;
 import org.wso2.carbon.apimgt.gateway.throttling.publisher.ThrottleDataPublisher;
 import org.wso2.carbon.apimgt.gateway.utils.redis.RedisCacheUtils;
+import org.wso2.carbon.apimgt.impl.APIManagerAnalyticsConfiguration;
 import org.wso2.carbon.apimgt.impl.APIManagerConfiguration;
 import org.wso2.carbon.apimgt.impl.APIManagerConfigurationService;
 import org.wso2.carbon.apimgt.impl.caching.CacheInvalidationService;
@@ -136,7 +137,7 @@ public class ServiceReferenceHolder {
                 setThrottleProperties(amConfigService.getAPIManagerConfiguration().getThrottleProperties());
             }
             if (amConfigService.getAPIAnalyticsConfiguration() != null) {
-                setAnalyticsCustomDataProvider(amConfigService.getAPIAnalyticsConfiguration().getReporterProperties().get(Constants.API_ANALYTICS_CUSTOM_DATA_PROVIDER_CLASS));
+                setAnalyticsCustomDataProvider(amConfigService.getAPIAnalyticsConfiguration());
             }
         }
     }
@@ -399,7 +400,8 @@ public class ServiceReferenceHolder {
         return analyticsCustomDataProvider;
     }
 
-    private void setAnalyticsCustomDataProvider(String customPublisherClass) {
+    private void setAnalyticsCustomDataProvider(APIManagerAnalyticsConfiguration apiManagerAnalyticsConfiguration) {
+        String customPublisherClass = apiManagerAnalyticsConfiguration.getReporterProperties().get(Constants.API_ANALYTICS_CUSTOM_DATA_PROVIDER_CLASS);
         if (customPublisherClass != null) {
             try {
                 Class<?> c = APIUtil.getClassForName(customPublisherClass);
