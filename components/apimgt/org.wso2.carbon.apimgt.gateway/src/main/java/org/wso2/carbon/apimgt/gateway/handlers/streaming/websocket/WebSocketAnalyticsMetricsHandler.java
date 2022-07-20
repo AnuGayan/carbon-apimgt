@@ -21,16 +21,12 @@ package org.wso2.carbon.apimgt.gateway.handlers.streaming.websocket;
 import io.netty.channel.ChannelHandlerContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.apimgt.common.analytics.collectors.AnalyticsCustomDataProvider;
 import org.wso2.carbon.apimgt.common.analytics.collectors.AnalyticsDataProvider;
 import org.wso2.carbon.apimgt.common.analytics.collectors.impl.GenericRequestDataCollector;
 import org.wso2.carbon.apimgt.common.analytics.exceptions.AnalyticsException;
 import org.wso2.carbon.apimgt.gateway.APIMgtGatewayConstants;
+import org.wso2.carbon.apimgt.gateway.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.impl.APIConstants;
-import org.wso2.carbon.apimgt.impl.utils.APIUtil;
-
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 
 /**
  * Handler to publish WebSocket analytics data to analytics cloud.
@@ -40,15 +36,6 @@ public class WebSocketAnalyticsMetricsHandler {
     private static final String HANDSHAKE = "HANDSHAKE";
     private static final String PUBLISH = "PUBLISH";
     private static final String SUBSCRIBE = "SUBSCRIBE";
-
-    AnalyticsCustomDataProvider analyticsCustomDataProvider;
-
-    public WebSocketAnalyticsMetricsHandler()
-            throws IllegalAccessException, InstantiationException, ClassNotFoundException, InvocationTargetException {
-        Class<?> c = APIUtil.getClassForName("org.wso2.carbon.apimgt.gateway.sample.publisher.CustomDataProvider");
-        Constructor<?> cons = c.getConstructors()[0];
-        analyticsCustomDataProvider = (AnalyticsCustomDataProvider) cons.newInstance();
-    }
 
     public void handleHandshake(ChannelHandlerContext ctx) {
         WebSocketUtils.setApiPropertyToChannel(ctx, APIMgtGatewayConstants.HTTP_METHOD, HANDSHAKE);
@@ -74,7 +61,8 @@ public class WebSocketAnalyticsMetricsHandler {
     }
 
     private void collectData(ChannelHandlerContext ctx) {
-        AnalyticsDataProvider provider = new WebSocketAnalyticsDataProvider(ctx, analyticsCustomDataProvider);
+        AnalyticsDataProvider provider = new WebSocketAnalyticsDataProvider(ctx, ServiceReferenceHolder.getInstance()
+                .getAnalyticsCustomDataProvider());
         GenericRequestDataCollector collector = new GenericRequestDataCollector(provider);
         try {
             collector.collectData();

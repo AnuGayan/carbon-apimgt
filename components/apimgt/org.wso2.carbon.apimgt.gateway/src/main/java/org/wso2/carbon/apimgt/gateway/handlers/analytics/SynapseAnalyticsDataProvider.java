@@ -50,6 +50,7 @@ import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 public class SynapseAnalyticsDataProvider implements AnalyticsDataProvider {
@@ -316,13 +317,13 @@ public class SynapseAnalyticsDataProvider implements AnalyticsDataProvider {
     public Map getProperties() {
         Map<String, Object> customProperties;
 
-        if (analyticsCustomDataProvider == null) {
-            return null;
+        if (analyticsCustomDataProvider != null) {
+            customProperties = analyticsCustomDataProvider.getCustomProperties(messageContext);
+        } else {
+            customProperties = new HashMap<>();
         }
-        customProperties = analyticsCustomDataProvider.getCustomProperties(messageContext);
-        customProperties.put("userName", getUserName());
-        customProperties.put("apiContext",getApiContext());
-
+        customProperties.put(Constants.API_USER_NAME_KEY, getUserName());
+        customProperties.put(Constants.API_CONTEXT_KEY,getApiContext());
         return customProperties;
     }
 

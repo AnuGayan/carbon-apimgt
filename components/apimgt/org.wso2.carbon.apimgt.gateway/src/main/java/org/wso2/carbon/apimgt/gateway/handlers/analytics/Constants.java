@@ -33,6 +33,9 @@ public class Constants {
     public static final String USER_NAME_CUSTOM_PROPERTY = "api.ut.userName";
     public static final String API_CONTEXT_CUSTOM_PROPERTY = "REST_API_CONTEXT";
     public static final String API_AUTH_CONTEXT_CUSTOM_PROPERTY = "__API_AUTH_CONTEXT";
+    public static final String API_USER_NAME_KEY = "userName";
+    public static final String API_CONTEXT_KEY = "apiContext";
+    public static final String API_ANALYTICS_CUSTOM_DATA_PROVIDER_CLASS = "publisher.custom.data.provider.class";
 
     public static final String REGION_ID_PROP = "apim.gw.region";
     public static final String DEFAULT_REGION_ID = "default";

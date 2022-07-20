@@ -51,6 +51,7 @@ import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import java.net.HttpURLConnection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -289,18 +290,16 @@ public class WebSocketAnalyticsDataProvider implements AnalyticsDataProvider {
 
     @Override
     public Map getProperties() {
-
         Map<String, Object> customProperties;
 
-        if (analyticsCustomDataProvider == null) {
-            return null;
+        if (analyticsCustomDataProvider != null) {
+            customProperties = analyticsCustomDataProvider.getCustomProperties(ctx);
+        } else {
+            customProperties = new HashMap<>();
         }
-        customProperties = analyticsCustomDataProvider.getCustomProperties(ctx);
-        customProperties.put("userName", getUserName());
-        customProperties.put("apiContext",getApiContext());
-
+        customProperties.put(Constants.API_USER_NAME_KEY, getUserName());
+        customProperties.put(Constants.API_CONTEXT_KEY,getApiContext());
         return customProperties;
-
     }
 
     private String getUserName() {

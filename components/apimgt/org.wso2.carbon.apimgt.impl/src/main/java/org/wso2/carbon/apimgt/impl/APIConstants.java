@@ -954,7 +954,6 @@ public final class APIConstants {
     public static final String API_ANALYTICS_PROPERTIES = API_ANALYTICS + "Properties";
     public static final String API_ANALYTICS_RESPONSE_SCHEMA_NAME = API_ANALYTICS + "ResponseSchemaName";
     public static final String API_ANALYTICS_FAULT_SCHEMA_NAME = API_ANALYTICS + "FaultSchemaName";
-    public static final String API_ANALYTICS_CUSTOM_DATA_PROVIDER_CLASS = "publisher.custom.data.provider.class";
     public static final String API_USAGE_BAM_SERVER_URL_GROUPS = API_ANALYTICS + "StreamProcessorServerURL";
     public static final String API_USAGE_BAM_SERVER_AUTH_URL_GROUPS = API_ANALYTICS + "StreamProcessorAuthServerURL";
     public static final String API_USAGE_BUILD_MSG = API_ANALYTICS + "PublishResponseMessageSize";

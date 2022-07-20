@@ -29,14 +29,11 @@ import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.gateway.handlers.streaming.websocket.WebSocketUtils;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 
-import java.lang.reflect.InvocationTargetException;
-
 public class WebsocketHandler extends CombinedChannelDuplexHandler<WebsocketInboundHandler, WebsocketOutboundHandler> {
 
     private static final Log log = LogFactory.getLog(WebsocketInboundHandler.class);
 
-    public WebsocketHandler()
-            throws ClassNotFoundException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    public WebsocketHandler() {
         super(new WebsocketInboundHandler(), new WebsocketOutboundHandler());
     }
 

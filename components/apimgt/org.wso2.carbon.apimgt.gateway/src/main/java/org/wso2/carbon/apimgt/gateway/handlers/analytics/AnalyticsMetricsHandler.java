@@ -23,19 +23,16 @@ import org.apache.synapse.AbstractExtendedSynapseHandler;
 import org.apache.synapse.MessageContext;
 import org.apache.synapse.SynapseConstants;
 import org.apache.synapse.core.axis2.Axis2MessageContext;
-import org.wso2.carbon.apimgt.common.analytics.collectors.AnalyticsCustomDataProvider;
 import org.wso2.carbon.apimgt.common.analytics.collectors.AnalyticsDataProvider;
 import org.wso2.carbon.apimgt.common.analytics.collectors.impl.GenericRequestDataCollector;
 import org.wso2.carbon.apimgt.common.analytics.exceptions.AnalyticsException;
 import org.wso2.carbon.apimgt.gateway.handlers.DataPublisherUtil;
 import org.wso2.carbon.apimgt.gateway.handlers.streaming.AsyncAnalyticsDataProvider;
+import org.wso2.carbon.apimgt.gateway.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.gateway.utils.GatewayUtils;
 import org.wso2.carbon.apimgt.impl.APIConstants;
-import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.inbound.endpoint.protocol.websocket.InboundWebsocketConstants;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
 /**
@@ -43,18 +40,6 @@ import java.util.Map;
  */
 public class AnalyticsMetricsHandler extends AbstractExtendedSynapseHandler {
     private static final Log log = LogFactory.getLog(AnalyticsMetricsHandler.class);
-    private AnalyticsCustomDataProvider analyticsCustomDataProvider;
-
-    public AnalyticsMetricsHandler()
-            throws IllegalAccessException, InstantiationException, ClassNotFoundException, InvocationTargetException {
-        String customPublisherClass = APIUtil.getAnalyticsCustomDataPublisherClass();
-        if (customPublisherClass != null) {
-            Class<?> c = APIUtil.getClassForName(customPublisherClass);
-            Constructor<?> cons = c.getConstructors()[0];
-            analyticsCustomDataProvider = (AnalyticsCustomDataProvider) cons.newInstance();
-        }
-    }
-
 
     @Override
     public boolean handleError(MessageContext messageContext) {
@@ -108,7 +93,8 @@ public class AnalyticsMetricsHandler extends AbstractExtendedSynapseHandler {
         if (skipPublishMetrics != null && (Boolean) skipPublishMetrics) {
             provider = new AsyncAnalyticsDataProvider(messageContext);
         } else {
-            provider = new SynapseAnalyticsDataProvider(messageContext, analyticsCustomDataProvider);
+            provider = new SynapseAnalyticsDataProvider(messageContext,  ServiceReferenceHolder.getInstance()
+                    .getAnalyticsCustomDataProvider());
         }
         GenericRequestDataCollector dataCollector = new GenericRequestDataCollector(provider);
         try {
