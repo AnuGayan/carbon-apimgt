@@ -68,7 +68,7 @@ public interface AnalyticsDataProvider {
 
     String getEndUserIP();
 
-    default Map getProperties() {
+    default Map<String, Object> getProperties() {
         return Collections.EMPTY_MAP;
     }
 }

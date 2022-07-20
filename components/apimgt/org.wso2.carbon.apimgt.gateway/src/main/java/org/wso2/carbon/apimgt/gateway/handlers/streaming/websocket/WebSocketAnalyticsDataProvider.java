@@ -36,6 +36,7 @@ import org.wso2.carbon.apimgt.common.analytics.publishers.dto.Target;
 import org.wso2.carbon.apimgt.common.analytics.publishers.dto.enums.EventCategory;
 import org.wso2.carbon.apimgt.common.analytics.publishers.dto.enums.FaultCategory;
 import org.wso2.carbon.apimgt.common.analytics.publishers.dto.enums.FaultSubCategory;
+import org.wso2.carbon.apimgt.common.gateway.constants.JWTConstants;
 import org.wso2.carbon.apimgt.gateway.APIMgtGatewayConstants;
 import org.wso2.carbon.apimgt.gateway.handlers.analytics.Constants;
 import org.wso2.carbon.apimgt.gateway.handlers.analytics.FaultCodeClassifier;
@@ -289,7 +290,7 @@ public class WebSocketAnalyticsDataProvider implements AnalyticsDataProvider {
     }
 
     @Override
-    public Map getProperties() {
+    public Map<String, Object> getProperties() {
         Map<String, Object> customProperties;
 
         if (analyticsCustomDataProvider != null) {
@@ -298,13 +299,13 @@ public class WebSocketAnalyticsDataProvider implements AnalyticsDataProvider {
             customProperties = new HashMap<>();
         }
         customProperties.put(Constants.API_USER_NAME_KEY, getUserName());
-        customProperties.put(Constants.API_CONTEXT_KEY,getApiContext());
+        customProperties.put(Constants.API_CONTEXT_KEY, getApiContext());
         return customProperties;
     }
 
     private String getUserName() {
 
-        Object authContext = WebSocketUtils.getPropertyFromChannel(Constants.API_AUTH_CONTEXT_CUSTOM_PROPERTY, ctx);
+        Object authContext = WebSocketUtils.getPropertyFromChannel(APISecurityUtils.API_AUTH_CONTEXT, ctx);
         if (authContext != null && authContext instanceof AuthenticationContext) {
             return ((AuthenticationContext)authContext).getUsername();
         }
@@ -313,7 +314,7 @@ public class WebSocketAnalyticsDataProvider implements AnalyticsDataProvider {
 
     private String getApiContext() {
 
-        Object apiContext = WebSocketUtils.getPropertyFromChannel(Constants.API_CONTEXT_CUSTOM_PROPERTY, ctx);
+        Object apiContext = WebSocketUtils.getPropertyFromChannel(JWTConstants.REST_API_CONTEXT, ctx);
         if (apiContext != null) {
             return (String) apiContext;
         }

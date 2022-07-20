@@ -37,6 +37,7 @@ import org.wso2.carbon.apimgt.common.analytics.publishers.dto.Target;
 import org.wso2.carbon.apimgt.common.analytics.publishers.dto.enums.EventCategory;
 import org.wso2.carbon.apimgt.common.analytics.publishers.dto.enums.FaultCategory;
 import org.wso2.carbon.apimgt.common.analytics.publishers.dto.enums.FaultSubCategory;
+import org.wso2.carbon.apimgt.common.gateway.constants.JWTConstants;
 import org.wso2.carbon.apimgt.gateway.APIMgtGatewayConstants;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityUtils;
 import org.wso2.carbon.apimgt.gateway.handlers.security.AuthenticationContext;
@@ -314,7 +315,7 @@ public class SynapseAnalyticsDataProvider implements AnalyticsDataProvider {
     }
 
     @Override
-    public Map getProperties() {
+    public Map<String, Object> getProperties() {
         Map<String, Object> customProperties;
 
         if (analyticsCustomDataProvider != null) {
@@ -329,16 +330,16 @@ public class SynapseAnalyticsDataProvider implements AnalyticsDataProvider {
 
     private String getUserName() {
 
-        if (messageContext.getPropertyKeySet().contains(Constants.USER_NAME_CUSTOM_PROPERTY)) {
-            return (String) messageContext.getProperty(Constants.USER_NAME_CUSTOM_PROPERTY);
+        if (messageContext.getPropertyKeySet().contains(APIMgtGatewayConstants.END_USER_NAME)) {
+            return (String) messageContext.getProperty(APIMgtGatewayConstants.END_USER_NAME);
         }
         return null;
     }
 
     private String getApiContext() {
 
-        if (messageContext.getPropertyKeySet().contains(Constants.API_CONTEXT_CUSTOM_PROPERTY)) {
-            return (String) messageContext.getProperty(Constants.API_CONTEXT_CUSTOM_PROPERTY);
+        if (messageContext.getPropertyKeySet().contains(JWTConstants.REST_API_CONTEXT)) {
+            return (String) messageContext.getProperty(JWTConstants.REST_API_CONTEXT);
         }
         return null;
     }

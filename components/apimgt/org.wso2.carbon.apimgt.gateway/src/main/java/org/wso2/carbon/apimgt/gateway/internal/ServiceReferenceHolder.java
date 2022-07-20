@@ -131,20 +131,12 @@ public class ServiceReferenceHolder {
 
     public void setAPIManagerConfigurationService(APIManagerConfigurationService amConfigService) {
         this.amConfigService = amConfigService;
-        if (amConfigService != null && amConfigService.getAPIManagerConfiguration() != null){
-            setThrottleProperties(amConfigService.getAPIManagerConfiguration().getThrottleProperties());
-            String customPublisherClass = amConfigService.getAPIAnalyticsConfiguration().getReporterProperties()
-                    .get(Constants.API_ANALYTICS_CUSTOM_DATA_PROVIDER_CLASS);
-            if (customPublisherClass != null) {
-                try {
-                    Class<?> c = APIUtil.getClassForName(customPublisherClass);
-                    Constructor<?> cons = c.getConstructors()[0];
-                    setAnalyticsCustomDataProvider((AnalyticsCustomDataProvider) cons.newInstance());
-                } catch (IllegalAccessException | InstantiationException | InvocationTargetException
-                        | ClassNotFoundException e) {
-                    String error = "Error in obtaining custom publisher class";
-                    log.debug(error, e);
-                }
+        if (amConfigService != null) {
+            if (amConfigService.getAPIManagerConfiguration() != null) {
+                setThrottleProperties(amConfigService.getAPIManagerConfiguration().getThrottleProperties());
+            }
+            if (amConfigService.getAPIAnalyticsConfiguration() != null) {
+                setAnalyticsCustomDataProvider(amConfigService.getAPIAnalyticsConfiguration().getReporterProperties().get(Constants.API_ANALYTICS_CUSTOM_DATA_PROVIDER_CLASS));
             }
         }
     }
@@ -407,7 +399,16 @@ public class ServiceReferenceHolder {
         return analyticsCustomDataProvider;
     }
 
-    public void setAnalyticsCustomDataProvider(AnalyticsCustomDataProvider analyticsCustomDataProvider) {
-        this.analyticsCustomDataProvider = analyticsCustomDataProvider;
+    public void setAnalyticsCustomDataProvider(String customPublisherClass) {
+        if (customPublisherClass != null) {
+            try {
+                Class<?> c = APIUtil.getClassForName(customPublisherClass);
+                Constructor<?> cons = c.getConstructors()[0];
+                analyticsCustomDataProvider = (AnalyticsCustomDataProvider) cons.newInstance();
+            } catch (IllegalAccessException | InstantiationException | InvocationTargetException
+                    | ClassNotFoundException e) {
+                log.error("Error in obtaining custom publisher class", e);
+            }
+        }
     }
 }
