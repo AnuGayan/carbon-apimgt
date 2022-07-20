@@ -324,7 +324,7 @@ public class SynapseAnalyticsDataProvider implements AnalyticsDataProvider {
             customProperties = new HashMap<>();
         }
         customProperties.put(Constants.API_USER_NAME_KEY, getUserName());
-        customProperties.put(Constants.API_CONTEXT_KEY,getApiContext());
+        customProperties.put(Constants.API_CONTEXT_KEY, getApiContext());
         return customProperties;
     }
 

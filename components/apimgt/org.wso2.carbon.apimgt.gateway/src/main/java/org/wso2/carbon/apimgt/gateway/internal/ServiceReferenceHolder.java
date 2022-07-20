@@ -399,7 +399,7 @@ public class ServiceReferenceHolder {
         return analyticsCustomDataProvider;
     }
 
-    public void setAnalyticsCustomDataProvider(String customPublisherClass) {
+    private void setAnalyticsCustomDataProvider(String customPublisherClass) {
         if (customPublisherClass != null) {
             try {
                 Class<?> c = APIUtil.getClassForName(customPublisherClass);
