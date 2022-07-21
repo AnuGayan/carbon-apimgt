@@ -401,7 +401,10 @@ public class ServiceReferenceHolder {
     }
 
     private void setAnalyticsCustomDataProvider(APIManagerAnalyticsConfiguration apiManagerAnalyticsConfiguration) {
-        String customPublisherClass = apiManagerAnalyticsConfiguration.getReporterProperties().get(Constants.API_ANALYTICS_CUSTOM_DATA_PROVIDER_CLASS);
+        String customPublisherClass = null;
+        if (apiManagerAnalyticsConfiguration.getReporterProperties().containsKey(Constants.API_ANALYTICS_CUSTOM_DATA_PROVIDER_CLASS)) {
+            customPublisherClass = apiManagerAnalyticsConfiguration.getReporterProperties().get(Constants.API_ANALYTICS_CUSTOM_DATA_PROVIDER_CLASS);
+        }
         if (customPublisherClass != null) {
             try {
                 Class<?> c = APIUtil.getClassForName(customPublisherClass);
