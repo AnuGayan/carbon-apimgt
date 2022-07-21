@@ -3776,6 +3776,20 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
                     "cannot contain leading or trailing white spaces");
         }
 
+        // Retain the 'DEFAULT' token type of migrated applications unless the token type is changed to 'JWT'.
+        if (APIConstants.DEFAULT_TOKEN_TYPE.equals(existingApp.getTokenType()) &&
+                APIConstants.TOKEN_TYPE_OAUTH.equals(application.getTokenType())) {
+            application.setTokenType(APIConstants.DEFAULT_TOKEN_TYPE);
+        }
+
+        // Prevent the change of token type of applications having 'JWT' token type.
+        if (APIConstants.TOKEN_TYPE_JWT.equals(existingApp.getTokenType()) &&
+                !APIConstants.TOKEN_TYPE_JWT.equals(application.getTokenType())) {
+            throw new APIManagementException(
+                    "Cannot change application token type from " + APIConstants.TOKEN_TYPE_JWT + " to " +
+                            application.getTokenType());
+        }
+
         Subscriber subscriber = application.getSubscriber();
 
         JSONArray applicationAttributesFromConfig = getAppAttributesFromConfig(subscriber.getName());
@@ -4201,6 +4215,11 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
             String applicationTokenType = application.getTokenType();
             if (StringUtils.isEmpty(application.getTokenType())) {
                 applicationTokenType = APIConstants.DEFAULT_TOKEN_TYPE;
+            }
+            // Fix done to migrated apps new keys generation flow to show the default token type in the UI correctly.
+            if (StringUtils.equals(applicationTokenType,APIConstants.DEFAULT_TOKEN_TYPE)
+                    || StringUtils.equals(applicationTokenType,APIConstants.TOKEN_TYPE_OAUTH)) {
+                applicationTokenType = APIConstants.DEFAULT_TOKEN_TYPE_NEW;
             }
             // Build key manager instance and create oAuthAppRequest by jsonString.
             OAuthAppRequest request =
@@ -4705,6 +4724,12 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
             }
 
             Application application = ApplicationUtils.retrieveApplication(applicationName, userId, groupingId);
+
+            // Fix done to migrated apps update keys generation flow to show the default token type in the UI correctly.
+            if (StringUtils.equals(application.getTokenType(),APIConstants.DEFAULT_TOKEN_TYPE)
+                    || StringUtils.equals(application.getTokenType(),APIConstants.TOKEN_TYPE_OAUTH)) {
+                application.setTokenType(APIConstants.DEFAULT_TOKEN_TYPE_NEW);
+            }
 
             final String subscriberName = application.getSubscriber().getName();
 
