@@ -2242,7 +2242,7 @@ public final class APIConstants {
     public static final String TENANT_STATE_ACTIVE = "ACTIVE";
     public static final String TENANT_STATE_INACTIVE = "INACTIVE";
 
-    public static final String DEFAULT_API_KEY_SIGN_KEY_STORE = "InternalKeyStore";
+    public static final String DEFAULT_API_KEY_SIGN_KEY_STORE = "KeyStore";
     public static final String GATEWAY_PUBLIC_CERTIFICATE_ALIAS = "gateway_certificate_alias";
     public static final String DEFAULT_API_KEY_GENERATOR_IMPL = "org.wso2.carbon.apimgt.impl.token" +
             ".DefaultApiKeyGenerator";
@@ -2281,8 +2281,8 @@ public final class APIConstants {
 
     public static final int MAX_LENGTH_API_NAME = 50;
     public static final int MAX_LENGTH_VERSION = 30;
-    public static final int MAX_LENGTH_PROVIDER = 50;
-    public static final int MAX_LENGTH_CONTEXT = 82; //context becomes context + version + two '/'. so max context is 50
+    public static final int MAX_LENGTH_PROVIDER = 200;
+    public static final int MAX_LENGTH_CONTEXT = 232; //context becomes context + version + two '/'. so max context is 200
     public static final int MAX_LENGTH_MEDIATION_POLICY_NAME = 255;
 
     /**

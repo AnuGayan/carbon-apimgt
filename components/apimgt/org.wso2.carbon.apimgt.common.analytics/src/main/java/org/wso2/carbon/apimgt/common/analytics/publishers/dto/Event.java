@@ -19,6 +19,8 @@ package org.wso2.carbon.apimgt.common.analytics.publishers.dto;
 
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
+import java.util.Map;
+
 /**
  * analytics event data.
  */
@@ -43,6 +45,16 @@ public class Event {
     private String userIp;
 
     private String errorType;
+
+    private Map<String, Object> properties;
+
+    public Map<String, Object> getProperties() {
+        return properties;
+    }
+
+    public void setProperties(Map<String, Object> properties) {
+        this.properties = properties;
+    }
 
     public API getApi() {
         return api;
