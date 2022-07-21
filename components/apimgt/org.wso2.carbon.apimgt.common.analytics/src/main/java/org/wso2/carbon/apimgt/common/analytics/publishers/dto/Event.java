@@ -46,14 +46,14 @@ public class Event {
 
     private String errorType;
 
-    private Map<String, Object> customProperties;
+    private Map<String, Object> properties;
 
-    public Map<String, Object> getCustomProperties() {
-        return customProperties;
+    public Map<String, Object> getProperties() {
+        return properties;
     }
 
-    public void setCustomProperties(Map<String, Object> customProperties) {
-        this.customProperties = customProperties;
+    public void setProperties(Map<String, Object> properties) {
+        this.properties = properties;
     }
 
     public API getApi() {
