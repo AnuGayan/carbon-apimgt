@@ -4725,6 +4725,12 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
 
             Application application = ApplicationUtils.retrieveApplication(applicationName, userId, groupingId);
 
+            // Fix done to migrated apps update keys generation flow to show the default token type in the UI correctly.
+            if (StringUtils.equals(application.getTokenType(),APIConstants.DEFAULT_TOKEN_TYPE)
+                    || StringUtils.equals(application.getTokenType(),APIConstants.TOKEN_TYPE_OAUTH)) {
+                application.setTokenType(APIConstants.DEFAULT_TOKEN_TYPE_NEW);
+            }
+
             final String subscriberName = application.getSubscriber().getName();
 
             boolean isCaseInsensitiveComparisons = Boolean.parseBoolean(getAPIManagerConfiguration().
