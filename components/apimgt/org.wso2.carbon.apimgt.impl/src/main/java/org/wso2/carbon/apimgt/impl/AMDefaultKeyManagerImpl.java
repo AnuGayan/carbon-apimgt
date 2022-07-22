@@ -193,8 +193,9 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
         clientInfo.setClientName(oauthClientName);
 
         //todo: run tests by commenting the type
-        if (StringUtils.isEmpty(info.getTokenType())) {
-            clientInfo.setTokenType(APIConstants.TOKEN_TYPE_JWT);
+        if (APIConstants.DEFAULT_TOKEN_TYPE.equals(info.getTokenType()) ||
+                APIConstants.TOKEN_TYPE_OAUTH.equals(info.getTokenType())) {
+            clientInfo.setTokenType(APIConstants.DEFAULT_TOKEN_TYPE);
         } else {
             clientInfo.setTokenType(info.getTokenType());
         }
