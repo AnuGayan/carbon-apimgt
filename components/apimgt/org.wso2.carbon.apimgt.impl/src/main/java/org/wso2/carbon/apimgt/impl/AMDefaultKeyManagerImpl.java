@@ -193,11 +193,10 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
         clientInfo.setClientName(oauthClientName);
 
         //todo: run tests by commenting the type
-        if (APIConstants.DEFAULT_TOKEN_TYPE.equals(info.getTokenType()) ||
-                APIConstants.TOKEN_TYPE_OAUTH.equals(info.getTokenType())) {
-            clientInfo.setTokenType(APIConstants.DEFAULT_TOKEN_TYPE);
-        } else {
+        if (APIConstants.JWT.equals(info.getTokenType())) {
             clientInfo.setTokenType(info.getTokenType());
+        } else {
+            clientInfo.setTokenType(APIConstants.DEFAULT_TOKEN_TYPE);
         }
 
         // Use a generated user as the app owner for cross tenant subscription scenarios, to avoid the tenant admin
