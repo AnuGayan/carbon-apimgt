@@ -194,7 +194,7 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
 
         //todo: run tests by commenting the type
         if (APIConstants.JWT.equals(info.getTokenType())) {
-            clientInfo.setTokenType(APIConstants.JWT);
+            clientInfo.setTokenType(info.getTokenType());
         } else {
             clientInfo.setTokenType(APIConstants.DEFAULT_TOKEN_TYPE);
         }
