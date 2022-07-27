@@ -403,9 +403,8 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                     try {
                         // Check if the header part is decoded
                         if (StringUtils.countMatches(apiKey, APIConstants.DOT) != 2) {
-                            log.debug("Invalid JWT token. The expected token format is <header.payload.signature>");
-                            throw new APISecurityException(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS,
-                                    "Invalid JWT token");
+                            String errorMessage = "Invalid JWT token. The expected token format is <header.payload.signature> ";
+                            return handleInvalidAuthHeader(responseDTO, inboundMessageContext, errorMessage);
                         }
                         inboundMessageContext.setSignedJWTInfo(getSignedJwtInfo(apiKey));
                         String keyManager = ServiceReferenceHolder.getInstance().getJwtValidationService()
@@ -415,7 +414,9 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                             inboundMessageContext.setJWTToken(isJwtToken);
                         }
                     } catch (ParseException e) {
-                        log.debug("Not a JWT token. Failed to decode the token header.", e);
+                        String errorMessage = "Not a JWT token. Failed to decode the token header. ";
+                        log.error(errorMessage, e);
+                        return handleInvalidAuthHeader(responseDTO, inboundMessageContext, errorMessage);
                     } catch (APIManagementException e) {
                         log.error("error while check validation of JWt", e);
                         throw new APISecurityException(APISecurityConstants.API_AUTH_GENERAL_ERROR,
@@ -457,6 +458,24 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
         responseDTO.setError(true);
         responseDTO = WebsocketUtil.getHandshakeErrorDTO(
                 APIMgtGatewayConstants.WEB_SOCKET_API_AUTH_ERROR, errorMessage);
+        return responseDTO;
+    }
+
+    /**
+     * Handle requests with empty authentication headers.
+     *
+     * @param inboundMessageContext InboundMessageContext
+     * @param responseDTO           InboundProcessorResponseDTO
+     * @return responseDTO InboundProcessorResponseDTO
+     */
+    private InboundProcessorResponseDTO handleInvalidAuthHeader(InboundProcessorResponseDTO responseDTO,
+                                                                InboundMessageContext inboundMessageContext, String msg) {
+
+        log.error(msg + " in request for the websocket context "
+                + inboundMessageContext.getApiContextUri());
+        responseDTO.setError(true);
+        responseDTO = WebsocketUtil.getHandshakeErrorDTO(
+                APIMgtGatewayConstants.WEB_SOCKET_API_AUTH_ERROR, msg);
         return responseDTO;
     }
 
