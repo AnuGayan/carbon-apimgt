@@ -29,7 +29,7 @@ import org.wso2.carbon.apimgt.rest.api.admin.v1.dto.RoleAliasDTO;
 import org.wso2.carbon.apimgt.rest.api.admin.v1.dto.RoleAliasListDTO;
 import org.wso2.carbon.apimgt.rest.api.admin.v1.dto.ScopeDTO;
 import org.wso2.carbon.apimgt.rest.api.admin.v1.dto.ScopeListDTO;
-import org.wso2.carbon.apimgt.rest.api.util.utils.RestApiUtil;
+import org.wso2.carbon.apimgt.rest.api.common.RestApiCommonUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -71,7 +71,7 @@ public class SystemScopesMappingUtil {
         if (portalScopeList.isEmpty()) {
             synchronized (lock) {
                 if (portalScopeList.isEmpty()) {
-                    portalScopeList = RestApiUtil.getScopesInfoFromAPIYamlDefinitions();
+                    portalScopeList = RestApiCommonUtil.getScopesInfoFromAPIYamlDefinitions();
                 }
             }
         }
