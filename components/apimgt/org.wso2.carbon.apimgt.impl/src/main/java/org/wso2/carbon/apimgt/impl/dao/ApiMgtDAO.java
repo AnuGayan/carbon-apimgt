@@ -4666,7 +4666,6 @@ public class ApiMgtDAO {
 
                 applicationsList.add(application);
             }
-
             applications = applicationsList.toArray(new Application[applicationsList.size()]);
         } catch (SQLException e) {
             handleException("Error when reading the application information from" + " the persistence store.", e);
