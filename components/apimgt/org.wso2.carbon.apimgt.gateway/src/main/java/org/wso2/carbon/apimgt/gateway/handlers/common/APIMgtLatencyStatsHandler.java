@@ -17,6 +17,7 @@
 */
 package org.wso2.carbon.apimgt.gateway.handlers.common;
 
+import com.atlassian.oai.validator.model.Headers;
 import io.swagger.parser.OpenAPIParser;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
@@ -115,7 +116,7 @@ public class APIMgtLatencyStatsHandler extends AbstractHandler {
                         parseOptions.setResolveFully(true);
                         openAPI = parser.readContents(swagger, null, parseOptions).getOpenAPI();
                         // HTTP headers should be case insensitive as for HTTP 1.1 RFC
-                        // Thus converting headers to lowercase in openAPI
+                        // Thus converting headers to lowercase for schema validation.
                         convertHeadersToLowercase(openAPI);
                     }
                     long endTime = System.currentTimeMillis();
@@ -160,7 +161,9 @@ public class APIMgtLatencyStatsHandler extends AbstractHandler {
     private List<Parameter> getLowercaseHeaderParameters(List<Parameter> parameters) {
 
         List<Parameter> headerParameters = parameters.stream()
-                .filter(param -> param instanceof HeaderParameter).collect(Collectors.toList());
+                .filter(param -> param instanceof HeaderParameter)
+                .filter(param -> !param.getName().equalsIgnoreCase(Headers.CONTENT_TYPE)) // ignore content-type headers
+                .collect(Collectors.toList());
         List<Parameter> modifiedHeaderParameters = headerParameters.stream()
                 .map(APIMgtLatencyStatsHandler::replaceLowerCaseHeaderName).collect(Collectors.toList());
         List<Parameter> nonHeaderParameters = parameters.stream()
