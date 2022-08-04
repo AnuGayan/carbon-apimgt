@@ -1951,6 +1951,32 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                             }
                             endpointConfigJson.replace(APIConstants.ENDPOINT_SECURITY,endpointSecurityJson);
                         }
+                    } else {
+                        JSONObject endpointSecurityJson =
+                                (JSONObject) endpointConfigJson.get(APIConstants.ENDPOINT_SECURITY);
+                        if (endpointSecurityJson.get(APIConstants.ENDPOINT_SECURITY_PRODUCTION) != null) {
+                            EndpointSecurity endpointSecurity = new ObjectMapper().convertValue(
+                                    endpointSecurityJson.get(APIConstants.ENDPOINT_SECURITY_PRODUCTION),
+                                    EndpointSecurity.class);
+                            if(endpointSecurity.isEnabled() && StringUtils.isBlank(endpointSecurity.getPassword())){
+                                endpointSecurity.setUsername(oldApi.getEndpointUTUsername());
+                                endpointSecurity.setPassword(oldApi.getEndpointUTPassword());
+                            }
+                            endpointSecurityJson.replace(APIConstants.ENDPOINT_SECURITY_PRODUCTION, new JSONParser()
+                                    .parse(new ObjectMapper().writeValueAsString(endpointSecurity)));
+                        }
+                        if (endpointSecurityJson.get(APIConstants.ENDPOINT_SECURITY_SANDBOX) != null) {
+                            EndpointSecurity endpointSecurity = new ObjectMapper().convertValue(
+                                    endpointSecurityJson.get(APIConstants.ENDPOINT_SECURITY_SANDBOX),
+                                    EndpointSecurity.class);
+                            if(endpointSecurity.isEnabled() && StringUtils.isBlank(endpointSecurity.getPassword())){
+                                endpointSecurity.setUsername(oldApi.getEndpointUTUsername());
+                                endpointSecurity.setPassword(oldApi.getEndpointUTPassword());
+                            }
+                            endpointSecurityJson.replace(APIConstants.ENDPOINT_SECURITY_SANDBOX, new JSONParser()
+                                    .parse(new ObjectMapper().writeValueAsString(endpointSecurity)));
+                        }
+                        endpointConfigJson.replace(APIConstants.ENDPOINT_SECURITY,endpointSecurityJson);
                     }
                     api.setEndpointConfig(endpointConfigJson.toJSONString());
                 }
