@@ -503,7 +503,7 @@ export default function Topics(props) {
                                 <GroupOfOperations tag={target} operation={operation}>
                                     <Grid
                                         container
-                                        direction='column'
+                                        direction='row'
                                         justify='flex-start'
                                         spacing={1}
                                         alignItems='stretch'
