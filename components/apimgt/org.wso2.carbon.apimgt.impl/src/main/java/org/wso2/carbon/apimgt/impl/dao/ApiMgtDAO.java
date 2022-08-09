@@ -4650,6 +4650,7 @@ public class ApiMgtDAO {
                 application.setUUID(rs.getString("UUID"));
                 application.setIsBlackListed(rs.getBoolean("ENABLED"));
                 application.setOwner(rs.getString("CREATED_BY"));
+                application.setTokenType(rs.getString("TOKEN_TYPE"));
 
                 if (multiGroupAppSharingEnabled) {
                     setGroupIdInApplication(application);
@@ -4665,7 +4666,7 @@ public class ApiMgtDAO {
 
                 applicationsList.add(application);
             }
-
+            // Application listing array assignment
             applications = applicationsList.toArray(new Application[applicationsList.size()]);
         } catch (SQLException e) {
             handleException("Error when reading the application information from" + " the persistence store.", e);

@@ -33,6 +33,7 @@ import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.util.AttributeKey;
+import io.netty.util.ReferenceCountUtil;
 import org.apache.axis2.description.TransportOutDescription;
 import org.apache.axis2.engine.AxisConfiguration;
 import org.apache.commons.lang3.StringUtils;
@@ -145,7 +146,9 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg)
             throws Exception {
 
-            String channelId = ctx.channel().id().asLongText();
+        ctx.channel().attr(AttributeKey.valueOf(APIMgtGatewayConstants.REQUEST_START_TIME)).set(System
+                .currentTimeMillis());
+        String channelId = ctx.channel().id().asLongText();
         InboundMessageContext inboundMessageContext;
         if (InboundMessageContextDataHolder.getInstance().getInboundMessageContextMap().containsKey(channelId)) {
             inboundMessageContext = InboundMessageContextDataHolder.getInstance()
@@ -257,6 +260,7 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                 gaUtils.publishGATrackingData(gaData, req.headers().get(HttpHeaders.USER_AGENT),
                         inboundMessageContext.getHeaders().get(HttpHeaders.AUTHORIZATION));
             } else {
+                ReferenceCountUtil.release(msg);
                 InboundMessageContextDataHolder.getInstance().removeInboundMessageContextForConnection(channelId);
                 if (StringUtils.isEmpty(responseDTO.getErrorMessage())) {
                     responseDTO.setErrorMessage(APISecurityConstants.API_AUTH_INVALID_CREDENTIALS_MESSAGE);
@@ -277,8 +281,7 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                  responseDTO = graphQLRequestProcessor.handleRequest((WebSocketFrame) msg,
                         ctx, inboundMessageContext, usageDataPublisher);
                 if (responseDTO.isError()) {
-                    handleWebsocketFrameRequestError(responseDTO, channelId, ctx);
-
+                    handleWebsocketFrameRequestError(responseDTO, channelId, ctx, msg);
                 } else {
                     ctx.fireChannelRead(msg);
                 }
@@ -292,6 +295,7 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                     WebSocketThrottleResponseDTO throttleResponseDTO =
                             WebsocketUtil.doThrottle(ctx, (WebSocketFrame) msg, null, inboundMessageContext);
                     if (throttleResponseDTO.isThrottled()) {
+                        ReferenceCountUtil.release(msg);
                         if (APIUtil.isAnalyticsEnabled()) {
                             WebsocketUtil.publishWSThrottleEvent(inboundMessageContext, usageDataPublisher,
                                     throttleResponseDTO.getThrottledOutReason());
@@ -304,7 +308,7 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
                         handleWSRequestSuccess(ctx, msg, inboundMessageContext, usageDataPublisher);
                     }
                 } else {
-                    handleWebsocketFrameRequestError(responseDTO, channelId, ctx);
+                    handleWebsocketFrameRequestError(responseDTO, channelId, ctx, msg);
                 }
             }
         }
@@ -530,7 +534,9 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
      * @param ctx         ChannelHandlerContext
      */
     private void handleWebsocketFrameRequestError(InboundProcessorResponseDTO responseDTO, String channelId,
-            ChannelHandlerContext ctx) {
+                                                  ChannelHandlerContext ctx, Object msg) {
+        // Release WebsocketFrame
+        ReferenceCountUtil.release(msg);
         if (responseDTO.isCloseConnection()) {
             // remove inbound message context from data holder
             InboundMessageContextDataHolder.getInstance().getInboundMessageContextMap().remove(channelId);
@@ -561,10 +567,14 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
     private void handleWSRequestSuccess(ChannelHandlerContext ctx, Object msg,
             InboundMessageContext inboundMessageContext, APIMgtUsageDataPublisher usageDataPublisher) {
         ctx.fireChannelRead(msg);
+        long endTime = System.currentTimeMillis();
+        long startTime = (long) ctx.channel().attr(AttributeKey.valueOf(APIMgtGatewayConstants.REQUEST_START_TIME))
+                .get();
+        long serviceTime = endTime - startTime;
         // publish analytics events if analytics is enabled
         if (APIUtil.isAnalyticsEnabled()) {
             WebsocketUtil.publishWSRequestEvent(inboundMessageContext.getUserIP(), true, inboundMessageContext,
-                    usageDataPublisher);
+                    usageDataPublisher, serviceTime);
         }
     }
 

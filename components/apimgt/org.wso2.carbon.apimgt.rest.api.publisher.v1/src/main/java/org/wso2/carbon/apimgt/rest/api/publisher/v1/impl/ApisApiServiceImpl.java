@@ -442,6 +442,12 @@ public class ApisApiServiceImpl implements ApisApiService {
             }
         }
 
+        if (!apiProvider.isValidContext(body.getProvider(), body.getName(),
+                                        body.getContext() + "/" + APIConstants.VERSION_PLACEHOLDER, username)) {
+            throw new APIManagementException(
+                    ExceptionCodes.from(ExceptionCodes.BLOCK_CONDITION_UNSUPPORTED_API_CONTEXT));
+        }
+
         //Check if the user has admin permission before applying a different provider than the current user
         String provider = body.getProvider();
         if (!StringUtils.isBlank(provider) && !provider.equals(username)) {

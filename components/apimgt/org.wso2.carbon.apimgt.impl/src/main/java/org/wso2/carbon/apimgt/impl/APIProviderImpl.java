@@ -9095,6 +9095,26 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         return deploymentStatusList;
     }
 
+    @Override
+    public boolean isValidContext(String providerName, String apiName, String contextTemplate, String userName)
+            throws APIManagementException {
+        if (isApiNameExist(apiName)) {
+            if (!contextTemplate.startsWith("/")) {
+                contextTemplate = "/" + contextTemplate;
+            }
+            List<String> versions = getApiVersionsMatchingApiName(apiName, userName);
+            for (String version : versions) {
+                String currentContextTemplate = getAPI(
+                        new APIIdentifier(providerName, apiName, version)).getContextTemplate();
+                if (currentContextTemplate.equals(contextTemplate)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return true;
+    }
+
     /**
      * This method returns an instance of ContainerManager
      *

@@ -26,9 +26,11 @@ import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
+import io.netty.util.ReferenceCountUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.apimgt.gateway.APIMgtGatewayConstants;
 import org.wso2.carbon.apimgt.gateway.InboundMessageContextDataHolder;
 import org.wso2.carbon.apimgt.gateway.dto.InboundProcessorResponseDTO;
 import org.wso2.carbon.apimgt.gateway.dto.WebSocketThrottleResponseDTO;
@@ -43,11 +45,9 @@ import java.util.HashMap;
 public class WebsocketHandler extends CombinedChannelDuplexHandler<WebsocketInboundHandler, WebsocketOutboundHandler> {
 
     private static final Log log = LogFactory.getLog(WebsocketInboundHandler.class);
-
     public WebsocketHandler() {
         super(new WebsocketInboundHandler(), new WebsocketOutboundHandler());
     }
-
     private static GraphQLResponseProcessor graphQLResponseProcessor = new GraphQLResponseProcessor();
     private final String API_PROPERTIES = "API_PROPERTIES";
     private final String WEB_SC_API_UT = "api.ut.WS_SC";
@@ -60,6 +60,8 @@ public class WebsocketHandler extends CombinedChannelDuplexHandler<WebsocketInbo
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
 
+        ctx.channel().attr(AttributeKey.valueOf(APIMgtGatewayConstants.RESPONSE_START_TIME)).set(System
+                .currentTimeMillis());
         String channelId = ctx.channel().id().asLongText();
         InboundMessageContext inboundMessageContext;
         if (InboundMessageContextDataHolder.getInstance().getInboundMessageContextMap().containsKey(channelId)) {
@@ -94,10 +96,10 @@ public class WebsocketHandler extends CombinedChannelDuplexHandler<WebsocketInbo
             if (APIConstants.APITransportType.GRAPHQL.toString()
                     .equals(inboundMessageContext.getElectedAPI().getApiType()) && msg instanceof TextWebSocketFrame) {
                 // Authenticate and handle GraphQL subscription responses
-                responseDTO = graphQLResponseProcessor.handleResponse((WebSocketFrame) msg,
+               responseDTO = graphQLResponseProcessor.handleResponse((WebSocketFrame) msg,
                         ctx, inboundMessageContext, inboundHandler().getUsageDataPublisher());
                 if (responseDTO.isError()) {
-                    handleWebsocketFrameRequestError(responseDTO, channelId, ctx, promise);
+                    handleWebsocketFrameRequestError(responseDTO, channelId, ctx, promise, msg);
                 } else {
                     if (log.isDebugEnabled()) {
                         log.debug("Sending Outbound Websocket frame." + ctx.channel().toString());
@@ -115,13 +117,14 @@ public class WebsocketHandler extends CombinedChannelDuplexHandler<WebsocketInbo
                             inboundHandler().getUsageDataPublisher())) {
                         handleWSResponseSuccess(ctx, msg, promise, inboundMessageContext);
                     } else {
+                        ReferenceCountUtil.release(msg);
                         ctx.writeAndFlush(new TextWebSocketFrame("Websocket frame throttled out"));
                         if (log.isDebugEnabled()) {
                             log.debug("Outbound Websocket frame is throttled. " + ctx.channel().toString());
                         }
                     }
                 } else {
-                    handleWebsocketFrameRequestError(responseDTO, channelId, ctx, promise);
+                    handleWebsocketFrameRequestError(responseDTO, channelId, ctx, promise, msg);
                 }
             }
         } else {
@@ -133,9 +136,13 @@ public class WebsocketHandler extends CombinedChannelDuplexHandler<WebsocketInbo
      * @param responseDTO InboundProcessorResponseDTO
      * @param channelId   Channel Id of the web socket connection
      * @param ctx         ChannelHandlerContext
+     * @param msg         WebsocketFrame that was received
      */
     private void handleWebsocketFrameRequestError(InboundProcessorResponseDTO responseDTO, String channelId,
-                                                  ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
+                                                  ChannelHandlerContext ctx, ChannelPromise promise, Object msg)
+            throws Exception {
+        // Release WebsocketFrame
+        ReferenceCountUtil.release(msg);
         if (responseDTO.isCloseConnection()) {
             // remove inbound message context from data holder
             InboundMessageContextDataHolder.getInstance().removeInboundMessageContextForConnection(channelId);
@@ -167,13 +174,17 @@ public class WebsocketHandler extends CombinedChannelDuplexHandler<WebsocketInbo
      * @throws Exception
      */
     private void handleWSResponseSuccess(ChannelHandlerContext ctx, Object msg, ChannelPromise promise,
-                                         InboundMessageContext inboundMessageContext) throws Exception {
+            InboundMessageContext inboundMessageContext) throws Exception {
+        long endTime = System.currentTimeMillis();
+        long startTime = (long) ctx.channel().attr(AttributeKey.valueOf(APIMgtGatewayConstants.RESPONSE_START_TIME))
+                .get();
+        long serviceTime = endTime - startTime;
         outboundHandler().write(ctx, msg, promise);
         // publish analytics events if analytics is enabled
         if (APIUtil.isAnalyticsEnabled()) {
             String clientIp = getClientIp(ctx);
             WebsocketUtil.publishWSRequestEvent(clientIp, true, inboundMessageContext,
-                    inboundHandler().getUsageDataPublisher());
+                    inboundHandler().getUsageDataPublisher(), serviceTime);
         }
     }
 

@@ -585,7 +585,7 @@ public class WebsocketUtil extends GraphQLProcessor {
 			requestPublisherDTO.setResponseCacheHit(false);
 			requestPublisherDTO.setResponseCode(0);
 			requestPublisherDTO.setResponseSize(0);
-			requestPublisherDTO.setServiceTime(0);
+			requestPublisherDTO.setServiceTime(requestPublisherDTO.getServiceTime());
 			requestPublisherDTO.setResponseTime(0);
 			ExecutionTimeDTO executionTime = new ExecutionTimeDTO();
 			executionTime.setBackEndLatency(0);
@@ -612,12 +612,13 @@ public class WebsocketUtil extends GraphQLProcessor {
 	 */
 	public static void publishWSRequestEvent(String clientIp, boolean isThrottledOut,
 											 InboundMessageContext inboundMessageContext,
-											 APIMgtUsageDataPublisher usageDataPublisher) {
+											 APIMgtUsageDataPublisher usageDataPublisher, long serviceTime) {
 
 		RequestResponseStreamDTO requestPublisherDTO = new RequestResponseStreamDTO();
 		requestPublisherDTO.setApiMethod("-");
 		requestPublisherDTO.setApiResourcePath("-");
 		requestPublisherDTO.setApiResourceTemplate("-");
+		requestPublisherDTO.setServiceTime(serviceTime);
 		publishRequestEvent(requestPublisherDTO, clientIp, isThrottledOut, inboundMessageContext, usageDataPublisher);
 	}
 
@@ -811,64 +812,73 @@ public class WebsocketUtil extends GraphQLProcessor {
 	 */
 	public static InboundProcessorResponseDTO authenticateOAuthToken(InboundProcessorResponseDTO responseDTO,
 			String apiKey, InboundMessageContext inboundMessageContext) throws APISecurityException {
-		String cacheKey;
-		APIKeyValidationInfoDTO info = null;
-		boolean prefixAdded = false;
+		try {
+			PrivilegedCarbonContext.startTenantFlow();
+			PrivilegedCarbonContext.getThreadLocalCarbonContext()
+					.setTenantDomain(inboundMessageContext.getTenantDomain(), true);
+			String cacheKey;
+			APIKeyValidationInfoDTO info = null;
+			boolean prefixAdded = false;
 
-		log.debug("The token was identified as an OAuth token");
-		//If the key have already been validated
-		if (WebsocketUtil.isGatewayTokenCacheEnabled()) {
-			cacheKey = WebsocketUtil.getAccessTokenCacheKey(apiKey, inboundMessageContext.getUri());
-			info = WebsocketUtil.validateCache(apiKey, cacheKey);
-			if (info != null) {
+			if (log.isDebugEnabled()) {
+				log.debug("The token was identified as an OAuth token");
+			}
+			//If the key have already been validated
+			if (WebsocketUtil.isGatewayTokenCacheEnabled()) {
+				cacheKey = WebsocketUtil.getAccessTokenCacheKey(apiKey, inboundMessageContext.getUri());
+				info = WebsocketUtil.validateCache(apiKey, cacheKey);
+				if (info != null) {
 
-				//This prefix is added for synapse to dispatch this request to the specific sequence
+					//This prefix is added for synapse to dispatch this request to the specific sequence
+					if (APIConstants.API_KEY_TYPE_PRODUCTION.equals(info.getType())) {
+						inboundMessageContext.setUri("/_PRODUCTION_" + inboundMessageContext.getUri());
+						prefixAdded = true;
+					} else if (APIConstants.API_KEY_TYPE_SANDBOX.equals(info.getType())) {
+						inboundMessageContext.setUri("/_SANDBOX_" + inboundMessageContext.getUri());
+						prefixAdded = true;
+					}
+
+					inboundMessageContext.setInfoDTO(info);
+					responseDTO.setError(info.isAuthorized());
+				}
+			}
+			String keyValidatorClientType = APISecurityUtils.getKeyValidatorClientType();
+			if (APIConstants.API_KEY_VALIDATOR_WS_CLIENT.equals(keyValidatorClientType)) {
+				info = getApiKeyDataForWSClient(apiKey, inboundMessageContext.getTenantDomain(),
+						inboundMessageContext.getApiContextUri(), inboundMessageContext.getVersion());
+			} else {
+				responseDTO.setError(true);
+				return responseDTO;
+			}
+			if (info == null || !info.isAuthorized()) {
+				responseDTO.setError(true);
+				return responseDTO;
+			}
+			if (info.getApiName() != null && info.getApiName().contains("*")) {
+				String[] str = info.getApiName().split("\\*");
+				inboundMessageContext.setVersion(str[1]);
+				inboundMessageContext.setUri("/" + str[1]);
+				info.setApiName(str[0]);
+			}
+			if (WebsocketUtil.isGatewayTokenCacheEnabled()) {
+				cacheKey = WebsocketUtil.getAccessTokenCacheKey(apiKey, inboundMessageContext.getUri());
+				WebsocketUtil.putCache(info, apiKey, cacheKey);
+			}
+			//This prefix is added for synapse to dispatch this request to the specific sequence
+			if (!prefixAdded) {
 				if (APIConstants.API_KEY_TYPE_PRODUCTION.equals(info.getType())) {
 					inboundMessageContext.setUri("/_PRODUCTION_" + inboundMessageContext.getUri());
-					prefixAdded = true;
 				} else if (APIConstants.API_KEY_TYPE_SANDBOX.equals(info.getType())) {
 					inboundMessageContext.setUri("/_SANDBOX_" + inboundMessageContext.getUri());
-					prefixAdded = true;
 				}
-
-				inboundMessageContext.setInfoDTO(info);
-				responseDTO.setError(info.isAuthorized());
 			}
-		}
-		String keyValidatorClientType = APISecurityUtils.getKeyValidatorClientType();
-		if (APIConstants.API_KEY_VALIDATOR_WS_CLIENT.equals(keyValidatorClientType)) {
-			info = getApiKeyDataForWSClient(apiKey, inboundMessageContext.getTenantDomain(),
-					inboundMessageContext.getApiContextUri(), inboundMessageContext.getVersion());
-		} else {
-			responseDTO.setError(true);
+			inboundMessageContext.setToken(info.getEndUserToken());
+			inboundMessageContext.setInfoDTO(info);
+			responseDTO.setError(false);
 			return responseDTO;
+		} finally {
+			PrivilegedCarbonContext.endTenantFlow();
 		}
-		if (info == null || !info.isAuthorized()) {
-			responseDTO.setError(true);
-			return responseDTO;
-		}
-		if (info.getApiName() != null && info.getApiName().contains("*")) {
-			String[] str = info.getApiName().split("\\*");
-			inboundMessageContext.setVersion(str[1]);
-			inboundMessageContext.setUri("/" + str[1]);
-			info.setApiName(str[0]);
-		}
-		if (WebsocketUtil.isGatewayTokenCacheEnabled()) {
-			cacheKey = WebsocketUtil.getAccessTokenCacheKey(apiKey, inboundMessageContext.getUri());
-			WebsocketUtil.putCache(info, apiKey, cacheKey);
-		}
-		//This prefix is added for synapse to dispatch this request to the specific sequence
-		if (!prefixAdded) {
-			if (APIConstants.API_KEY_TYPE_PRODUCTION.equals(info.getType())) {
-				inboundMessageContext.setUri("/_PRODUCTION_" + inboundMessageContext.getUri());
-			} else if (APIConstants.API_KEY_TYPE_SANDBOX.equals(info.getType())) {
-				inboundMessageContext.setUri("/_SANDBOX_" + inboundMessageContext.getUri());
-			}
-		}
-		inboundMessageContext.setToken(info.getEndUserToken());
-		inboundMessageContext.setInfoDTO(info);
-		responseDTO.setError(false);
-		return responseDTO;
 	}
 
 	protected static APIKeyValidationInfoDTO getApiKeyDataForWSClient(String key, String domain, String apiContextUri,
