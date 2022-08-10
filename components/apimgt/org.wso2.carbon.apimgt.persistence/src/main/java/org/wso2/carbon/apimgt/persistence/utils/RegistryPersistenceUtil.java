@@ -646,9 +646,6 @@ public class RegistryPersistenceUtil {
             } else { //If APIEndpointPasswordRegistryHandler is enabled take password from the registry hidden property
                 api.setEndpointUTPassword(apiResource.getProperty(APIConstants.REGISTRY_HIDDEN_ENDPOINT_PROPERTY));
             }
-            if(api.getEndpointUTPassword() == null) {
-                api.setEndpointUTPassword(artifact.getAttribute(APIConstants.API_OVERVIEW_ENDPOINT_PASSWORD_UPDATED));
-            }
             api.setTransports(artifact.getAttribute(APIConstants.API_OVERVIEW_TRANSPORTS));
             api.setInSequence(artifact.getAttribute(APIConstants.API_OVERVIEW_INSEQUENCE));
             api.setOutSequence(artifact.getAttribute(APIConstants.API_OVERVIEW_OUTSEQUENCE));
