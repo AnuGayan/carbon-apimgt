@@ -904,10 +904,10 @@ public class API implements Serializable {
                     productionAndSandbox.setUsername(getEndpointUTUsername());
                     productionAndSandbox.setPassword(getEndpointUTPassword());
                     try {
-                        String productionSecurity = objectMapper.writeValueAsString(productionAndSandbox);
-                        String sandboxSecurity = objectMapper.writeValueAsString(productionAndSandbox);
-                        epSecurity.put(APIConstants.ENDPOINT_SECURITY_PRODUCTION, parser.parse(productionSecurity));
-                        epSecurity.put(APIConstants.ENDPOINT_SECURITY_SANDBOX, parser.parse(sandboxSecurity));
+                        Object productionAndSandboxSecurity = parser.parse(
+                                objectMapper.writeValueAsString(productionAndSandbox));
+                        epSecurity.put(APIConstants.ENDPOINT_SECURITY_PRODUCTION, productionAndSandboxSecurity);
+                        epSecurity.put(APIConstants.ENDPOINT_SECURITY_SANDBOX, productionAndSandboxSecurity);
                     } catch (JsonProcessingException e) {
                         e.printStackTrace();
                     }
