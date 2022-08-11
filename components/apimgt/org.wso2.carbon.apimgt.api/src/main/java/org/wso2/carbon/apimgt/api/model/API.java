@@ -882,16 +882,12 @@ public class API implements Serializable {
         if ((endpointConfig == null || StringUtils.isAllEmpty(endpointConfig) && endpoints.size() > 0)) {
             return getEndpointConfigString(endpoints);
         }
-        JSONParser parser = new JSONParser();
-        ObjectMapper objectMapper = new ObjectMapper();
-        JSONObject endpointConfigJson = null;
-        try {
-            endpointConfigJson = (JSONObject) parser.parse(endpointConfig);
-        } catch (ParseException e) {
-            log.error("Error while retrieving endpoint config for API : " + getUUID(), e);
-        }
+
         if (isEndpointSecured()) {
             try {
+                JSONParser parser = new JSONParser();
+                ObjectMapper objectMapper = new ObjectMapper();
+                JSONObject endpointConfigJson = (JSONObject) parser.parse(endpointConfig);
                 EndpointSecurity productionAndSandbox = new EndpointSecurity();
                 if (endpointConfigJson.get(APIConstants.ENDPOINT_SECURITY) == null) {
                     JSONObject epSecurity = new JSONObject();
@@ -903,14 +899,10 @@ public class API implements Serializable {
                     }
                     productionAndSandbox.setUsername(getEndpointUTUsername());
                     productionAndSandbox.setPassword(getEndpointUTPassword());
-                    try {
-                        Object productionAndSandboxSecurity = parser.parse(
-                                objectMapper.writeValueAsString(productionAndSandbox));
-                        epSecurity.put(APIConstants.ENDPOINT_SECURITY_PRODUCTION, productionAndSandboxSecurity);
-                        epSecurity.put(APIConstants.ENDPOINT_SECURITY_SANDBOX, productionAndSandboxSecurity);
-                    } catch (JsonProcessingException e) {
-                        e.printStackTrace();
-                    }
+                    Object productionAndSandboxSecurity = parser.parse(
+                            objectMapper.writeValueAsString(productionAndSandbox));
+                    epSecurity.put(APIConstants.ENDPOINT_SECURITY_PRODUCTION, productionAndSandboxSecurity);
+                    epSecurity.put(APIConstants.ENDPOINT_SECURITY_SANDBOX, productionAndSandboxSecurity);
                     endpointConfigJson.put(APIConstants.ENDPOINT_SECURITY, epSecurity);
                 } else {
                     JSONObject endpointSecurity = (JSONObject) endpointConfigJson.get(APIConstants.ENDPOINT_SECURITY);
@@ -939,16 +931,16 @@ public class API implements Serializable {
                         }
                         sandbox.setUsername(getEndpointUTUsername());
                         sandbox.setPassword(getEndpointUTPassword());
-                        String productionSecurity = objectMapper.writeValueAsString(sandbox);
-                        endpointSecurity.put(APIConstants.ENDPOINT_SECURITY_SANDBOX, parser.parse(productionSecurity));
+                        String sandboxSecurity = objectMapper.writeValueAsString(sandbox);
+                        endpointSecurity.put(APIConstants.ENDPOINT_SECURITY_SANDBOX, parser.parse(sandboxSecurity));
                         endpointConfigJson.replace(APIConstants.ENDPOINT_SECURITY, endpointSecurity);
                     }
                 }
-                try {
-                    endpointConfig = objectMapper.writeValueAsString(endpointConfigJson);
-                } catch (JsonProcessingException e) {
-                    log.error("Error while processing endpoint config for API : " + getUUID(), e);
-                }
+                endpointConfig = objectMapper.writeValueAsString(endpointConfigJson);
+            } catch (ParseException e) {
+                log.error("Error while retrieving endpoint config for API : " + getUUID(), e);
+            } catch (JsonProcessingException e) {
+                log.error("Error while processing endpoint config JSON for API : " + getUUID(), e);
             } catch (Exception e) {
                 log.error("Error while processing endpoint config for API : " + getUUID(), e);
             }
