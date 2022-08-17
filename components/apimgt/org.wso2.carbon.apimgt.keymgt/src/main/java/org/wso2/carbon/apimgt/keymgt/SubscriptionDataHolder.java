@@ -37,13 +37,14 @@ public class SubscriptionDataHolder {
         return instance;
     }
 
-    public void registerTenantSubscriptionStore(String tenantDomain) {
+    public SubscriptionDataStore registerTenantSubscriptionStore(String tenantDomain) {
 
         SubscriptionDataStore tenantStore = subscriptionStore.get(tenantDomain);
         if (tenantStore == null) {
             tenantStore = new SubscriptionDataStoreImpl(tenantDomain);
         }
         subscriptionStore.put(tenantDomain, tenantStore);
+        return tenantStore;
     }
 
     public void unregisterTenantSubscriptionStore(String tenantDomain) {
@@ -53,7 +54,16 @@ public class SubscriptionDataHolder {
 
     public SubscriptionDataStore getTenantSubscriptionStore(String tenantDomain) {
 
-        return subscriptionStore.get(tenantDomain);
+        SubscriptionDataStore subscriptionDataStore = subscriptionStore.get(tenantDomain);
+        if (subscriptionDataStore == null) {
+            synchronized (tenantDomain.concat("getTenantSubscriptionStore").intern()) {
+                subscriptionDataStore = subscriptionStore.get(tenantDomain);
+                if (subscriptionDataStore == null) {
+                    subscriptionDataStore = registerTenantSubscriptionStore(tenantDomain);
+                }
+            }
+        }
+        return subscriptionDataStore;
     }
 
 }

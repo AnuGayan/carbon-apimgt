@@ -31,6 +31,7 @@ import org.wso2.carbon.apimgt.gateway.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.gateway.jwt.RevokedJWTTokensRetriever;
 import org.wso2.carbon.apimgt.gateway.throttling.util.BlockingConditionRetriever;
 import org.wso2.carbon.apimgt.gateway.throttling.util.KeyTemplateRetriever;
+import org.wso2.carbon.apimgt.gateway.utils.GatewayUtils;
 import org.wso2.carbon.apimgt.gateway.webhooks.WebhooksDataHolder;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.certificatemgt.exceptions.CertificateManagementException;
@@ -42,6 +43,10 @@ import org.wso2.carbon.apimgt.impl.gatewayartifactsynchronizer.exception.Artifac
 import org.wso2.carbon.apimgt.impl.utils.CertificateMgtUtils;
 import org.wso2.carbon.apimgt.common.jms.JMSTransportHandler;
 import org.wso2.carbon.apimgt.keymgt.SubscriptionDataHolder;
+import org.wso2.carbon.apimgt.keymgt.model.SubscriptionDataLoader;
+import org.wso2.carbon.apimgt.keymgt.model.entity.API;
+import org.wso2.carbon.apimgt.keymgt.model.exception.DataLoadingException;
+import org.wso2.carbon.apimgt.keymgt.model.impl.SubscriptionDataLoaderImpl;
 import org.wso2.carbon.base.CarbonBaseUtils;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.core.ServerShutdownHandler;
@@ -55,6 +60,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 /**
  * Class for loading synapse artifacts to memory on initial server startup
@@ -161,6 +167,18 @@ public class GatewayStartupListener extends AbstractAxis2ConfigurationContextObs
         }).start();
         SubscriptionDataHolder.getInstance()
                 .registerTenantSubscriptionStore(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME);
+        if (GatewayUtils.isOnDemandLoading()) {
+            try {
+                retrieveAllAPIMetadata();
+            } catch (DataLoadingException e) {
+                log.error("Error while loading All API Metadata", e);
+            }
+            try {
+                new EndpointCertificateDeployer().deployAllCertificatesAtStartup();
+            } catch (APIManagementException e) {
+                log.error("Error while loading All certificate", e);
+            }
+        }
         ServiceReferenceHolder.getInstance().addLoadedTenant(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME);
         retrieveAndDeployArtifacts(MultitenantConstants.SUPER_TENANT_DOMAIN_NAME);
         retrieveBlockConditionsAndKeyTemplates();
@@ -178,6 +196,14 @@ public class GatewayStartupListener extends AbstractAxis2ConfigurationContextObs
         jmsTransportHandlerForEventHub.subscribeForJmsEvents(APIConstants.TopicNames.TOPIC_ASYNC_WEBHOOKS_DATA,
                 new GatewayJMSMessageListener());
         copyTenantArtifacts();
+    }
+
+    private void retrieveAllAPIMetadata() throws DataLoadingException {
+        SubscriptionDataLoader subscriptionDataLoader = new SubscriptionDataLoaderImpl();
+        List<API> apis = subscriptionDataLoader.loadAllTenantApiMetadata();
+        if (apis != null && !apis.isEmpty()) {
+            apis.forEach(api -> DataHolder.getInstance().addAPIMetaData(api));
+        }
     }
 
     private void copyTenantArtifacts() {
@@ -323,7 +349,9 @@ public class GatewayStartupListener extends AbstractAxis2ConfigurationContextObs
                 log.error(e);
             }
         }).start();
-        retrieveAndDeployArtifacts(tenantDomain);
+        if (!GatewayUtils.isOnDemandLoading()) {
+            retrieveAndDeployArtifacts(tenantDomain);
+        }
         ServiceReferenceHolder.getInstance().addLoadedTenant(tenantDomain);
     }
 
@@ -332,6 +360,7 @@ public class GatewayStartupListener extends AbstractAxis2ConfigurationContextObs
 
         String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
         ServiceReferenceHolder.getInstance().removeUnloadedTenant(tenantDomain);
+        DataHolder.getInstance().markApisAsUnDeployedInTenant(tenantDomain);
         SubscriptionDataHolder.getInstance().unregisterTenantSubscriptionStore(tenantDomain);
         WebhooksDataHolder.getInstance().unregisterTenantSubscriptionStore(tenantDomain);
     }

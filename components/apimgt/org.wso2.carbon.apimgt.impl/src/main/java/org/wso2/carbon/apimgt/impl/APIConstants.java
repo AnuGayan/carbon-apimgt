@@ -35,6 +35,7 @@ public final class APIConstants {
     public static final String OBJECT = "object";
     //key value of the provider rxt
     public static final String PROVIDER_KEY = "provider";
+    public static final String ORG_ALL_QUERY_PARAM = "ALL";
 
     //key value of the APIImpl rxt
     public static final String API_KEY = "api";
@@ -2577,6 +2578,7 @@ public final class APIConstants {
         public static final String API_ID = "apiId";
         public static final String LABEL = "label";
         public static final String LABELS = "labels";
+        public static final String EnableOnDemandLoadingAPIS = "EnableOnDemandLoadingAPIS";
 
     }
 

@@ -553,6 +553,7 @@ public class TemplateBuilderUtil {
         productAPIDto.setProvider(id.getProviderName());
         productAPIDto.setApiId(apiProduct.getUuid());
         productAPIDto.setName(id.getName());
+        productAPIDto.setApiContext(apiProduct.getContext());
         productAPIDto.setVersion(id.getVersion());
         productAPIDto.setTenantDomain(tenantDomain);
         String definition = apiProduct.getDefinition();
@@ -614,6 +615,7 @@ public class TemplateBuilderUtil {
         gatewayAPIDTO.setVersion(api.getId().getVersion());
         gatewayAPIDTO.setProvider(api.getId().getProviderName());
         gatewayAPIDTO.setApiId(api.getUUID());
+        gatewayAPIDTO.setApiContext(api.getContext());
         gatewayAPIDTO.setTenantDomain(tenantDomain);
 
         String definition;

@@ -34,6 +34,7 @@ public class GatewayAPIDTO implements Serializable {
     private String provider;
     private String tenantDomain;
     private String apiId;
+    private String apiContext;
     private String apiDefinition;
     private GatewayContentDTO[] sequenceToBeAdd;
     private String[] sequencesToBeRemove;
@@ -204,5 +205,13 @@ public class GatewayAPIDTO implements Serializable {
     public void setCredentialsToBeRemove(String[] credentialsToBeRemove) {
 
         this.credentialsToBeRemove = credentialsToBeRemove;
+    }
+
+    public String getApiContext() {
+        return apiContext;
+    }
+
+    public void setApiContext(String apiContext) {
+        this.apiContext = apiContext;
     }
 }

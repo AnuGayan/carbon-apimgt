@@ -3008,6 +3008,7 @@ public class SQLConstants {
 
         public static final String GET_CERTIFICATES = "SELECT * FROM AM_CERTIFICATE_METADATA WHERE TENANT_ID=?";
 
+        public static final String GET_ALL_CERTIFICATES = "SELECT * FROM AM_CERTIFICATE_METADATA";
         public static final String GET_CERTIFICATE_ALL_TENANTS = "SELECT * FROM AM_CERTIFICATE_METADATA WHERE " +
                 "(ALIAS=?)";
         public static final String GET_CERTIFICATE_TENANT = "SELECT * FROM AM_CERTIFICATE_METADATA WHERE TENANT_ID=? " +

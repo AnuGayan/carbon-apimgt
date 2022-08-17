@@ -69,6 +69,16 @@ public interface CertificateManager {
     boolean addCertificateToGateway(String certificate, String alias);
 
     /**
+     * Method to add the certificate to gateway nodes.
+     *
+     * @param certificate : The Base64 encoded certificate string.
+     * @param alias       : Certificate alias.
+     * @param tenantId    : Tenant id.
+     * @return : True if the certificate is added to gateway node successfully. False otherwise.
+     */
+    boolean addAllCertificateToGateway(String certificate, String alias, int tenantId);
+
+    /**
      * This method is to remove the certificate from client-truststore.jks of gateway nodes.
      *
      * @param alias : The alias of the certificate to be removed.
@@ -231,4 +241,11 @@ public interface CertificateManager {
      * @throws APIManagementException API Management Exception.
      */
     int getClientCertificateCount(int tenantId) throws APIManagementException;
+
+    /**
+     * This method is used to retrieve all the certificates.
+     *
+     * @return : List of Certificate metadata objects.
+     */
+    List<CertificateMetadataDTO> getAllCertificates();
 }
