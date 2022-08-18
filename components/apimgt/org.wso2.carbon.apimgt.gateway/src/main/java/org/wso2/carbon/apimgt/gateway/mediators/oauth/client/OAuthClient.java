@@ -165,6 +165,15 @@ public class OAuthClient {
                 long currentTimeInSeconds = System.currentTimeMillis() / 1000;
                 long expiryTimeInSeconds = currentTimeInSeconds + Long.parseLong(tokenResponse.getExpiresIn());
                 tokenResponse.setValidTill(expiryTimeInSeconds);
+            } else if (null != APIUtil.getMediationConfigurationFromAPIMConfig(
+                    APIConstants.OAuthConstants.OAUTH_MEDIATION_CONFIG
+                            + APIConstants.OAuthConstants.EXPIRES_IN_CONFIG)) {
+                tokenResponse.setExpiresIn(APIUtil.getMediationConfigurationFromAPIMConfig(
+                        APIConstants.OAuthConstants.OAUTH_MEDIATION_CONFIG
+                                + APIConstants.OAuthConstants.EXPIRES_IN_CONFIG));
+                long currentTimeInSeconds = System.currentTimeMillis() / 1000;
+                long expiryTimeInSeconds = currentTimeInSeconds + Long.parseLong(tokenResponse.getExpiresIn());
+                tokenResponse.setValidTill(expiryTimeInSeconds);
             }
         }
 
