@@ -203,6 +203,14 @@ public class CertificateManagerImpl implements CertificateManager {
     }
 
     @Override
+    public boolean addAllCertificateToGateway(String certificate, String alias, int tenantId) {
+        // Check whether the api is invoked via the APIGatewayAdmin service.
+        alias = alias + "_" + tenantId;
+
+        return addCertificateToListenerOrSenderProfile(certificate, alias, false);
+    }
+
+    @Override
     public boolean addClientCertificateToGateway(String certificate, String alias) {
 
         int tenantId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId();
@@ -356,6 +364,21 @@ public class CertificateManagerImpl implements CertificateManager {
             certificates = certificateMgtDAO.getCertificates(null, null, tenantId);
         } catch (CertificateManagementException e) {
             log.error("Error retrieving certificates for the tenantId '" + tenantId + "' ", e);
+        }
+        return certificates;
+    }
+
+    @Override
+    public List<CertificateMetadataDTO> getAllCertificates() {
+        List<CertificateMetadataDTO> certificates = null;
+
+        if (log.isDebugEnabled()) {
+            log.debug("Get all the certificates");
+        }
+        try {
+            certificates = certificateMgtDAO.getAllCertificates();
+        } catch (CertificateManagementException e) {
+            log.error("Error retrieving certificates ", e);
         }
         return certificates;
     }

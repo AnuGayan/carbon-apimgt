@@ -64,6 +64,7 @@ import org.wso2.carbon.apimgt.gateway.threatprotection.utils.ThreatProtectorCons
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.APIManagerConfiguration;
 import org.wso2.carbon.apimgt.impl.dto.APIKeyValidationInfoDTO;
+import org.wso2.carbon.apimgt.impl.dto.GatewayArtifactSynchronizerProperties;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.keymgt.SubscriptionDataHolder;
 import org.wso2.carbon.apimgt.keymgt.model.SubscriptionDataStore;
@@ -1367,5 +1368,12 @@ public class GatewayUtils {
 
     public static boolean isAllApisDeployed () {
         return DataHolder.getInstance().isAllApisDeployed();
+    }
+
+    public static boolean isOnDemandLoading() {
+        GatewayArtifactSynchronizerProperties gatewayArtifactSynchronizerProperties =
+                ServiceReferenceHolder.getInstance().getAPIManagerConfiguration()
+                        .getGatewayArtifactSynchronizerProperties();
+        return gatewayArtifactSynchronizerProperties.isOnDemandLoading();
     }
 }

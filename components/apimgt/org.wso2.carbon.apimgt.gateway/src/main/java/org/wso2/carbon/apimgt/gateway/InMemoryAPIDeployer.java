@@ -64,7 +64,6 @@ public class InMemoryAPIDeployer {
     private static Log log = LogFactory.getLog(InMemoryAPIDeployer.class);
     ArtifactRetriever artifactRetriever;
     GatewayArtifactSynchronizerProperties gatewayArtifactSynchronizerProperties;
-    private boolean debugEnabled = log.isDebugEnabled();
 
     public InMemoryAPIDeployer() {
 
@@ -91,8 +90,44 @@ public class InMemoryAPIDeployer {
                 unDeployAPI(apiGatewayAdmin, gatewayEvent);
                 apiGatewayAdmin.deployAPI(gatewayAPIDTO);
                 addDeployedCertificatesToAPIAssociation(gatewayAPIDTO);
-                if (debugEnabled) {
+                DataHolder.getInstance().addAPIMetaData(gatewayEvent);
+                DataHolder.getInstance().markAPIAsDeployed(gatewayAPIDTO);
+                if (log.isDebugEnabled()) {
                     log.debug("API with " + apiId + " is deployed in gateway with the labels " + String.join(",",
+                            gatewayLabels));
+                }
+                return true;
+            }
+        } catch (IOException | ArtifactSynchronizerException e) {
+            String msg = "Error deploying " + apiId + " in Gateway";
+            log.error(msg, e);
+            throw new ArtifactSynchronizerException(msg, e);
+        } finally {
+            MessageContext.destroyCurrentMessageContext();
+        }
+        return true;
+    }
+
+    /**
+     * Deploy an API in the gateway using the deployAPI method in gateway admin.
+     *
+     * @param apiId uuid of API
+     * @return True if API artifact retrieved from the storage and successfully deployed without any error. else false
+     */
+    public boolean deployAPI(String apiId) throws ArtifactSynchronizerException {
+
+        try {
+            Set<String> gatewayLabels = gatewayArtifactSynchronizerProperties.getGatewayLabels();
+            GatewayAPIDTO gatewayAPIDTO = retrieveArtifact(apiId, gatewayLabels);
+            if (gatewayAPIDTO != null) {
+                APIGatewayAdmin apiGatewayAdmin = new APIGatewayAdmin();
+                MessageContext.setCurrentMessageContext(
+                        org.wso2.carbon.apimgt.gateway.utils.GatewayUtils.createAxis2MessageContext());
+                apiGatewayAdmin.deployAPI(gatewayAPIDTO);
+                addDeployedCertificatesToAPIAssociation(gatewayAPIDTO);
+                DataHolder.getInstance().markAPIAsDeployed(gatewayAPIDTO);
+                if (log.isDebugEnabled()) {
+                log.debug("API with " + apiId + " is deployed in gateway with the labels " + String.join(",",
                             gatewayLabels));
                 }
                 return true;
@@ -174,6 +209,7 @@ public class InMemoryAPIDeployer {
                                 log.info("Deploying synapse artifacts of " + gatewayAPIDTO.getName());
                                 apiGatewayAdmin.deployAPI(gatewayAPIDTO);
                                 addDeployedCertificatesToAPIAssociation(gatewayAPIDTO);
+                                DataHolder.getInstance().markAPIAsDeployed(gatewayAPIDTO);
                             }
                         } catch (AxisFault axisFault) {
                             log.error("Error in deploying " + gatewayAPIDTO.getName() + " to the Gateway ", axisFault);
@@ -183,7 +219,7 @@ public class InMemoryAPIDeployer {
                     // reload dynamic profiles to avoid delays in loading certs in mutual ssl enabled APIs upon
                     // server restart
                     DynamicProfileReloaderHolder.getInstance().reloadAllHandlers();
-                    if (debugEnabled) {
+                    if (log.isDebugEnabled()) {
                         log.debug("APIs deployed in gateway with the labels of " + labelString);
                     }
                     result = true;

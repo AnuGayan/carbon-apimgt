@@ -25,6 +25,7 @@ public class CertificateMetadataDTO {
     private String alias;
     private String endpoint;
     private String certificate;
+    private int tenantId;
 
     public String getCertificate() {
 
@@ -50,5 +51,13 @@ public class CertificateMetadataDTO {
 
     public void setEndpoint(String endpoint) {
         this.endpoint = endpoint;
+    }
+
+    public int getTenantId() {
+        return tenantId;
+    }
+
+    public void setTenantId(int tenantId) {
+        this.tenantId = tenantId;
     }
 }

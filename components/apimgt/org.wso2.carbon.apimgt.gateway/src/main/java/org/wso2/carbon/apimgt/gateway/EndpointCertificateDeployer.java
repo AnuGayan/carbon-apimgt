@@ -52,6 +52,8 @@ public class EndpointCertificateDeployer {
             ServiceReferenceHolder.getInstance().getAPIManagerConfiguration().getEventHubConfigurationDto();
     private String baseURL = eventHubConfigurationDto.getServiceUrl() + APIConstants.INTERNAL_WEB_APP_EP;
 
+    public EndpointCertificateDeployer() {}
+
     public EndpointCertificateDeployer(String tenantDomain) {
 
         this.tenantDomain = tenantDomain;
@@ -63,6 +65,18 @@ public class EndpointCertificateDeployer {
 
         try (CloseableHttpResponse closeableHttpResponse = invokeService(endpoint, tenantDomain)) {
             retrieveCertificatesAndDeploy(closeableHttpResponse);
+
+        } catch (IOException | ArtifactSynchronizerException e) {
+            throw new APIManagementException("Error while inserting certificates into truststore", e);
+        }
+    }
+
+    public void deployAllCertificatesAtStartup() throws APIManagementException {
+
+        String endpoint = baseURL + APIConstants.CERTIFICATE_RETRIEVAL_ENDPOINT;
+
+        try (CloseableHttpResponse closeableHttpResponse = invokeService(endpoint, APIConstants.ORG_ALL_QUERY_PARAM)) {
+            retrieveAllCertificatesAndDeploy(closeableHttpResponse);
 
         } catch (IOException | ArtifactSynchronizerException e) {
             throw new APIManagementException("Error while inserting certificates into truststore", e);
@@ -99,6 +113,31 @@ public class EndpointCertificateDeployer {
                     CertificateManagerImpl.getInstance()
                             .addCertificateToGateway(certificateMetadataDTO.getCertificate(),
                                     certificateMetadataDTO.getAlias());
+                }
+            } finally {
+                if (tenantFlowStarted) {
+                    PrivilegedCarbonContext.endTenantFlow();
+                }
+            }
+
+        }
+    }
+
+    private void retrieveAllCertificatesAndDeploy(CloseableHttpResponse closeableHttpResponse) throws IOException {
+
+        boolean tenantFlowStarted = false;
+        if (closeableHttpResponse.getStatusLine().getStatusCode() == 200) {
+            String content = EntityUtils.toString(closeableHttpResponse.getEntity());
+            List<CertificateMetadataDTO> certificateMetadataDTOList;
+            Type listType = new TypeToken<List<CertificateMetadataDTO>>() {
+            }.getType();
+            certificateMetadataDTOList = new Gson().fromJson(content, listType);
+
+            try {
+                for (CertificateMetadataDTO certificateMetadataDTO : certificateMetadataDTOList) {
+                    CertificateManagerImpl.getInstance()
+                            .addAllCertificateToGateway(certificateMetadataDTO.getCertificate(),
+                                    certificateMetadataDTO.getAlias(), certificateMetadataDTO.getTenantId());
                 }
             } finally {
                 if (tenantFlowStarted) {

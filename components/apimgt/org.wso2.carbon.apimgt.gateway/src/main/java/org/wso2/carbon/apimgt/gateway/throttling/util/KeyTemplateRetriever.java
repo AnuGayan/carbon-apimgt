@@ -78,23 +78,32 @@ public class KeyTemplateRetriever extends TimerTask {
             HttpClient httpClient = APIUtil.getHttpClient(keyMgtPort, keyMgtProtocol);
             HttpResponse httpResponse = null;
             int retryCount = 0;
-            boolean retry;
+            boolean retry = true;
             do {
                 try {
                     httpResponse = httpClient.execute(method);
-                    retry = false;
+                    if (httpResponse.getStatusLine().getStatusCode() == 200) {
+                        retry = false;
+                    }
                 } catch (IOException ex) {
-                    retryCount++;
-                    if (retryCount < keyTemplateRetrievalRetries) {
-                        retry = true;
-                        log.warn("Failed retrieving throttling data from remote endpoint: " + ex.getMessage()
-                                 + ". Retrying after " + keyTemplateRetrievalTimeoutInSeconds + " seconds...");
-                        Thread.sleep(keyTemplateRetrievalTimeoutInSeconds * 1000);
-                    } else {
+                    if (retryCount >= keyTemplateRetrievalRetries) {
                         throw ex;
+                    } else {
+                        log.warn("Failed retrieving throttling data from remote endpoint: " + ex.getMessage()
+                                + ". Retrying after " + keyTemplateRetrievalTimeoutInSeconds + " seconds...");
                     }
                 }
-            } while(retry);
+                if (retry) {
+                    if (retryCount < keyTemplateRetrievalRetries) {
+                        log.warn("Failed retrieving throttling data from remote endpoint. Retrying after "
+                                + keyTemplateRetrievalTimeoutInSeconds + " seconds...");
+                        Thread.sleep(keyTemplateRetrievalTimeoutInSeconds * 1000);
+                    } else {
+                        retry = false;
+                    }
+                    retryCount++;
+                }
+            } while (retry);
 
             String responseString = EntityUtils.toString(httpResponse.getEntity(), "UTF-8");
             if (responseString != null && !responseString.isEmpty()) {
@@ -120,7 +129,9 @@ public class KeyTemplateRetriever extends TimerTask {
 
     public void loadKeyTemplatesFromWebService() {
         List keyListMap = Arrays.asList(retrieveKeyTemplateData());
-        getThrottleDataHolder().addKeyTemplateFromMap(GatewayUtils.generateMap(keyListMap));
+        if (!keyListMap.isEmpty()) {
+            getThrottleDataHolder().addKeyTemplateFromMap(GatewayUtils.generateMap(keyListMap));
+        }
     }
 
     protected ThrottleDataHolder getThrottleDataHolder() {

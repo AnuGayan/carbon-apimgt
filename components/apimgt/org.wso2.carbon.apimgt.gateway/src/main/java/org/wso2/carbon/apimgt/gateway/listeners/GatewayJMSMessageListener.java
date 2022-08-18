@@ -30,7 +30,9 @@ import org.wso2.carbon.apimgt.api.model.APIStatus;
 import org.wso2.carbon.apimgt.gateway.EndpointCertificateDeployer;
 import org.wso2.carbon.apimgt.gateway.GoogleAnalyticsConfigDeployer;
 import org.wso2.carbon.apimgt.gateway.InMemoryAPIDeployer;
+import org.wso2.carbon.apimgt.gateway.internal.DataHolder;
 import org.wso2.carbon.apimgt.gateway.internal.ServiceReferenceHolder;
+import org.wso2.carbon.apimgt.gateway.utils.GatewayUtils;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.APIConstants.EventType;
 import org.wso2.carbon.apimgt.impl.APIConstants.PolicyType;
@@ -140,7 +142,7 @@ public class GatewayJMSMessageListener implements MessageListener {
                         }
                     }
                 }
-                if (tenantLoaded) {
+                if (tenantLoaded || GatewayUtils.isOnDemandLoading()) {
                     Set<String> systemConfiguredGatewayLabels = new HashSet(gatewayEvent.getGatewayLabels());
                     systemConfiguredGatewayLabels.retainAll(gatewayArtifactSynchronizerProperties.getGatewayLabels());
                     if (!systemConfiguredGatewayLabels.isEmpty()) {
@@ -173,6 +175,8 @@ public class GatewayJMSMessageListener implements MessageListener {
                                     endTenantFlow();
                                 }
                             }
+                            DataHolder.getInstance().removeAPIFromAllTenantMap(gatewayEvent.getContext(),
+                                    gatewayEvent.getTenantDomain());
                         }
                     }
 
@@ -195,11 +199,12 @@ public class GatewayJMSMessageListener implements MessageListener {
         } else if (EventType.API_UPDATE.toString().equals(eventType)) {
             APIEvent event = new Gson().fromJson(eventJson, APIEvent.class);
             ServiceReferenceHolder.getInstance().getKeyManagerDataService().addOrUpdateAPI(event);
+            DataHolder.getInstance().addAPIMetaData(event);
         } else if (EventType.API_LIFECYCLE_CHANGE.toString().equals(eventType)) {
             APIEvent event = new Gson().fromJson(eventJson, APIEvent.class);
-            if (APIStatus.CREATED.toString().equals(event.getApiStatus())
-                    || APIStatus.RETIRED.toString().equals(event.getApiStatus())) {
+            if (APIStatus.RETIRED.toString().equals(event.getApiStatus())) {
                 ServiceReferenceHolder.getInstance().getKeyManagerDataService().removeAPI(event);
+                DataHolder.getInstance().removeAPIFromAllTenantMap(event.getApiContext(),event.getTenantDomain());
             } else {
                 ServiceReferenceHolder.getInstance().getKeyManagerDataService().addOrUpdateAPI(event);
             }
