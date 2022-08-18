@@ -168,9 +168,11 @@ public class DataHolder {
     }
 
     private String getTenantDomainFromContext(String context){
-        String tenantDomain = null;
-        tenantDomain = StringUtils.substringBefore(StringUtils.substringAfter(context, "/t/"),
-                "/");
+        String tenantDomain = "carbon.super";
+        if(context != null && StringUtils.isNotEmpty(context) && context.startsWith("/t/")) {
+            tenantDomain = StringUtils.substringBefore(StringUtils.substringAfter(context, "/t/"),
+                    "/");
+        }
         return tenantDomain;
     }
 }
