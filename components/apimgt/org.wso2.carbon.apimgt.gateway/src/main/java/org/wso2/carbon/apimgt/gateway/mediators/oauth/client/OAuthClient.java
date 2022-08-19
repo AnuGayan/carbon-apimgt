@@ -161,21 +161,12 @@ public class OAuthClient {
                 tokenResponse.setTokenType((String) jsonResponse.get("token_type"));
             }
             if (jsonResponse.containsKey("expires_in")) {
-                tokenResponse.setExpiresIn(jsonResponse.get("expires_in").toString());
-                long currentTimeInSeconds = System.currentTimeMillis() / 1000;
-                long expiryTimeInSeconds = currentTimeInSeconds + Long.parseLong(tokenResponse.getExpiresIn());
-                tokenResponse.setValidTill(expiryTimeInSeconds);
-            } else if (null != APIUtil.getMediationConfigurationFromAPIMConfig(
-                    APIConstants.OAuthConstants.OAUTH_MEDIATION_CONFIG
-                            + APIConstants.OAuthConstants.EXPIRES_IN_CONFIG)) {
-                tokenResponse.setExpiresIn(APIUtil.getMediationConfigurationFromAPIMConfig(
-                        APIConstants.OAuthConstants.OAUTH_MEDIATION_CONFIG
-                                + APIConstants.OAuthConstants.EXPIRES_IN_CONFIG));
-                long currentTimeInSeconds = System.currentTimeMillis() / 1000;
-                long expiryTimeInSeconds = currentTimeInSeconds + Long.parseLong(tokenResponse.getExpiresIn());
-                tokenResponse.setValidTill(expiryTimeInSeconds);
+                tokenResponse.setExpiresIn( jsonResponse.get("expires_in").toString());
             }
         }
+        long currentTimeInSeconds = System.currentTimeMillis() / 1000;
+        long expiryTimeInSeconds = currentTimeInSeconds + Long.parseLong(tokenResponse.getExpiresIn());
+        tokenResponse.setValidTill(expiryTimeInSeconds);
 
         if (log.isDebugEnabled()) {
             log.debug("Response: [status-code] " + responseCode + " [message] "
