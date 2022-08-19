@@ -462,7 +462,6 @@ public final class APIConstants {
     public static final String AUTHORIZATION_HEADER_DEFAULT = "Authorization";
     public static final String HEADER_TENANT = "xWSO2Tenant";
     public static final String X_WSO2_TENANT_HEADER = "X-WSO2-Tenant";
-    public static final String MEDIATOR_CONFIG = "MediatorConfigs.";
     public static final String AUTHORIZATION_QUERY_PARAM_DEFAULT = "access_token";
     public static final String API_KEY_HEADER_QUERY_PARAM = "apikey";
     public static final String REMOVE_OAUTH_HEADER_FROM_OUT_MESSAGE = "RemoveOAuthHeadersFromOutMessage";
@@ -1298,13 +1297,12 @@ public final class APIConstants {
             Collections.unmodifiableSet(new HashSet<>(Arrays.asList(new String[]{"SUBSCRIBE", "PUBLISH"})));
 
     public static final String HTTP_VERB_PUBLISH = "PUBLISH";
-    public static final String OAUTH_MEDIATION_CONFIG = "OAuth.";
     public static final String HTTP_VERB_SUBSCRIBE = "SUBSCRIBE";
     public static final String OAUTH2_DEFAULT_SCOPE = "default";
 
     public static final String RECENTLY_ADDED_API_CACHE_NAME = "RECENTLY_ADDED_API";
     public static final String VELOCITY_LOGGER = "VelocityLogger";
-    public static final String EXPIRES_IN_CONFIG = "ExpiresIn";
+
     public static final String SHA_256 = "SHA-256";
 
     public static class DigestAuthConstants {

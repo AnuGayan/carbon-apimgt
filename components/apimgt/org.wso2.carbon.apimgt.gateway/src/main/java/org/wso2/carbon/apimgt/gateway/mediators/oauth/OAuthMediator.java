@@ -100,14 +100,22 @@ public class OAuthMediator extends AbstractMediator implements ManagedLifecycle 
 
         CountDownLatch latch = new CountDownLatch(1);
 
-        TokenResponse tokenResponse = null;
         if (oAuthEndpoint != null) {
             try {
-                tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch);
+                OAuthTokenGenerator.generateToken(oAuthEndpoint, latch);
                 latch.await();
             } catch (InterruptedException | APISecurityException e) {
                 log.error("Could not generate access token...", e);
             }
+        }
+
+        TokenResponse tokenResponse;
+        if (ServiceReferenceHolder.getInstance().isRedisEnabled()) {
+            assert oAuthEndpoint != null;
+            tokenResponse = (TokenResponse) ServiceReferenceHolder.getInstance().getRedisCacheUtils()
+                    .getObject(oAuthEndpoint.getId(), TokenResponse.class);
+        } else {
+            tokenResponse = TokenCache.getInstance().getTokenMap().get(oAuthEndpoint.getId());
         }
         if (tokenResponse != null) {
             String accessToken = tokenResponse.getAccessToken();
