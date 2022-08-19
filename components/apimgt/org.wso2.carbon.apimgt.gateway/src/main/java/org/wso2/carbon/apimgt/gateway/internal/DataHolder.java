@@ -82,8 +82,12 @@ public class DataHolder {
 
     public void addAPIMetaData(API api) {
         String context = api.getContext();
-        int index = context.lastIndexOf("/" + api.getApiVersion());
-        String defaultContext = context.substring(0, index);
+        String defaultContext = context;
+        if (!api.getApiType().equals("APIProduct")) {
+            int index = context.lastIndexOf("/" + api.getApiVersion());
+            defaultContext = context.substring(0, index);
+        }
+
         Map<String, API> apiMap;
         if (tenantAPIMap.containsKey(getTenantDomainFromContext(context))) {
             apiMap = tenantAPIMap.get(getTenantDomainFromContext(context));
