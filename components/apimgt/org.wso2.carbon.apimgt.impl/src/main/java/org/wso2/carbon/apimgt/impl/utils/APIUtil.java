@@ -9266,6 +9266,18 @@ public final class APIUtil {
         return null;
     }
 
+    public static String getMediationConfigurationFromAPIMConfig(String property) {
+
+        APIManagerConfiguration apimConfig =
+                ServiceReferenceHolder.getInstance().getAPIManagerConfigurationService().getAPIManagerConfiguration();
+
+        String mediatorConfiguration = apimConfig.getFirstProperty(APIConstants.MEDIATOR_CONFIG + property);
+        if (!StringUtils.isBlank(mediatorConfiguration)) {
+            return mediatorConfiguration;
+        }
+        return null;
+    }
+
     public static boolean isForgetPasswordConfigured() {
 
         AxisConfiguration axis2Config = ServiceReferenceHolder.getContextService().getServerConfigContext()
