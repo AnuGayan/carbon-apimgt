@@ -1298,13 +1298,11 @@ public final class APIConstants {
             Collections.unmodifiableSet(new HashSet<>(Arrays.asList(new String[]{"SUBSCRIBE", "PUBLISH"})));
 
     public static final String HTTP_VERB_PUBLISH = "PUBLISH";
-    public static final String OAUTH_MEDIATION_CONFIG = "OAuth.";
     public static final String HTTP_VERB_SUBSCRIBE = "SUBSCRIBE";
     public static final String OAUTH2_DEFAULT_SCOPE = "default";
 
     public static final String RECENTLY_ADDED_API_CACHE_NAME = "RECENTLY_ADDED_API";
     public static final String VELOCITY_LOGGER = "VelocityLogger";
-    public static final String EXPIRES_IN_CONFIG = "ExpiresIn";
     public static final String SHA_256 = "SHA-256";
 
     public static class DigestAuthConstants {
@@ -1361,6 +1359,8 @@ public final class APIConstants {
         public static final String SCOPE = "scope";
         public static final String TOKEN_TYPE = "token_type";
         public static final String EXPIRES_IN = "expires_in";
+        public static final String OAUTH_MEDIATION_CONFIG = "OAuth.";
+        public static final String EXPIRES_IN_CONFIG = "ExpiresIn";
 
         // Properties in Endpoint Config
         public static final String ENDPOINT_SECURITY_PRODUCTION = "production";
