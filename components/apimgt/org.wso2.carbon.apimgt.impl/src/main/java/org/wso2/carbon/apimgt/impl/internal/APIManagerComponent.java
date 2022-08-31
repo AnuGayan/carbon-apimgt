@@ -172,6 +172,7 @@ public class APIManagerComponent {
             APIUtil.loadTenantExternalStoreConfig(MultitenantConstants.SUPER_TENANT_ID);
             APIUtil.loadTenantGAConfig(MultitenantConstants.SUPER_TENANT_ID);
             int tenantId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId();
+            String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
             APIUtil.loadAndSyncTenantConf(tenantId);
             APIUtil.loadTenantWorkFlowExtensions(tenantId);
             // load self sigup configuration to the registry
@@ -250,7 +251,7 @@ public class APIManagerComponent {
                 log.error("Exception when creating default roles for tenant " + MultitenantConstants.SUPER_TENANT_ID, e);
             }
             // Adding default throttle policies
-            addDefaultAdvancedThrottlePolicies();
+            addDefaultAdvancedThrottlePolicies(tenantDomain,tenantId);
             // Update all NULL THROTTLING_TIER values to Unlimited
             boolean isNullThrottlingTierConversionEnabled = APIUtil.updateNullThrottlingTierAtStartup();
             try {
@@ -659,8 +660,8 @@ public class APIManagerComponent {
         }
     }
 
-    private void addDefaultAdvancedThrottlePolicies() throws APIManagementException {
-        APIUtil.addDefaultSuperTenantAdvancedThrottlePolicies();
+    private void addDefaultAdvancedThrottlePolicies(String tenantDomain, int tenantId) throws APIManagementException {
+        APIUtil.addDefaultTenantAdvancedThrottlePolicies(tenantDomain, tenantId);
     }
 
     @Reference(
