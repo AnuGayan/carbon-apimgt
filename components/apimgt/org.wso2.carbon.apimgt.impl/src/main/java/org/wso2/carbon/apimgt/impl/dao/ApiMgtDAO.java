@@ -13242,8 +13242,9 @@ public class ApiMgtDAO {
                 checkIsExistPreparedStatement.setString(4, "%" + tenantDomainWithAt);
             }
             if (PolicyConstants.POLICY_LEVEL_APP.equals(policyLevel)) {
-                checkIsExistPreparedStatement.setInt(2,
-                        APIUtil.getTenantIdFromTenantDomain(tenantDomainWithAt.replace("@", "")));
+                int tenantId = tenantDomainWithAt.contains("@") ? APIUtil.getTenantIdFromTenantDomain(
+                        tenantDomainWithAt.replace("@", "")) : MultitenantConstants.SUPER_TENANT_ID;
+                checkIsExistPreparedStatement.setInt(2, tenantId);
             }
             checkIsResultSet = checkIsExistPreparedStatement.executeQuery();
             if (checkIsResultSet != null && checkIsResultSet.next()) {
