@@ -2991,7 +2991,14 @@ public class SQLConstants {
         		+ " (select count(map.THROTTLING_TIER) as c from AM_API_URL_MAPPING map, AM_API api"
         		+ "  where map.THROTTLING_TIER = ? and api.API_PROVIDER like ?  and map.API_ID = api.API_ID and map.REVISION_UUID IS NULL)) x ";
 
-        public static final String TIER_ATTACHED_TO_APPLICATION = " SELECT count(APPLICATION_TIER) as c FROM AM_APPLICATION where APPLICATION_TIER = ? ";
+        public static final String TIER_ATTACHED_TO_APPLICATION =
+                "SELECT COUNT(APPLICATION_TIER) AS c " +
+                "FROM " +
+                "  AM_APPLICATION AS APP, AM_SUBSCRIBER AS SUB " +
+                "WHERE " +
+                "  APP.APPLICATION_TIER = ?" +
+                "  AND APP.SUBSCRIBER_ID = SUB.SUBSCRIBER_ID " +
+                "  AND SUB.TENANT_ID = ?";
 
         public static final String GET_TIERS_WITH_BANDWIDTH_QUOTA_TYPE_SQL = "SELECT NAME "
                 + "FROM AM_API_THROTTLE_POLICY LEFT JOIN AM_CONDITION_GROUP "

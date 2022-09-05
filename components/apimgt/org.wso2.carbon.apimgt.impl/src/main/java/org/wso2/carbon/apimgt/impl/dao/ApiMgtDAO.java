@@ -13221,7 +13221,6 @@ public class ApiMgtDAO {
         ResultSet checkIsResultSet = null;
         boolean status = false;
         try {
-            /*String apiProvider = tenantId;*/
             connection = APIMgtDBUtil.getConnection();
             connection.setAutoCommit(true);
             String isExistQuery = SQLConstants.ThrottleSQLConstants.TIER_HAS_SUBSCRIPTION;
@@ -13242,13 +13241,16 @@ public class ApiMgtDAO {
                 checkIsExistPreparedStatement.setString(3, tierId);
                 checkIsExistPreparedStatement.setString(4, "%" + tenantDomainWithAt);
             }
+            if (PolicyConstants.POLICY_LEVEL_APP.equals(policyLevel)) {
+                checkIsExistPreparedStatement.setInt(2,
+                        APIUtil.getTenantIdFromTenantDomain(tenantDomainWithAt.replace("@", "")));
+            }
             checkIsResultSet = checkIsExistPreparedStatement.executeQuery();
             if (checkIsResultSet != null && checkIsResultSet.next()) {
                 int count = checkIsResultSet.getInt(1);
                 if (count > 0) {
                     status = true;
                 }
-
             }
 
             connection.setAutoCommit(true);
