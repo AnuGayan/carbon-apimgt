@@ -20,7 +20,9 @@ const options = ['Save and deploy', 'Save'];
  */
 export default function CustomSplitButton(props) {
     const [open, setOpen] = React.useState(false);
-    const { handleSave, handleSaveAndDeploy, isUpdating } = props;
+    const {
+        handleSave, handleSaveAndDeploy, isUpdating, id,
+    } = props;
     const anchorRef = React.useRef(null);
     const [selectedIndex, setSelectedIndex] = React.useState(1);
 
@@ -60,7 +62,9 @@ export default function CustomSplitButton(props) {
                     <Button
                         onClick={(event) => handleClick(event, selectedIndex)}
                         disabled={isUpdating}
+                        data-testid='custom-select-save-button'
                         style={{ width: '200px' }}
+                        id={id}
                     >
                         {options[selectedIndex]}
                         {isUpdating && <CircularProgress size={24} />}

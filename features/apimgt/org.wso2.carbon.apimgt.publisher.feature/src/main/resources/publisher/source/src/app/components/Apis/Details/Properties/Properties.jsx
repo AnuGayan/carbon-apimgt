@@ -482,6 +482,7 @@ function Properties(props) {
                 {(!isEmpty(additionalProperties) || showAddProperty) && (
                     <Box ml={1}>
                         <Button
+                            id='add-new-property'
                             variant='outlined'
                             color='primary'
                             size='small'
@@ -542,6 +543,7 @@ function Properties(props) {
                                 )}
                             <div className={classes.actions}>
                                 <Button
+                                    id='add-new-property'
                                     variant='outlined'
                                     color='primary'
                                     onClick={toggleAddProperty}
@@ -594,7 +596,7 @@ function Properties(props) {
                                                     <TextField
                                                         fullWidth
                                                         required
-                                                        id='outlined-required'
+                                                        id='property-name'
                                                         label={intl.formatMessage({
                                                             id: `Apis.Details.Properties.Properties.
                                                                 show.add.property.property.name`,
@@ -623,7 +625,7 @@ function Properties(props) {
                                                     <TextField
                                                         fullWidth
                                                         required
-                                                        id='outlined-required'
+                                                        id='property-value'
                                                         label={intl.formatMessage({
                                                             id: 'Apis.Details.Properties.Properties.property.value',
                                                             defaultMessage: 'Value',
@@ -662,6 +664,7 @@ function Properties(props) {
                                                 <TableCell align='right'>
                                                     <Box display='flex'>
                                                         <Button
+                                                            id='properties-add-btn'
                                                             variant='contained'
                                                             color='primary'
                                                             disabled={
@@ -724,12 +727,14 @@ function Properties(props) {
                                 spacing={1}
                                 className={classes.buttonSection}
                             >
-                                <Grid item>
+                                <Grid item id='save-api-properties'>
                                     <div>
                                         {editing || api.isRevision || (isEmpty(additionalProperties)
                                             && !isAdditionalPropertiesStale)
                                             || isRestricted(['apim:api_create', 'apim:api_publish'], api) ? (
                                                 <Button
+                                                    id='save-api-properties'
+                                                    data-testid='save-api-properties-btn'
                                                     disabled
                                                     type='submit'
                                                     variant='contained'

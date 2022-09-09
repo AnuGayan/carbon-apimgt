@@ -534,6 +534,7 @@ function AddEditKeyManager(props) {
                                 <Grid container>
                                     <Grid item xs={6}>
                                         <TextField
+                                            id='name'
                                             autoFocus
                                             margin='dense'
                                             name='name'
@@ -562,6 +563,7 @@ function AddEditKeyManager(props) {
                                     <Grid item xs={6}>
                                         <Box ml={1}>
                                             <TextField
+                                                id='display-name'
                                                 autoFocus={!!id}
                                                 margin='dense'
                                                 name='displayName'
@@ -592,6 +594,7 @@ function AddEditKeyManager(props) {
 
 
                             <TextField
+                                id='description'
                                 multiline
                                 rows={4}
                                 rowsMax={10}
@@ -627,10 +630,12 @@ function AddEditKeyManager(props) {
                                             <span className={classes.error}>*</span>
                                         </InputLabel>
                                         <Select
+                                            id='Admin.KeyManager.form.type.select'
                                             name='type'
                                             value={type}
                                             onChange={onChange}
                                             classes={{ select: classes.select }}
+                                            data-testid='key-manager-type-select'
                                         >
                                             {settings.keyManagerConfiguration.map((keymanager) => (
                                                 <MenuItem key={keymanager.type} value={keymanager.type}>

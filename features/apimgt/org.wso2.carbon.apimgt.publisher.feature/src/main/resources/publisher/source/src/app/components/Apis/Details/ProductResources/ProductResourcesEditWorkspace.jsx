@@ -575,6 +575,7 @@ function ProductResourcesEdit(props) {
                                     <a
                                         onClick={() => addSelectedResourcesToTree()}
                                         onKeyDown={() => addSelectedResourcesToTree()}
+                                        id='add-selected-resources'
                                     >
                                         <Typography variant='body2'>
                                             <FormattedMessage
@@ -589,6 +590,7 @@ function ProductResourcesEdit(props) {
                                     <a
                                         onClick={() => addSelectedResourcesToTree(true)}
                                         onKeyDown={() => addSelectedResourcesToTree(true)}
+                                        id='add-all-resources-btn'
                                     >
                                         <Typography variant='body2'>
                                             <FormattedMessage
@@ -602,7 +604,7 @@ function ProductResourcesEdit(props) {
                                 </div>
                                 <div className={classes.ResourceWrapper}>
                                     <div className='frame'>
-                                        <List dense>
+                                        <List dense id='resource-wrapper'>
                                             {Object.keys(selectedApiPaths).map((key) => {
                                                 const path = selectedApiPaths[key];
                                                 const labelId = `checkbox-list-label-${key}`;
@@ -627,7 +629,7 @@ function ProductResourcesEdit(props) {
                                                                     />
                                                                 </ListItemIcon>
                                                                 <ListItemText
-                                                                    id={labelId}
+                                                                    id={labelId + innerKey}
                                                                     primary={(
                                                                         <div>
                                                                             <MethodView
@@ -756,6 +758,9 @@ function ProductResourcesEdit(props) {
                                                                             },
                                                                             'remove',
                                                                         )}
+                                                                        aria-label={
+                                                                            'delete resource ' + apiResource.name
+                                                                        }
                                                                     >
                                                                         delete
                                                                     </Icon>

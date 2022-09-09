@@ -148,6 +148,7 @@ function SourceDownload(props) {
                     onClick={() => downloadSwagger(api.id, selectedEndpoint
                         ? selectedEndpoint.environmentName : 'Default')}
                     className={classes.downloadLink}
+                    id='swagger-download-btn'
                 >
                     <CloudDownloadRounded className={classes.buttonIcon} />
                     <FormattedMessage

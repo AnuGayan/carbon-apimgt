@@ -176,6 +176,7 @@ function APIRateLimiting(props) {
                                 )}
                                 label='API Level'
                                 labelPlacement='end'
+                                id='api-rate-limiting-api-level'
                             />
                             <FormControlLabel
                                 value={RateLimitingLevels.RESOURCE}
@@ -188,6 +189,7 @@ function APIRateLimiting(props) {
                                 className={focusOperationLevel && classes.focusLabel}
                                 label='Operation Level'
                                 labelPlacement='end'
+                                id='api-rate-limiting-operation-level'
                             />
                         </RadioGroup>
                     </FormControl>
@@ -210,7 +212,11 @@ function APIRateLimiting(props) {
                                 variant='outlined'
                             >
                                 {operationRateLimits.map((rateLimit) => (
-                                    <MenuItem key={rateLimit.name} value={rateLimit.name}>
+                                    <MenuItem
+                                        key={rateLimit.name}
+                                        value={rateLimit.name}
+                                        id={'api-rate-limiting-api-level-' + rateLimit.name}
+                                    >
                                         {rateLimit.displayName}
                                     </MenuItem>
                                 ))}

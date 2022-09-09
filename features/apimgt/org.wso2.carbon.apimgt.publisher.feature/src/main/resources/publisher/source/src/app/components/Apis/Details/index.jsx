@@ -357,6 +357,7 @@ class Details extends Component {
                 route='api definition'
                 to={pathPrefix + 'api definition'}
                 Icon={<CodeIcon />}
+                id='left-menu-itemAPIdefinition'
             />
         );
 
@@ -432,6 +433,7 @@ class Details extends Component {
                             })}
                             to={pathPrefix + 'operations'}
                             Icon={<ResourcesIcon />}
+                            id='left-menu-operations'
                         />
                     </>
                 );
@@ -460,6 +462,7 @@ class Details extends Component {
                             })}
                             to={pathPrefix + 'resources'}
                             Icon={<ResourcesIcon />}
+                            id='left-menu-itemresources'
                         />
                     </>
                 );
@@ -576,7 +579,7 @@ class Details extends Component {
         return promisedUpdate
             .then((updatedAPI) => {
                 if (isAPIProduct) {
-                    Alert.info(`${updatedAPI.name} API updated successfully`);
+                    Alert.info(`${updatedAPI.name} API Product updated successfully`);
                     this.setState({ api: updatedAPI });
                     return updatedAPI;
                 } else {
@@ -688,6 +691,7 @@ class Details extends Component {
                             to={pathPrefix + 'overview'}
                             Icon={<DashboardIcon />}
                             head='valueOnly'
+                            id='left-menu-overview'
                         />
                         <Typography className={classes.headingText}>
                             Develop
@@ -711,6 +715,7 @@ class Details extends Component {
                                     route='deployments'
                                     to={pathPrefix + 'deployments'}
                                     Icon={<PersonPinCircleOutlinedIcon />}
+                                    id='left-menu-itemdeployments'
                                 />
                             </>
                         )}
@@ -725,6 +730,7 @@ class Details extends Component {
                                     route='deployments'
                                     to={pathPrefix + 'deployments'}
                                     Icon={<PersonPinCircleOutlinedIcon />}
+                                    id='left-menu-itemdeployments'
                                 />
                             </>
                         )}
@@ -741,6 +747,7 @@ class Details extends Component {
                                     })}
                                     to={pathPrefix + 'test-console'}
                                     iconText='test'
+                                    id='left-menu-itemTestConsole'
                                 />
                             </div>
                         )}
@@ -755,6 +762,7 @@ class Details extends Component {
                                     })}
                                     to={pathPrefix + 'lifecycle'}
                                     Icon={<LifeCycleIcon />}
+                                    id='left-menu-itemlifecycle'
                                 />
                             </div>
                         )}

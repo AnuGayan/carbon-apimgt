@@ -478,6 +478,7 @@ class Credentials extends React.Component {
                                                 className={classes.buttonElm}
                                                 onClick={() => this.handleSubscribe()}
                                                 disabled={!api.isSubscriptionAvailable || isSubscribing}
+                                                id='subscribe-to-api-btn'
                                             >
                                                 <FormattedMessage
                                                     id={'Apis.Details.Credentials.'
@@ -513,7 +514,7 @@ class Credentials extends React.Component {
                                     />
                                 </Typography>
                                 <div className={classes.tableMain}>
-                                    <table>
+                                    <table id='subscription-table'>
                                         <tr>
                                             <th className={classes.th}>
                                                 <FormattedMessage
@@ -587,6 +588,7 @@ class Credentials extends React.Component {
                                                  || isOnlyBasicAuth || isPrototypedAPI
                                                  || !isSetAllorResidentKeyManagers}
                                             size='small'
+                                            id='start-key-gen-wizard-btn'
                                         >
                                             <Icon>add_circle_outline</Icon>
                                             <FormattedMessage

@@ -429,6 +429,7 @@ class CreateEditForm extends React.Component {
                         }
                         helperText={this.showNameHelper()}
                         type='text'
+                        id='doc-name'
                         variant='outlined'
                         name='name'
                         margin='normal'
@@ -454,6 +455,7 @@ class CreateEditForm extends React.Component {
                                 this.validate('summary', value);
                             },
                         }}
+                        id='doc-summary'
                         margin='normal'
                         variant='outlined'
                         label={
@@ -661,6 +663,7 @@ class CreateEditForm extends React.Component {
                                 />
                             }
                             type='text'
+                            id='other-doc-type'
                             name='otherTypeName'
                             margin='normal'
                             value={otherTypeName}
@@ -741,6 +744,7 @@ class CreateEditForm extends React.Component {
                                     this.validate('url', value);
                                 },
                             }}
+                            id='url'
                             margin='normal'
                             label={
                                 <FormattedMessage

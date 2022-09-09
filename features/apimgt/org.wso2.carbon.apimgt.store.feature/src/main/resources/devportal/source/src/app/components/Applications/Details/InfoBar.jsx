@@ -409,6 +409,7 @@ class InfoBar extends React.Component {
                             <Grid item xs={1} m={1} className={classes.editButton}>
                                 <Link to={`/applications/${applicationId}/edit/fromView`} className={classes.editButton}>
                                     <Button
+                                        id='edit-application'
                                         style={{ padding: '4px' }}
                                         color='default'
                                         className='application-info-bar-edit-button'

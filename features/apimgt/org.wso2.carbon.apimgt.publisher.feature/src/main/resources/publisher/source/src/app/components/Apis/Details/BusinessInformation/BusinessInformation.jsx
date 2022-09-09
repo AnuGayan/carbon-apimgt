@@ -208,7 +208,7 @@ class BusinessInformation extends React.Component {
                                     error={!this.isValidBusinessOwnerEmail}
                                     disabled={isRestricted(['apim:api_create', 'apim:api_publish'], api)}
                                     fullWidth
-                                    id='name'
+                                    id='Email'
                                     label={(
                                         <>
                                             <FormattedMessage
@@ -250,7 +250,7 @@ class BusinessInformation extends React.Component {
                                 <TextField
                                     disabled={isRestricted(['apim:api_create', 'apim:api_publish'], api)}
                                     fullWidth
-                                    id='name'
+                                    id='TOname'
                                     label={(
                                         <>
                                             <FormattedMessage
@@ -282,7 +282,7 @@ class BusinessInformation extends React.Component {
                                     error={!this.isValidTechnicalOwnerEmail}
                                     disabled={isRestricted(['apim:api_create', 'apim:api_publish'], api)}
                                     fullWidth
-                                    id='name'
+                                    id='TOemail'
                                     label={(
                                         <FormattedMessage
                                             id={
@@ -338,6 +338,7 @@ class BusinessInformation extends React.Component {
                                                     isRestricted(['apim:api_create', 'apim:api_publish'], api)
                                                     || !this.isValid() || api.isRevision
                                                 }
+                                                id='business-info-save'
                                             >
                                                 <FormattedMessage id='save' defaultMessage='Save' />
                                             </Button>

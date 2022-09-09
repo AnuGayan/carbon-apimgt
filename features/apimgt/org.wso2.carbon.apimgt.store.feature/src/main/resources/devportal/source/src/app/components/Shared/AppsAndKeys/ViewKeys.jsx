@@ -394,6 +394,7 @@ class ViewKeys extends React.Component {
                                                 classes={{ root: classes.iconButton }}
                                                 onClick={() => this.handleShowHidden('showCS')}
                                                 onMouseDown={this.handleMouseDownGeneric}
+                                                id='visibility-toggle-btn'
                                             >
                                                 {showCS ? <Icon>visibility_off</Icon> : <Icon>visibility</Icon>}
                                             </IconButton>
@@ -587,14 +588,23 @@ class ViewKeys extends React.Component {
                             <DialogActions>
                                 {isUpdating && <CircularProgress size={24} />}
                                 {!showToken && !showCurl && !isKeyJWT && !showSecretGen && (
-                                    <Button onClick={this.generateAccessToken} color='primary' disabled={isUpdating}>
+                                    <Button
+                                        onClick={this.generateAccessToken}
+                                        color='primary'
+                                        id='generate-access-token-generate-btn'
+                                        disabled={isUpdating}
+                                    >
                                         <FormattedMessage
                                             id='Shared.AppsAndKeys.ViewKeys.consumer.generate.btn'
                                             defaultMessage='Generate'
                                         />
                                     </Button>
                                 )}
-                                <Button onClick={this.handleClose} color='primary' autoFocus>
+                                <Button 
+                                onClick={this.handleClose} 
+                                id='generate-access-token-close-btn'
+                                color='primary' 
+                                autoFocus>
                                     <FormattedMessage
                                         id='Shared.AppsAndKeys.ViewKeys.consumer.close.btn'
                                         defaultMessage='Close'
@@ -608,6 +618,7 @@ class ViewKeys extends React.Component {
                                     && supportedGrantTypesUnchanged.find((a) => a.includes('client_credentials'))
                                     && (
                                         <Button
+                                            id='generate-access-token-oauth2'
                                             variant='outlined'
                                             size='small'
                                             color='primary'
@@ -622,6 +633,7 @@ class ViewKeys extends React.Component {
                                         </Button>
                                     )}
                                 <Button
+                                    id='curl-to-generate-access-token-btn'
                                     variant='outlined'
                                     size='small'
                                     color='primary'

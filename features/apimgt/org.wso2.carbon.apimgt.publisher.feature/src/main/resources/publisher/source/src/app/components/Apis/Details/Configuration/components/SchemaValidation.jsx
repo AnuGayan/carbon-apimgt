@@ -154,6 +154,7 @@ class SchemaValidation extends React.Component {
                                         value: checked,
                                     })}
                                     color='primary'
+                                    id='schema-validation-switch'
                                 />
                             )}
                         />
@@ -195,7 +196,12 @@ class SchemaValidation extends React.Component {
                         </DialogContentText>
                     </DialogContent>
                     <DialogActions>
-                        <Button color='primary' variant='contained' onClick={() => this.setIsOpen(false)}>
+                        <Button
+                            color='primary'
+                            variant='contained'
+                            onClick={() => this.setIsOpen(false)}
+                            id='schema-validation-yes-btn'
+                        >
                             Yes
                         </Button>
                         <Button

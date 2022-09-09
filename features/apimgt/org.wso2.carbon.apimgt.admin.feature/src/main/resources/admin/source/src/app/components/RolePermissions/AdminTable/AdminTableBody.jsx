@@ -156,6 +156,7 @@ function AdminTableBody(props) {
                                     scope='row'
                                     padding={multiSelect ? 'none' : 'default'}
                                     align={index === 0 ? 'left' : 'right'}
+                                    data-testid={column}
                                 >
                                     {column}
                                 </TableCell>

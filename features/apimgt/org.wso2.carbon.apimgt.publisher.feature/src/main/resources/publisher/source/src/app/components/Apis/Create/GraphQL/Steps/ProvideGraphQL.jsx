@@ -135,8 +135,8 @@ export default function ProvideGraphQL(props) {
                     )}
                 <Grid item md={11}>
                     {apiInputs.inputValue ? (
-                        <List>
-                            <ListItem key={apiInputs.inputValue.path}>
+                        <List data-testid='uploaded-list-graphql'>
+                            <ListItem key={apiInputs.inputValue.path} data-testid='uploaded-list-content-graphql'>
                                 <ListItemAvatar>
                                     <Avatar>
                                         <InsertDriveFile />
@@ -145,6 +145,7 @@ export default function ProvideGraphQL(props) {
                                 <ListItemText
                                     primary={`${apiInputs.inputValue.path} - 
                                     ${humanFileSize(apiInputs.inputValue.size)}`}
+                                    data-testid={'file-input-' + apiInputs.inputValue.path}
                                 />
                                 <ListItemSecondaryAction>
                                     <IconButton
@@ -154,6 +155,7 @@ export default function ProvideGraphQL(props) {
                                             inputsDispatcher({ action: 'inputValue', value: null });
                                             inputsDispatcher({ action: 'isFormValid', value: false });
                                         }}
+                                        data-testid='btn-delete-imported-file'
                                     >
                                         <DeleteIcon />
                                     </IconButton>
@@ -166,6 +168,7 @@ export default function ProvideGraphQL(props) {
                             onDrop={onDrop}
                             files={apiInputs.inputValue}
                             accept={accept}
+                            ariaLabel='GraphQL file upload'
                         >
                             {isValidating ? (<CircularProgress />)
                                 : ([
@@ -178,6 +181,7 @@ export default function ProvideGraphQL(props) {
                                     <Button
                                         color='primary'
                                         variant='contained'
+                                        data-testid='browse-to-upload-btn'
                                     >
                                         <FormattedMessage
                                             id='Apis.Create.GraphQL.Steps.ProvideGraphQL.Input.file.upload'

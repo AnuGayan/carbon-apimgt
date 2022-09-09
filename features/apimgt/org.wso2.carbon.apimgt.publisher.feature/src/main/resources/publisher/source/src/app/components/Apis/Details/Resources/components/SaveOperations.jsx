@@ -99,6 +99,7 @@ export default function SaveOperations(props) {
                                 handleSave={handleSave}
                                 handleSaveAndDeploy={handleSaveAndDeploy}
                                 isUpdating={isUpdating}
+                                id='resources-save-operations'
                             />
                         )}
                 </Grid>

@@ -221,7 +221,9 @@ const APIDetailsTopMenu = (props) => {
             </Link>
             <VerticalDivider height={70} />
             <div className={classes.infoItem}>
-                <Typography variant='subtitle1'>{isAPIProduct ? api.state : api.lifeCycleStatus}</Typography>
+                <Typography data-testid='itest-api-state' variant='subtitle1'>
+                    {isAPIProduct ? api.state : api.lifeCycleStatus}
+                </Typography>
                 <Typography variant='caption' align='left'>
                     <FormattedMessage
                         id='Apis.Details.components.APIDetailsTopMenu.state'
@@ -373,6 +375,7 @@ const APIDetailsTopMenu = (props) => {
                         onClick={exportAPI}
                         onKeyDown={null}
                         className={classes.downloadApiFlex}
+                        id='download-api-btn'
                     >
                         <div>
                             <CloudDownloadRounded />

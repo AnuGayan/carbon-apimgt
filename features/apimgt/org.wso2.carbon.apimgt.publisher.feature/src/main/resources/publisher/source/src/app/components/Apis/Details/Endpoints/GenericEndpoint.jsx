@@ -94,6 +94,7 @@ function GenericEndpoint(props) {
         readOnly,
         autoFocus,
         name,
+        id,
         apiId,
     } = props;
     const [serviceUrl, setServiceUrl] = useState(endpointURL);
@@ -136,6 +137,7 @@ function GenericEndpoint(props) {
             <TextField
                 disabled={isRestricted(['apim:api_create'], api)}
                 label={name}
+                id={id}
                 className={classes.textField}
                 value={serviceUrl}
                 placeholder={!serviceUrl ? 'http://appserver/resource' : ''}
@@ -157,10 +159,12 @@ function GenericEndpoint(props) {
                 InputProps={{
                     readOnly,
                     autoFocus,
+                    id: category,
                     endAdornment: (
                         <InputAdornment position='end'>
                             {statusCode && (
                                 <Chip
+                                    id={category + '-endpoint-test-status'}
                                     label={statusCode}
                                     className={isEndpointValid ? classes.endpointValidChip : iff(
                                         isErrorCode,
@@ -175,6 +179,7 @@ function GenericEndpoint(props) {
                                     aria-label='TestEndpoint'
                                     onClick={() => testEndpoint(serviceUrl, apiId)}
                                     disabled={(isRestricted(['apim:api_create'], api)) || isUpdating}
+                                    id={category + '-endpoint-test-icon-btn'}
                                 >
                                     {isUpdating
                                         ? <CircularProgress size={20} />
@@ -227,6 +232,7 @@ function GenericEndpoint(props) {
                                             aria-label='Security'
                                             onClick={() => setESConfigOpen(type, esCategory)}
                                             disabled={(isRestricted(['apim:api_create'], api))}
+                                            id={category + '-endpoint-security-icon-btn'}
                                         >
                                             <Tooltip
                                                 placement='top-start'
@@ -271,6 +277,7 @@ GenericEndpoint.defaultProps = {
     readOnly: false,
     autoFocus: false,
     name: 'Service URL',
+    id: '',
 };
 
 GenericEndpoint.propTypes = {
@@ -287,6 +294,7 @@ GenericEndpoint.propTypes = {
     autoFocus: PropTypes.bool,
     name: PropTypes.string,
     apiId: PropTypes.string.isRequired,
+    id: PropTypes.string,
 };
 
 export default withStyles(styles)(GenericEndpoint);

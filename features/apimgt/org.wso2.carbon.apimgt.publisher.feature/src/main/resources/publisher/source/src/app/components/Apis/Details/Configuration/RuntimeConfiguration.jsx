@@ -634,7 +634,7 @@ export default function RuntimeConfiguration() {
                 </Grid>
                 <Grid container>
                     <Grid container direction='row' alignItems='center' spacing={1} style={{ marginTop: 20 }}>
-                        <Grid item>
+                        <Grid item id='save-runtime-configurations'>
                             {api.isRevision
                                 || ((apiConfig.visibility === 'RESTRICTED' && apiConfig.visibleRoles.length === 0)
                                 || isRestricted(['apim:api_create'], api)) || saveButtonDisabled ? (
@@ -654,6 +654,7 @@ export default function RuntimeConfiguration() {
                                         handleSave={handleSave}
                                         handleSaveAndDeploy={handleSaveAndDeploy}
                                         isUpdating={isUpdating}
+                                        id='runtime-config-save-button'
                                     />
                                 )}
                         </Grid>

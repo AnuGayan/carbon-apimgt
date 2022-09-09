@@ -155,7 +155,7 @@ const apiKeyRestrictions = (props) => {
           >
             <FormControlLabel
               value="none"
-              control={<Radio color="primary" />}
+              control={<Radio color="primary" id={'api-key-restriction-none'}/>}
               label={intl.formatMessage({
                 defaultMessage: "None",
                 id:
@@ -165,7 +165,7 @@ const apiKeyRestrictions = (props) => {
             />
             <FormControlLabel
               value="ip"
-              control={<Radio color="primary" />}
+              control={<Radio color="primary" id={'api-key-restriction-ip'}/>}
               label={intl.formatMessage({
                 defaultMessage: "IP Addresses",
                 id:
@@ -175,7 +175,7 @@ const apiKeyRestrictions = (props) => {
             />
             <FormControlLabel
               value="referer"
-              control={<Radio color="primary" />}
+              control={<Radio color="primary" id={'api-key-restriction-referer'}/>}
               label={intl.formatMessage({
                 defaultMessage: "HTTP Referrers (Web Sites)",
                 id:
@@ -222,6 +222,7 @@ const apiKeyRestrictions = (props) => {
                     id: "Shared.AppsAndKeys.Tokens.apiKeyRestriction.enter.ip",
                   })}
                   fullWidth
+                  id='ip-address-txt'
                 />
               </Grid>
               <Grid item md={2} xs={2}>
@@ -232,6 +233,7 @@ const apiKeyRestrictions = (props) => {
                     color="primary"
                     aria-label="add"
                     onClick={addIpItem}
+                    id='ip-address-add-btn'
                   >
                     <AddIcon />
                   </Fab>
@@ -312,6 +314,7 @@ const apiKeyRestrictions = (props) => {
                     id: "Shared.AppsAndKeys.Tokens.apiKeyRestriction.enter.referer",
                   })}
                   fullWidth
+                  id='referer-txt'
                 />
               </Grid>
               <Grid item md={2} xs={2}>
@@ -322,6 +325,7 @@ const apiKeyRestrictions = (props) => {
                     color="primary"
                     aria-label="add"
                     onClick={addRefererItem}
+                  id='referer-add-btn'
                   >
                     <AddIcon />
                   </Fab>

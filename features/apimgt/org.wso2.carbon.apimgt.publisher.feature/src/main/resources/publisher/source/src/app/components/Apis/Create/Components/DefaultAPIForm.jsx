@@ -253,7 +253,7 @@ export default function DefaultAPIForm(props) {
                 <TextField
                     autoFocus
                     fullWidth
-                    id='outlined-name'
+                    id='api-name'
                     error={validity.name}
                     label={(
                         <>
@@ -285,7 +285,7 @@ export default function DefaultAPIForm(props) {
                             <Grid item md={8} xs={6}>
                                 <TextField
                                     fullWidth
-                                    id='outlined-name'
+                                    id='context'
                                     error={validity.context}
                                     label={(
                                         <>
@@ -324,6 +324,7 @@ export default function DefaultAPIForm(props) {
                             <Grid item md={4} xs={6}>
                                 <TextField
                                     fullWidth
+                                    id='version'
                                     error={validity.version}
                                     label={(
                                         <>
@@ -354,7 +355,7 @@ export default function DefaultAPIForm(props) {
                             <Grid item md={12}>
                                 <TextField
                                     fullWidth
-                                    id='outlined-name'
+                                    id='context'
                                     error={validity.context}
                                     label={(
                                         <>

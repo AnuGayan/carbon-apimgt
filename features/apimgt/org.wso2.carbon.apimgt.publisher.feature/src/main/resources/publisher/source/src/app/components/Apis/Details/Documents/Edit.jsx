@@ -127,8 +127,11 @@ function Edit(props) {
     const { classes, docId, apiId } = props;
     return (
         <div>
-            <Button onClick={toggleOpen} disabled={isRestricted(['apim:api_create', 'apim:api_publish'], api) || api.isRevision}
-                className={classes.editMetaButton}>
+            <Button
+                onClick={toggleOpen}
+                disabled={isRestricted(['apim:api_create', 'apim:api_publish'], api) || api.isRevision}
+                className={classes.editMetaButton}
+            >
                 <Icon>edit</Icon>
                 <FormattedMessage
                     id='Apis.Details.Documents.Edit.documents.text.editor.edit'

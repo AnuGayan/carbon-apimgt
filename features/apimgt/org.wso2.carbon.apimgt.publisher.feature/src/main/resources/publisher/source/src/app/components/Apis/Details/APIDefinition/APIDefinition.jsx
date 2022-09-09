@@ -767,7 +767,13 @@ class APIDefinition extends React.Component {
                                 classes={classes}
                             />
                         )}
-                        <a className={classes.downloadLink} href={downloadLink} download={fileName}>
+
+                        <a
+                            className={classes.downloadLink}
+                            href={downloadLink}
+                            download={fileName}
+                            id='download-definition-btn'
+                        >
                             <Button size='small' className={classes.button}>
                                 <CloudDownloadRounded className={classes.buttonIcon} />
                                 <FormattedMessage

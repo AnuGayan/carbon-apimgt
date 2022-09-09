@@ -469,6 +469,7 @@ class Details extends React.Component {
                             iconText='overview'
                             to={pathPrefix + 'overview'}
                             open={open}
+                            id='left-menu-overview'
                         />
                         {!api.advertiseInfo.advertised && (
                             <>
@@ -486,6 +487,7 @@ class Details extends React.Component {
                                             iconText='credentials'
                                             to={pathPrefix + 'credentials'}
                                             open={open}
+                                            id='left-menu-credentials'
                                         />
 
                                     </>
@@ -502,6 +504,7 @@ class Details extends React.Component {
                                         iconText='test'
                                         to={pathPrefix + 'test'}
                                         open={open}
+                                        id='left-menu-test'
                                     />
 
                                 )}
@@ -532,6 +535,7 @@ class Details extends React.Component {
                                         iconText='comments'
                                         to={pathPrefix + 'comments'}
                                         open={open}
+                                        id='left-menu-comments'
                                     />
 
                                 )}
@@ -561,6 +565,7 @@ class Details extends React.Component {
                                 iconText='sdk'
                                 to={pathPrefix + 'sdk'}
                                 open={open}
+                                id='left-menu-sdk'
                             />
 
                         )}

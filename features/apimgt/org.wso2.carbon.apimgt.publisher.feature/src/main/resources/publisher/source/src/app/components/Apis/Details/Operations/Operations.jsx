@@ -396,6 +396,7 @@ class Operations extends React.Component {
                             disabled={isSaving || api.isRevision}
                             className={classes.buttonMain}
                             onClick={this.updateOperations}
+                            data-testid='custom-select-save-button'
                         >
                             {isSaving && <CircularProgress size={20} />}
                             <FormattedMessage

@@ -54,6 +54,7 @@ export default function DefaultVersion(props) {
                         </FormLabel>
                         <RadioGroup
                             aria-label='Make this the default version'
+                            name='defaultVersion'
                             value={api.isDefaultVersion}
                             onChange={({
                                 target: { value },
@@ -72,6 +73,7 @@ export default function DefaultVersion(props) {
                                         defaultMessage='Yes'
                                     />
                                 )}
+                                id='default-version-yes'
                             />
                             <FormControlLabel
                                 disabled={isRestricted(['apim:api_create'], apiFromContext)}
