@@ -53,6 +53,7 @@ import org.wso2.carbon.apimgt.gateway.APIMgtGatewayConstants;
 import org.wso2.carbon.apimgt.gateway.handlers.throttling.APIThrottleConstants;
 import org.wso2.carbon.apimgt.gateway.internal.DataHolder;
 import org.wso2.carbon.apimgt.gateway.internal.ServiceReferenceHolder;
+import org.wso2.carbon.apimgt.gateway.utils.GatewayUtils;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.APIManagerConfiguration;
 import org.wso2.carbon.apimgt.impl.caching.CacheProvider;
@@ -603,23 +604,32 @@ public class Utils {
         return jsonObMap;
     }
 
-    public static TreeMap<String, org.wso2.carbon.apimgt.keymgt.model.entity.API> getSelectedAPIList(String path,
-                                                                                                     String tenantDomain) {
+    public static TreeMap<String, org.wso2.carbon.apimgt.keymgt.model.entity.API> getSelectedAPIList(
+            String path, String tenantDomain) {
+
         TreeMap<String, org.wso2.carbon.apimgt.keymgt.model.entity.API> selectedAPIMap =
                 new TreeMap<>(new ContextLengthSorter());
-        Map<String, Map<String, org.wso2.carbon.apimgt.keymgt.model.entity.API>> tenantAPIMap
-                = DataHolder.getInstance().getTenantAPIMap();
-        if (tenantAPIMap != null && tenantAPIMap.containsKey(tenantDomain)) {
-            Map<String, org.wso2.carbon.apimgt.keymgt.model.entity.API> contextAPIMap = tenantAPIMap.get(tenantDomain);
-            if (contextAPIMap != null) {
-                contextAPIMap.forEach((context, api) -> {
-                    if (ApiUtils.matchApiPath(path, context)) {
-                        selectedAPIMap.put(context, api);
-                    }
-                });
+        Map<String, org.wso2.carbon.apimgt.keymgt.model.entity.API> contextAPIMap = null;
+        if (GatewayUtils.isOnDemandLoading()) {
+            Map<String, Map<String, org.wso2.carbon.apimgt.keymgt.model.entity.API>> tenantAPIMap =
+                    DataHolder.getInstance().getTenantAPIMap();
+            if (tenantAPIMap != null && tenantAPIMap.containsKey(tenantDomain)) {
+                contextAPIMap = tenantAPIMap.get(tenantDomain);
+            }
+        } else {
+            SubscriptionDataStore tenantSubscriptionStore =
+                    SubscriptionDataHolder.getInstance().getTenantSubscriptionStore(tenantDomain);
+            if (tenantSubscriptionStore != null) {
+                contextAPIMap = tenantSubscriptionStore.getAllAPIsByContextList();
             }
         }
-
+        if (contextAPIMap != null) {
+            contextAPIMap.forEach((context, api) -> {
+                if (ApiUtils.matchApiPath(path, context)) {
+                    selectedAPIMap.put(context, api);
+                }
+            });
+        }
         return selectedAPIMap;
     }
 
