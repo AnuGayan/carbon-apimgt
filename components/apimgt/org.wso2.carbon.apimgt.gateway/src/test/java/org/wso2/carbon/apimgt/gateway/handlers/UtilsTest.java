@@ -26,6 +26,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.wso2.carbon.apimgt.gateway.internal.DataHolder;
+import org.wso2.carbon.apimgt.gateway.utils.GatewayUtils;
 import org.wso2.carbon.apimgt.keymgt.SubscriptionDataHolder;
 import org.wso2.carbon.apimgt.keymgt.model.SubscriptionDataStore;
 import org.wso2.carbon.apimgt.keymgt.model.entity.API;
@@ -34,12 +35,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({DataHolder.class})
+@PrepareForTest({DataHolder.class, GatewayUtils.class})
 
 public class UtilsTest {
     @Before
     public void init() {
         PowerMockito.mockStatic(DataHolder.class);
+        PowerMockito.mockStatic(GatewayUtils.class);
     }
 
     @Test
@@ -49,6 +51,7 @@ public class UtilsTest {
         Map<String,Map<String,API>> tenantAPIMap = new HashMap<>();
         Mockito.when(dataHolder.getTenantAPIMap()).thenReturn(tenantAPIMap);
         tenantAPIMap.put("carbon.super",apiMap());
+        PowerMockito.when(GatewayUtils.isOnDemandLoading()).thenReturn(true);
         Map<String, API> selectedAPIList = Utils.getSelectedAPIList("/api1/cde?c=y", "carbon.super");
         Assert.assertEquals(selectedAPIList.size(), 1);
         Assert.assertEquals(selectedAPIList.keySet().iterator().next(), "/api1");
@@ -61,6 +64,7 @@ public class UtilsTest {
         Map<String,Map<String,API>> tenantAPIMap = new HashMap<>();
         Mockito.when(dataHolder.getTenantAPIMap()).thenReturn(tenantAPIMap);
         tenantAPIMap.put("carbon.super",apiMap());
+        PowerMockito.when(GatewayUtils.isOnDemandLoading()).thenReturn(true);
         Map<String, API> selectedAPIList = Utils.getSelectedAPIList("/api1/abc/cde?c=y", "carbon.super");
         Assert.assertEquals(selectedAPIList.size(), 2);
         Assert.assertEquals(selectedAPIList.keySet().iterator().next(), "/api1/abc");
@@ -73,6 +77,7 @@ public class UtilsTest {
         Map<String,Map<String,API>> tenantAPIMap = new HashMap<>();
         Mockito.when(dataHolder.getTenantAPIMap()).thenReturn(tenantAPIMap);
         tenantAPIMap.put("carbon.super",apiMap());
+        PowerMockito.when(GatewayUtils.isOnDemandLoading()).thenReturn(true);
         Map<String, API> selectedAPIList = Utils.getSelectedAPIList("/api1/1.0.0/cde?c=y", "carbon.super");
         Assert.assertEquals(selectedAPIList.size(), 2);
         Assert.assertEquals(selectedAPIList.keySet().iterator().next(), "/api1/1.0.0");
@@ -85,6 +90,7 @@ public class UtilsTest {
         Map<String,Map<String,API>> tenantAPIMap = new HashMap<>();
         tenantAPIMap.put("carbon.super",apiMap());
         Mockito.when(dataHolder.getTenantAPIMap()).thenReturn(tenantAPIMap);
+        PowerMockito.when(GatewayUtils.isOnDemandLoading()).thenReturn(true);
         Map<String, API> selectedAPIList = Utils.getSelectedAPIList("/api1/abc/1.0.0/cde?c=y", "carbon.super");
         Assert.assertEquals(selectedAPIList.size(), 3);
         Assert.assertEquals(selectedAPIList.keySet().iterator().next(), "/api1/abc/1.0.0");
