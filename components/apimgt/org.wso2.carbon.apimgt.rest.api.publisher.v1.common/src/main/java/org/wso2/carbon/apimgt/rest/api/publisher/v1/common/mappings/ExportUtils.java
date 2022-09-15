@@ -90,6 +90,7 @@ public class ExportUtils {
     private static final String IN = "in";
     private static final String OUT = "out";
     private static final String SOAPTOREST = "SoapToRest";
+    private static final String ERROR_RETRIEVING_SWAGGER = "Error while retrieving Swagger definition for API: ";
 
     /**
      * Validate name, version and provider before exporting an API/API Product.
@@ -876,9 +877,14 @@ public class ExportUtils {
                 if (!APIConstants.APITransportType.GRAPHQL.toString().equalsIgnoreCase(apiType)) {
                     String formattedSwaggerJson = RestApiCommonUtil.retrieveSwaggerDefinition(
                             APIMappingUtil.fromDTOtoAPI(apiDtoToReturn, apiDtoToReturn.getProvider()), apiProvider);
-                    CommonUtil.writeToYamlOrJson(archivePath + ImportExportConstants.SWAGGER_DEFINITION_LOCATION,
-                            exportFormat,
-                            formattedSwaggerJson);
+                    if (formattedSwaggerJson != null) {
+                        CommonUtil.writeToYamlOrJson(archivePath + ImportExportConstants.SWAGGER_DEFINITION_LOCATION,
+                                exportFormat, formattedSwaggerJson);
+                    } else {
+                        throw new APIImportExportException(ERROR_RETRIEVING_SWAGGER + apiDtoToReturn.getName()
+                                + StringUtils.SPACE + APIConstants.API_DATA_VERSION + ": "
+                                + apiDtoToReturn.getVersion());
+                    }
                 }
                 if (log.isDebugEnabled()) {
                     log.debug("Meta information retrieved successfully for API: " + apiDtoToReturn.getName()
@@ -887,15 +893,20 @@ public class ExportUtils {
             } else {
                 String asyncApiJson = RestApiCommonUtil.retrieveAsyncAPIDefinition(
                         APIMappingUtil.fromDTOtoAPI(apiDtoToReturn, apiDtoToReturn.getProvider()), apiProvider);
-                CommonUtil.writeToYamlOrJson(archivePath + ImportExportConstants.ASYNCAPI_DEFINITION_LOCATION,
-                        exportFormat, asyncApiJson);
+                if (asyncApiJson != null) {
+                    CommonUtil.writeToYamlOrJson(archivePath + ImportExportConstants.ASYNCAPI_DEFINITION_LOCATION,
+                            exportFormat, asyncApiJson);
+                } else {
+                    throw new APIImportExportException("Error while retrieving AsyncAPI definition for API: "
+                            + apiDtoToReturn.getName() + StringUtils.SPACE + APIConstants.API_DATA_VERSION + ": "
+                            + apiDtoToReturn.getVersion());
+                }
             }
             CommonUtil.writeDtoToFile(archivePath + ImportExportConstants.API_FILE_LOCATION, exportFormat,
                     ImportExportConstants.TYPE_API, apiDtoToReturn);
         } catch (APIManagementException e) {
-            throw new APIImportExportException(
-                    "Error while retrieving Swagger definition for API: " + apiDtoToReturn.getName() + StringUtils.SPACE
-                            + APIConstants.API_DATA_VERSION + ": " + apiDtoToReturn.getVersion(), e);
+            throw new APIImportExportException(ERROR_RETRIEVING_SWAGGER + apiDtoToReturn.getName()
+                    + StringUtils.SPACE + APIConstants.API_DATA_VERSION + ": " + apiDtoToReturn.getVersion(), e);
         } catch (IOException e) {
             throw new APIImportExportException(
                     "Error while retrieving saving as YAML for API: " + apiDtoToReturn.getName() + StringUtils.SPACE
@@ -997,8 +1008,12 @@ public class ExportUtils {
         try {
             String formattedSwaggerJson = apiProvider.getAPIDefinitionOfAPIProduct(
                     APIMappingUtil.fromDTOtoAPIProduct(apiProductDtoToReturn, apiProductDtoToReturn.getProvider()));
-            CommonUtil.writeToYamlOrJson(archivePath + ImportExportConstants.SWAGGER_DEFINITION_LOCATION, exportFormat,
-                    formattedSwaggerJson);
+            if (formattedSwaggerJson != null) {
+                CommonUtil.writeToYamlOrJson(archivePath + ImportExportConstants.SWAGGER_DEFINITION_LOCATION,
+                        exportFormat, formattedSwaggerJson);
+            } else {
+                throw new APIImportExportException(ERROR_RETRIEVING_SWAGGER + apiProductDtoToReturn.getName());
+            }
 
             if (log.isDebugEnabled()) {
                 log.debug(
