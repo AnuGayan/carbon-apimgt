@@ -90,7 +90,6 @@ public class ExportUtils {
     private static final String IN = "in";
     private static final String OUT = "out";
     private static final String SOAPTOREST = "SoapToRest";
-    private static final String ERROR_RETRIEVING_SWAGGER = "Error while retrieving Swagger definition for API: ";
 
     /**
      * Validate name, version and provider before exporting an API/API Product.
@@ -881,8 +880,8 @@ public class ExportUtils {
                         CommonUtil.writeToYamlOrJson(archivePath + ImportExportConstants.SWAGGER_DEFINITION_LOCATION,
                                 exportFormat, formattedSwaggerJson);
                     } else {
-                        throw new APIImportExportException(ERROR_RETRIEVING_SWAGGER + apiDtoToReturn.getName()
-                                + StringUtils.SPACE + APIConstants.API_DATA_VERSION + ": "
+                        throw new APIImportExportException("Error while retrieving Swagger definition for API: "
+                                + apiDtoToReturn.getName() + StringUtils.SPACE + APIConstants.API_DATA_VERSION + ": "
                                 + apiDtoToReturn.getVersion());
                     }
                 }
@@ -905,8 +904,9 @@ public class ExportUtils {
             CommonUtil.writeDtoToFile(archivePath + ImportExportConstants.API_FILE_LOCATION, exportFormat,
                     ImportExportConstants.TYPE_API, apiDtoToReturn);
         } catch (APIManagementException e) {
-            throw new APIImportExportException(ERROR_RETRIEVING_SWAGGER + apiDtoToReturn.getName()
-                    + StringUtils.SPACE + APIConstants.API_DATA_VERSION + ": " + apiDtoToReturn.getVersion(), e);
+            throw new APIImportExportException("Error while retrieving Swagger definition for API: "
+                    + apiDtoToReturn.getName() + StringUtils.SPACE + APIConstants.API_DATA_VERSION + ": "
+                    + apiDtoToReturn.getVersion(), e);
         } catch (IOException e) {
             throw new APIImportExportException(
                     "Error while retrieving saving as YAML for API: " + apiDtoToReturn.getName() + StringUtils.SPACE
@@ -1012,7 +1012,8 @@ public class ExportUtils {
                 CommonUtil.writeToYamlOrJson(archivePath + ImportExportConstants.SWAGGER_DEFINITION_LOCATION,
                         exportFormat, formattedSwaggerJson);
             } else {
-                throw new APIImportExportException(ERROR_RETRIEVING_SWAGGER + apiProductDtoToReturn.getName());
+                throw new APIImportExportException("Error while retrieving Swagger definition for API Product: "
+                        + apiProductDtoToReturn.getName());
             }
 
             if (log.isDebugEnabled()) {
