@@ -1354,10 +1354,12 @@ public class OAS3Parser extends APIDefinition {
 
         // Populate null descriptions of OpenAPI response objects under components
         Components components = openAPI.getComponents();
-        for (String responseEntry : components.getResponses().keySet()) {
-            String description = components.getResponses().get(responseEntry).getDescription();
-            if (description == null) {
-                components.getResponses().get(responseEntry).setDescription("");
+        if (components.getResponses() != null) {
+            for (String responseEntry : components.getResponses().keySet()) {
+                String description = components.getResponses().get(responseEntry).getDescription();
+                if (description == null) {
+                    components.getResponses().get(responseEntry).setDescription("");
+                }
             }
         }
     }
