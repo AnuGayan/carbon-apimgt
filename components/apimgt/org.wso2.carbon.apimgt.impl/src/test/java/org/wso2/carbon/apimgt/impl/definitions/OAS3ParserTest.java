@@ -1,5 +1,6 @@
 package org.wso2.carbon.apimgt.impl.definitions;
 
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
@@ -146,6 +147,14 @@ public class OAS3ParserTest extends OASTestBase {
                     String description = operation.getResponses().get(responseEntry).getDescription();
                     Assert.assertEquals("", description);
                 }
+            }
+        }
+
+        Components components = openAPI.getComponents();
+        if (components != null && components.getResponses() != null) {
+            for (String responseEntry : components.getResponses().keySet()) {
+                String description = components.getResponses().get(responseEntry).getDescription();
+                Assert.assertEquals("", description);
             }
         }
     }
