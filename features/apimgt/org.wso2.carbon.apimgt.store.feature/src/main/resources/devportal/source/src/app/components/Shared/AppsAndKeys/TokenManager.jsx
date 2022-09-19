@@ -159,7 +159,7 @@ const StyledTabs = withStyles({
             borderLeft: 'none',
         },
     },
-})((props) => <Tabs {...props} TabIndicatorProps={{ children: <span /> }} />);
+})((props) => <Tabs {...props} TabIndicatorProps={{children: <span/>}}/>);
 
 
 const StyledTab = withStyles((theme) => ({
@@ -733,6 +733,7 @@ class TokenManager extends React.Component {
                                     label={keymanager.displayName || keymanager.name}
                                     value={keymanager.name}
                                     disabled={!keymanager.enabled}
+                                    id={keymanager.name.replace(/\s/g, '')}
                                 />
                             ))}
                         </Tabs>
@@ -830,6 +831,7 @@ class TokenManager extends React.Component {
                                         {!isUserOwner ? (
                                             <>
                                                 <Button
+                                                    id='generate-keys'
                                                     variant='contained'
                                                     color='primary'
                                                     className={classes.button}
@@ -847,7 +849,7 @@ class TokenManager extends React.Component {
                                                             id: 'Shared.AppsAndKeys.TokenManager.generate.keys',
                                                             defaultMessage: 'Generate Keys'})
                                                     }
-                                                    {isLoading && <CircularProgress size={20} />}
+                                                    {isLoading && <CircularProgress size={20}/>}
                                                 </Button>
                                                 <Typography variant='caption'>
                                                     <FormattedMessage
@@ -859,6 +861,7 @@ class TokenManager extends React.Component {
                                         ) : (
                                             <Box display='flex'>
                                                 <Button
+                                                    id='generate-keys'
                                                     variant='contained'
                                                     color='primary'
                                                     className={classes.button}
@@ -874,16 +877,16 @@ class TokenManager extends React.Component {
                                                             id: 'Shared.AppsAndKeys.TokenManager.generate.keys',
                                                             defaultMessage: 'Generate Keys'})
                                                     }
-                                                    {isLoading && <CircularProgress size={20} />}
+                                                    {isLoading && <CircularProgress size={20}/>}
                                                 </Button>
                                                 {!keymanager.enableOAuthAppCreation && (
                                                     <Box m={2} display='flex'>
-                                                        <WarningIcon className={classes.warningIcon} />
+                                                        <WarningIcon className={classes.warningIcon}/>
                                                         <Typography variant='body1'>
                                                             <FormattedMessage
                                                                 defaultMessage='Oauth app creation disabled for {kmName} key manager'
                                                                 id='Shared.AppsAndKeys.TokenManager.app.creation.disable.warn'
-                                                                values={{ kmName: keymanager.displayName || keymanager.name }}
+                                                                values={{kmName: keymanager.displayName || keymanager.name}}
                                                             />
                                                         </Typography>
                                                     </Box>

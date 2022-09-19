@@ -276,7 +276,9 @@ function AddEdit(props) {
                     return null;
                 })
                 .finally(() => {
-                    updateList();
+                    if (updateList) {
+                        updateList();
+                    }
                 });
         } else {
             promisedAddCustomPolicy = restApi.addCustomPolicy(
@@ -300,7 +302,9 @@ function AddEdit(props) {
                     return null;
                 })
                 .finally(() => {
-                    updateList();
+                    if (updateList) {
+                        updateList();
+                    }
                 });
         }
     };
@@ -436,10 +440,18 @@ function AddEdit(props) {
                             disabled={validationError && validationError.length !== 0
                                 && Object.values(validationError)[0] !== false}
                         >
-                            <FormattedMessage
-                                id='Throttling.Custom.AddEdit.form.add'
-                                defaultMessage='Add'
-                            />
+                            {!editMode && (
+                                <FormattedMessage
+                                    id='Throttling.Custom.AddEdit.form.add'
+                                    defaultMessage='Add'
+                                />
+                            )}
+                            {editMode && (
+                                <FormattedMessage
+                                    id='Throttling.Custom.AddEdit.form.edit'
+                                    defaultMessage='Edit'
+                                />
+                            )}
                         </Button>
                         <RouterLink to='/throttling/custom'>
                             <Button variant='contained'>

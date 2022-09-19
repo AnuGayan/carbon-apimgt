@@ -158,7 +158,7 @@ function Operation(props) {
                     disableTouchRipple
                     expandIcon={<ExpandMoreIcon />}
                     aria-controls='panel2a-content'
-                    id='panel2a-header'
+                    id={verb + target}
                     classes={{ content: classes.contentNoMargin }}
                 >
                     <Grid container direction='row' justify='space-between' alignItems='center' spacing={0}>

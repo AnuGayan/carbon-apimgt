@@ -208,6 +208,7 @@ function Environments(props) {
                                     || selectedEndpoint.URLs.http
                                     || selectedEndpoint.URLs.ws
                                     || selectedEndpoint.URLs.wss}
+                                data-testid='http-url'
                             />
                             <Avatar className={classNames(classes.avatar, 'endpoint-url-copy-btn')} sizes={30}>
                                 <Tooltip

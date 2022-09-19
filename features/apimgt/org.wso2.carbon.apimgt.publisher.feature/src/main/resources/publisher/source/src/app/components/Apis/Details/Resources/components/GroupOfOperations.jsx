@@ -35,7 +35,7 @@ export default function GroupOfOperations(props) {
     const currentTagInfo = openAPI.tags && openAPI.tags.find((tagInfo) => tagInfo.name === tag);
     return (
         <ExpansionPanel defaultExpanded>
-            <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />} aria-controls='panel1a-content' id='panel1a-header'>
+            <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />} aria-controls='panel1a-content' id={tag}>
                 <Typography variant='h4'>
                     {tag}
                     {currentTagInfo && (

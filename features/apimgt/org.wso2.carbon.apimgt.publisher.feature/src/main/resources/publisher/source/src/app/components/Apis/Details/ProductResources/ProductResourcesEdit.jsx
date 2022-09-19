@@ -130,6 +130,7 @@ function ProductResourcesEdit() {
                                     handleSave={handleSave}
                                     handleSaveAndDeploy={handleSaveAndDeploy}
                                     isUpdating={isUpdating}
+                                    id='save-product-resources'
                                 />
                             </div>
                         </Grid>

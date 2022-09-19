@@ -179,7 +179,7 @@ export default function AccessControl(props) {
                             defaultMessage='All'
                         />
                     </MenuItem>
-                    <MenuItem value='RESTRICTED'>
+                    <MenuItem value='RESTRICTED' id='access-control-restricted-by-roles'>
                         <FormattedMessage
                             id='Apis.Details.Configuration.components.AccessControl.dropdown.restricted'
                             defaultMessage='Restrict by role(s)'
@@ -230,6 +230,7 @@ export default function AccessControl(props) {
             {!isNone && (
                 <Box py={1} style={{ marginTop: 10 }}>
                     <ChipInput
+                        data-testid='access-control-select-role'
                         fullWidth
                         variant='outlined'
                         label={(

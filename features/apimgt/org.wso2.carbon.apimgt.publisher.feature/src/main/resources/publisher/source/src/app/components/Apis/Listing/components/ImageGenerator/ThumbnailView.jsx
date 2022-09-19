@@ -460,7 +460,7 @@ class ThumbnailView extends Component {
                                         />
                                     </div>
                                 </Grid>
-                                <Grid item xs={9}>
+                                <Grid item xs={9} id='edit-api-thumbnail-upload'>
                                     <Dropzone
                                         multiple={false}
                                         accept='image/*'
@@ -613,6 +613,7 @@ class ThumbnailView extends Component {
                             color='primary'
                             size='small'
                             onClick={this.handleClick('btnUploadAPIThumb', intl)}
+                            id='edit-api-thumbnail-upload-btn'
                         >
                             {selectedTab === 'design' && uploading && (
                                 <>

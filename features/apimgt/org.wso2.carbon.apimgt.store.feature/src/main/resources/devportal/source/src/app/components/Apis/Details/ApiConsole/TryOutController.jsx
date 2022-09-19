@@ -529,6 +529,7 @@ function TryOutController(props) {
                                         value='API-KEY'
                                         disabled={!isApiKeyEnabled}
                                         control={<Radio />}
+                                        id='api-key-select-radio-button'
                                         label={(
                                             <FormattedMessage
                                                 id='Apis.Details.ApiConsole.security.scheme.apikey'
@@ -718,6 +719,7 @@ function TryOutController(props) {
                                                 className={classes.genKeyButton}
                                                 disabled={!user || (subscriptions && subscriptions.length === 0)
                                                     || (!ksGenerated && securitySchemeType === 'OAUTH')}
+                                                id='gen-test-key'
                                             >
                                                 {isUpdating && (
                                                     <CircularProgress size={15} />

@@ -81,11 +81,8 @@ function CreateNewVersionButton(props) {
     return (
         <>
             {/* allowing create new version based on scopes */}
-            <ScopeValidation
-                resourceMethod={resourceMethod.POST}
-                resourcePath={resourcePath.API_COPY}
-            >
-                <div className={classes.createNewVersionWrapper}>
+            <ScopeValidation resourceMethod={resourceMethod.POST} resourcePath={resourcePath.API_COPY}>
+                <div className={classes.createNewVersionWrapper} id='create-new-version-btn'>
                     <VerticalDivider height={70} />
                     <Link
                         className={classes.createNewVersion}

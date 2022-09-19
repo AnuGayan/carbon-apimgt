@@ -457,6 +457,7 @@ class Listing extends React.Component {
                         <Link to={!isRestricted(['apim:api_create', 'apim:api_publish'], api) && !api.isRevision && url}>
                             <Button
                                 size='small'
+                                data-testid='add-document-btn'
                                 className={classes.button}
                                 disabled={isRestricted(['apim:api_create', 'apim:api_publish'], api) || api.isRevision}
                             >
@@ -516,6 +517,8 @@ class Listing extends React.Component {
                                 <div className={classes.actions}>
                                     <Link to={!isRestricted(['apim:api_create', 'apim:api_publish'], api) && !api.isRevision && url}>
                                         <Button
+                                            id='add-new-document-btn'
+                                            data-testid='add-document-btn'
                                             variant='contained'
                                             color='primary'
                                             className={classes.button}

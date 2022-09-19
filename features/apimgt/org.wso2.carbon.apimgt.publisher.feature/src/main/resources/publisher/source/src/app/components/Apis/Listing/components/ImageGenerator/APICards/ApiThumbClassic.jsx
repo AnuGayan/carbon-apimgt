@@ -199,6 +199,7 @@ class APIThumb extends Component {
                 onBlur={this.toggleMouseOver}
                 elevation={isHover ? 4 : 1}
                 className={classes.card}
+                data-testid={'card-' + api.name + api.version}
             >
                 <CardMedia
                     src='None'
@@ -211,7 +212,13 @@ class APIThumb extends Component {
                 <CardContent className={classes.apiDetails}>
                     <div className={classes.textWrapper}>
                         <Link to={overviewPath}>
-                            <Typography gutterBottom variant='h4' className={classes.thumbHeader} title={api.name}>
+                            <Typography
+                                gutterBottom
+                                variant='h4'
+                                className={classes.thumbHeader}
+                                title={api.name}
+                                id={api.name}
+                            >
                                 {api.name}
                             </Typography>
                         </Link>
@@ -262,12 +269,13 @@ class APIThumb extends Component {
                         </div>
                     </div>
                 </CardContent>
-                <CardActions className={classes.apiActions}>
+                <CardActions className={classes.apiActions} data-testid={'card-action-' + api.name + api.version}>
                     <Chip
                         size='small'
                         classes={{ root: classes.thumbRightBy, label: classes.thumbRightByLabel }}
                         label={api.apiType === API.CONSTS.APIProduct ? api.state : api.lifeCycleStatus}
                         color='default'
+                        data-testid='itest-api-lifecycleState'
                     />
                     {(api.type === 'GRAPHQL' || api.transportType === 'GRAPHQL') && (
                         <Chip

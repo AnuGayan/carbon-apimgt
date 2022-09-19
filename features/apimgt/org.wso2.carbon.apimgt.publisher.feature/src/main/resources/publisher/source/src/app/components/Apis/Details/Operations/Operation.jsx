@@ -218,7 +218,7 @@ class Operation extends React.Component {
             );
         }
         return (
-            <TableRow style={{ borderStyle: 'hidden' }}>
+            <TableRow style={{ borderStyle: 'hidden' }} data-testid={operation.target + '-tbl-row'}>
                 <TableCell>
                     <Typography variant='body1'>
                         {operation.target}
@@ -349,6 +349,7 @@ class Operation extends React.Component {
                         onChange={this.handleChange}
                         value={isSecurity}
                         color='primary'
+                        data-testid={operation.target + '-security-btn'}
                     />
                 </TableCell>
             </TableRow>

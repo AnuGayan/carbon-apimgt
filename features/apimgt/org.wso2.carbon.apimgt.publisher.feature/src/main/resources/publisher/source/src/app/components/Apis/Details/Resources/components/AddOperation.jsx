@@ -101,7 +101,10 @@ function VerbElement(props) {
                         onClick={onClick}
                         edge='end'
                         checked={checked}
-                        inputProps={{ 'aria-labelledby': verb }}
+                        inputProps={{
+                            'aria-labelledby': verb,
+                            id: `add-operation-${verb.toLowerCase()}`,
+                        }}
                     />
                 </ListItemSecondaryAction>
             </ListItem>
@@ -222,6 +225,7 @@ function AddOperation(props) {
                         </InputLabel>
 
                         <Select
+                            id='add-operation-selection-dropdown'
                             multiple
                             renderValue={(verbs) => {
                                 const remaining = [];
@@ -338,8 +342,9 @@ function AddOperation(props) {
                                 style={{ marginLeft: '20px', marginBottom: '15px', marginRight: '20px' }}
                                 size='small'
                                 color='primary'
-                                aria-label='add'
+                                aria-label='Add new operation'
                                 onClick={addOperation}
+                                id='add-operation-button'
                             >
                                 <AddIcon />
                             </Fab>

@@ -312,27 +312,28 @@ class LifeCycleUpdate extends Component {
                     >
                         <div className={classes.buttonsWrapper}>
                             {!isWorkflowPending
-                                && lifecycleButtons.map((transitionState) => {
-                                    /* Skip when transitions available for current state ,
-                            this occurs in states where have allowed re-publishing in prototype and published sates */
-                                    return (
-                                        <Button
-                                            disabled={transitionState.disabled
-                                                || this.state.isUpdating || api.isRevision}
-                                            variant='contained'
-                                            color='primary'
-                                            className={classes.stateButton}
-                                            key={transitionState.event}
-                                            data-value={transitionState.event}
-                                            onClick={this.updateLifeCycleState}
-                                        >
-                                            {transitionState.displayName}
-                                            {this.state.isUpdating === transitionState.event && (
-                                                <CircularProgress size={18} />
-                                            )}
-                                        </Button>
-                                    );
-                                })}
+                            && lifecycleButtons.map((transitionState) => {
+                                /* Skip when transitions available for current state, this occurs in states
+                                where have allowed re-publishing in prototype and published sates */
+                                return (
+                                    <Button
+                                        disabled={transitionState.disabled
+                                        || this.state.isUpdating || api.isRevision}
+                                        variant='contained'
+                                        color='primary'
+                                        className={classes.stateButton}
+                                        key={transitionState.event}
+                                        data-value={transitionState.event}
+                                        onClick={this.updateLifeCycleState}
+                                        data-testid={transitionState.event + '-btn'}
+                                    >
+                                        {transitionState.displayName}
+                                        {this.state.isUpdating === transitionState.event && (
+                                            <CircularProgress size={18} />
+                                        )}
+                                    </Button>
+                                );
+                            })}
                         </div>
                     </ScopeValidation>
                 </Grid>

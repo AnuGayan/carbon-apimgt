@@ -407,7 +407,7 @@ export default function DesignConfigurations() {
                                 <Box px={8} py={5}>
                                     <Box py={1}>
                                         <Grid container spacing={0}>
-                                            <Grid item xs={12} md={2}>
+                                            <Grid item xs={12} md={2} id='edit-api-thumbnail-btn'>
                                                 <ThumbnailView
                                                     api={api}
                                                     width={100}
@@ -464,6 +464,7 @@ export default function DesignConfigurations() {
                                             color='primary'
                                             className={classes.btnSpacing}
                                             onClick={handleSave}
+                                            id='design-config-save-btn'
                                         >
                                             <FormattedMessage
                                                 id='Apis.Details.Configuration.Configuration.save'

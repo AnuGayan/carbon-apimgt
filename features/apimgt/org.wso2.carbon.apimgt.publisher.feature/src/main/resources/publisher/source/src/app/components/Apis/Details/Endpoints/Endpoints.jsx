@@ -512,6 +512,7 @@ function Endpoints(props) {
                                                 handleSave={handleSave}
                                                 handleSaveAndDeploy={handleSaveAndDeploy}
                                                 isUpdating={isUpdating}
+                                                id='endpoint-save-btn'
                                             />
                                         )}
                                 </Grid>
