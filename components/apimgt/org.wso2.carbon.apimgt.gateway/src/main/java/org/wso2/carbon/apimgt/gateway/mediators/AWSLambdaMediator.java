@@ -17,6 +17,7 @@
  */
 package org.wso2.carbon.apimgt.gateway.mediators;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.SdkClientException;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
@@ -167,6 +168,13 @@ public class AWSLambdaMediator extends AbstractMediator {
      */
     private InvokeResult invokeLambda(String payload) {
         try {
+            // Validate resource timeout and set client configuration
+            if (resourceTimeout < 1000 || resourceTimeout > 900000) {
+                setResourceTimeout(APIConstants.AWS_DEFAULT_CONNECTION_TIMEOUT);
+            }
+            ClientConfiguration clientConfig = new ClientConfiguration();
+            clientConfig.setSocketTimeout(resourceTimeout);
+            
             String[] resourceNameSplit = resourceName.split(":");
             region = resourceNameSplit[3];
             // set credential provider
@@ -177,7 +185,10 @@ public class AWSLambdaMediator extends AbstractMediator {
                     log.debug("Using temporary credentials supplied by the IAM role attached to the EC2 instance");
                 }
                 credentialsProvider = DefaultAWSCredentialsProviderChain.getInstance();
-                awsLambda = AWSLambdaClientBuilder.standard().withCredentials(credentialsProvider).build();
+                awsLambda = AWSLambdaClientBuilder.standard()
+                        .withCredentials(credentialsProvider)
+                        .withClientConfiguration(clientConfig)
+                        .build();
             } else if (!StringUtils.isEmpty(accessKey) && !StringUtils.isEmpty(secretKey)) {
                 if (log.isDebugEnabled()) {
                     log.debug("Using user given stored credentials");
@@ -186,6 +197,7 @@ public class AWSLambdaMediator extends AbstractMediator {
                 credentialsProvider = new AWSStaticCredentialsProvider(awsCredentials);
                 awsLambda = AWSLambdaClientBuilder.standard()
                         .withCredentials(credentialsProvider)
+                        .withClientConfiguration(clientConfig)
                         .withRegion(region)
                         .build();
             } else {
@@ -193,9 +205,6 @@ public class AWSLambdaMediator extends AbstractMediator {
                 return null;
             }
             // set invoke request
-            if (resourceTimeout < 1000 || resourceTimeout > 900000) {
-                setResourceTimeout(APIConstants.AWS_DEFAULT_CONNECTION_TIMEOUT);
-            }
             InvokeRequest invokeRequest = new InvokeRequest()
                     .withFunctionName(resourceName)
                     .withPayload(payload)
