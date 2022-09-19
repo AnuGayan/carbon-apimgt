@@ -291,7 +291,8 @@ public class ImportUtils {
         if (!StringUtils.isEmpty(applicationKeyDTO.getConsumerKey())) {
             jsonParamObj.put(APIConstants.JSON_CLIENT_ID, applicationKeyDTO.getConsumerKey());
             if (!StringUtils.isEmpty(applicationKeyDTO.getConsumerSecret())) {
-                jsonParamObj.put(APIConstants.JSON_CLIENT_SECRET, applicationKeyDTO.getConsumerSecret());
+                jsonParamObj.put(APIConstants.JSON_CLIENT_SECRET, Base64
+                        .decodeBase64(applicationKeyDTO.getConsumerSecret()));
             }
         }
         if (applicationKeyDTO.getAdditionalProperties() != null) {
