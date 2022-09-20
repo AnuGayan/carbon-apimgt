@@ -9761,4 +9761,25 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         ApiKeyGenerator apiKeyGenerator = new InternalAPIKeyGenerator();
         return apiKeyGenerator.generateToken(jwtTokenInfoDTO);
     }
+
+    @Override
+    public boolean isValidContext(String providerName, String apiName, String contextTemplate, String userName)
+            throws APIManagementException {
+        providerName = (StringUtils.isBlank(providerName)) ? userName : providerName;
+        if (isApiNameExist(apiName)) {
+            if (!contextTemplate.startsWith("/")) {
+                contextTemplate = "/" + contextTemplate;
+            }
+            List<String> versions = getApiVersionsMatchingApiName(apiName, providerName);
+            for (String version : versions) {
+                String currentContextTemplate = getAPI(
+                        new APIIdentifier(providerName, apiName, version)).getContextTemplate();
+                if (currentContextTemplate.equals(contextTemplate)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return true;
+    }
 }
