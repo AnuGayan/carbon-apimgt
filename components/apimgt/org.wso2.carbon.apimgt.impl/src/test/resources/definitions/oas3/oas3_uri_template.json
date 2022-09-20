@@ -6,6 +6,9 @@
         "responses":{
           "200":{
             "description":""
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
           }
         },
         "x-auth-type":"Application",
@@ -105,6 +108,11 @@
             }
           }
         }
+      }
+    },
+    "responses": {
+      "NotFound": {
+        "description": ""
       }
     }
   }

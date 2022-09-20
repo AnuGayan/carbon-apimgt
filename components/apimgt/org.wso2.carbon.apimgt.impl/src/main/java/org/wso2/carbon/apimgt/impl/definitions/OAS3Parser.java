@@ -1337,6 +1337,7 @@ public class OAS3Parser extends APIDefinition {
      */
     private void populateNullDescriptions(OpenAPI openAPI) {
 
+        // Populate null descriptions of OpenAPI response objects under resources
         Paths paths = openAPI.getPaths();
         for (String pathKey : paths.keySet()) {
             Map<PathItem.HttpMethod, Operation> operationsMap = paths.get(pathKey).readOperationsMap();
@@ -1347,6 +1348,17 @@ public class OAS3Parser extends APIDefinition {
                     if (description == null) {
                         operation.getResponses().get(responseEntry).setDescription("");
                     }
+                }
+            }
+        }
+
+        // Populate null descriptions of OpenAPI response objects under components
+        Components components = openAPI.getComponents();
+        if (components != null && components.getResponses() != null) {
+            for (String responseEntry : components.getResponses().keySet()) {
+                String description = components.getResponses().get(responseEntry).getDescription();
+                if (description == null) {
+                    components.getResponses().get(responseEntry).setDescription("");
                 }
             }
         }
