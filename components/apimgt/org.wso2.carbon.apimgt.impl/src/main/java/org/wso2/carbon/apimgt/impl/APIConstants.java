@@ -2755,4 +2755,6 @@ public final class APIConstants {
         public static final String DEPLOYMENT_DESCRIPTOR_FILE = "deployments";
         public static final String DEPLOYMENT_DESCRIPTOR_FILE_TYPE = "deployments";
     }
+
+    public static final String CASE_SENSITIVE_CHECK_PATH =    "caseSensitiveRoleValidation";
 }
