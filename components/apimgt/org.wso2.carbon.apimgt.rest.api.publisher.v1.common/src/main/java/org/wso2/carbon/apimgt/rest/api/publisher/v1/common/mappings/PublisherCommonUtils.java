@@ -595,7 +595,7 @@ public class PublisherCommonUtils {
                             status = "Invalid user roles found in accessControlRole list";
                         }
                     }
-                    status = isMatched ?
+                    status = isMatched && StringUtils.isBlank(status) ?
                             "" :
                             "This user does not have at least one role specified in API access control.";
                 } else {
