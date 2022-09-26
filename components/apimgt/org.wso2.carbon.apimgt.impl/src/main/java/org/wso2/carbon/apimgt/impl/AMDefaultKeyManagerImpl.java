@@ -196,7 +196,7 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
         if (APIConstants.JWT.equals(info.getTokenType())) {
             clientInfo.setTokenType(info.getTokenType());
         } else {
-            clientInfo.setTokenType(APIConstants.DEFAULT_TOKEN_TYPE);
+            clientInfo.setTokenType(APIConstants.DEFAULT_TOKEN_TYPE_NEW);
         }
 
         // Use a generated user as the app owner for cross tenant subscription scenarios, to avoid the tenant admin
