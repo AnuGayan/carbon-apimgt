@@ -123,12 +123,20 @@ const TryOutConsole = () => {
                     const transportPort = selectedDeploymentVhost[`${transport}Port`];
                     if (!transportPort) {
                         console.error(`Can't find ${transport}Port `
-                    + `in selected deployment ( ${selectedDeploymentVhost.name} )`);
+                            + `in selected deployment ( ${selectedDeploymentVhost.name} )`);
                     }
                     const baseURL = `${transport}://${selectedDeployment.vhost}:${transportPort}`;
-                    const url = `${baseURL}${pathSeparator}`
-                + `${selectedDeploymentVhost.httpContext}${api.context}/${api.version}`
-                    .replace('{version}', `${api.version}`);
+                    let url = `${baseURL}${pathSeparator}`
+                        + `${selectedDeploymentVhost.httpContext}${api.context}/${api.version}`
+                            .replaceAll('{version}', `${api.version}`);
+                    if (`${api.context}`.includes('{version}')) {
+                        url = `${baseURL}${pathSeparator}`
+                            + `${selectedDeploymentVhost.httpContext}${api.context}`
+                                .replaceAll('{version}', `${api.version}`);
+                    } else {
+                        url = `${baseURL}${pathSeparator}`
+                            + `${selectedDeploymentVhost.httpContext}${api.context}/${api.version}`;
+                    }
                     return { url };
                 });
                 oasCopy.servers = servers.sort((a, b) => ((a.url > b.url) ? -1 : 1));
@@ -142,8 +150,14 @@ const TryOutConsole = () => {
                     console.warn('HTTPS transport port will be used for all other transports');
                 }
                 const host = `${selectedDeploymentVhost.host}:${transportPort}`;
-                const basePath = `${pathSeparator}${selectedDeploymentVhost.httpContext}${api.context}/${api.version}`
-                    .replace('{version}', `${api.version}`);
+                let basePath = `${pathSeparator}${selectedDeploymentVhost.httpContext}${api.context}/${api.version}`
+                    .replaceAll('{version}', `${api.version}`);
+                if (`${api.context}`.includes('{version}')) {
+                    basePath = `${pathSeparator}${selectedDeploymentVhost.httpContext}${api.context}`
+                        .replaceAll('{version}', `${api.version}`);
+                } else {
+                    basePath = `${pathSeparator}${selectedDeploymentVhost.httpContext}${api.context}/${api.version}`;
+                }
                 oasCopy.schemes = api.transport.slice().sort((a, b) => ((a > b) ? -1 : 1));
                 oasCopy.basePath = basePath;
                 oasCopy.host = host;
@@ -234,7 +248,7 @@ const TryOutConsole = () => {
                                 <FormattedMessage
                                     id='Apis.Details.ApiConsole.deployments.no'
                                     defaultMessage={'{artifactType} is not deployed yet! Please deploy '
-                                    + 'the {artifactType} before trying out'}
+                                        + 'the {artifactType} before trying out'}
                                     values={{ artifactType: api.isRevision ? 'Revision' : 'API' }}
                                 />
                                 <Link to={'/apis/' + api.id + '/deployments'}>
