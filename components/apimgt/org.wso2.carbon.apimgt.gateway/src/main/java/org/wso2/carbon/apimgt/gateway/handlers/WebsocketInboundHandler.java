@@ -134,6 +134,13 @@ public class WebsocketInboundHandler extends ChannelInboundHandlerAdapter {
         if (msg instanceof FullHttpRequest) {
             FullHttpRequest req = (FullHttpRequest) msg;
 
+            // This block is for the health check of the ports 8099 and 9099
+            if (req.headers() != null && !req.headers().contains(HttpHeaders.UPGRADE)
+                    && APIConstants.WEB_SOCKET_HEALTH_CHECK_PATH.equals(req.uri())) {
+                ctx.fireChannelRead(msg);
+                return;
+            }
+
             setUris(req);
             inboundName = getInboundName(ctx);
             setTenantDomain(requestPath);
