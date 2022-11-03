@@ -103,7 +103,7 @@ public class OAuthMediator extends AbstractMediator implements ManagedLifecycle 
         TokenResponse tokenResponse = null;
         if (oAuthEndpoint != null) {
             try {
-                tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch);
+                tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch, false);
                 latch.await();
             } catch (InterruptedException | APISecurityException e) {
                 log.error("Could not generate access token...", e);
