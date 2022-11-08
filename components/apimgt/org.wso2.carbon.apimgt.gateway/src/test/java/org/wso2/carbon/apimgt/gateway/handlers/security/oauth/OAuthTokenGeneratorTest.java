@@ -95,12 +95,12 @@ public class OAuthTokenGeneratorTest {
         oAuthEndpoint.setGrantType("CLIENT_CREDENTIALS");
 
         // First token generation operation. Token endpoint will be called and the token response will be cached.
-        TokenResponse tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch, false);
+        TokenResponse tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch);
         Assert.assertNotNull(tokenResponse);
         Assert.assertNotNull(tokenCache.getTokenMap().get(oAuthEndpoint.getId()));
         // Second token generation operation. Since the token response was cached, the token endpoint will not be
         // called during this operation.
-        tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch, false);
+        tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch);
         Assert.assertNotNull(tokenResponse);
         // Token endpoint will be called only one time (during the first token generation operation).
         PowerMockito.verifyStatic(OAuthClient.class, Mockito.times(1));
@@ -125,17 +125,17 @@ public class OAuthTokenGeneratorTest {
         oAuthEndpoint.setGrantType("CLIENT_CREDENTIALS");
 
         // First token generation operation. Token endpoint will be called and the token response will be cached.
-        TokenResponse tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch, false);
+        TokenResponse tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch);
         Assert.assertNotNull(tokenResponse);
         Assert.assertNotNull(tokenCache.getTokenMap().get(oAuthEndpoint.getId()));
         // Second token generation operation. Since the token is expired, the token endpoint will be called during
         // this operation.
-        tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch, false);
+        tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch);
         Assert.assertNotNull(tokenResponse);
         // Third token generation operation (replicating the behaviour when the mock token response contains a refresh
         // token).
         mockTokenResponse.setRefreshToken("testRefreshToken");
-        tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch, false);
+        tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch);
         Assert.assertNotNull(tokenResponse);
         // Token endpoint will be called three times (during the first, second and third token generation operations).
         PowerMockito.verifyStatic(OAuthClient.class, Mockito.times(3));
@@ -158,12 +158,12 @@ public class OAuthTokenGeneratorTest {
         oAuthEndpoint.setGrantType("CLIENT_CREDENTIALS");
 
         // First token generation operation. Token endpoint will be called and the token response will not be cached.
-        TokenResponse tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch, false);
+        TokenResponse tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch);
         Assert.assertNotNull(tokenResponse);
         Assert.assertNull(tokenCache.getTokenMap().get(oAuthEndpoint.getId()));
         // Second token generation operation. Since the token response was not cached, the token endpoint will be
         // called during this operation.
-        tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch, false);
+        tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch);
         Assert.assertNotNull(tokenResponse);
         // Token endpoint will be called two times (during the first and second token generation operations).
         PowerMockito.verifyStatic(OAuthClient.class, Mockito.times(2));
@@ -189,12 +189,12 @@ public class OAuthTokenGeneratorTest {
         oAuthEndpoint.setGrantType("PASSWORD");
 
         // First token generation operation. Token endpoint will be called and the token response will be cached.
-        TokenResponse tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch, false);
+        TokenResponse tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch);
         Assert.assertNotNull(tokenResponse);
         Assert.assertNotNull(tokenCache.getTokenMap().get(oAuthEndpoint.getId()));
         // Second token generation operation. Since the token response was cached, the token endpoint will not be
         // called during this operation.
-        tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch, false);
+        tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch);
         Assert.assertNotNull(tokenResponse);
         // Token endpoint will be called only one time (during the first token generation operation).
         PowerMockito.verifyStatic(OAuthClient.class, Mockito.times(1));
@@ -222,17 +222,17 @@ public class OAuthTokenGeneratorTest {
         oAuthEndpoint.setGrantType("PASSWORD");
 
         // First token generation operation. Token endpoint will be called and the token response will be cached.
-        TokenResponse tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch, false);
+        TokenResponse tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch);
         Assert.assertNotNull(tokenResponse);
         Assert.assertNotNull(tokenCache.getTokenMap().get(oAuthEndpoint.getId()));
         // Second token generation operation. Since the token is expired, the token endpoint will be called during
         // this operation.
-        tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch, false);
+        tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch);
         Assert.assertNotNull(tokenResponse);
         // Third token generation operation (replicating the behaviour when the mock token response contains a refresh
         // token).
         mockTokenResponse.setRefreshToken("testRefreshToken");
-        tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch, false);
+        tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch);
         Assert.assertNotNull(tokenResponse);
         // Token endpoint will be called three times (during the first, second and third token generation operations).
         PowerMockito.verifyStatic(OAuthClient.class, Mockito.times(3));
@@ -256,12 +256,12 @@ public class OAuthTokenGeneratorTest {
         oAuthEndpoint.setGrantType("PASSWORD");
 
         // First token generation operation. Token endpoint will be called and the token response will not be cached.
-        TokenResponse tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch, false);
+        TokenResponse tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch);
         Assert.assertNotNull(tokenResponse);
         Assert.assertNull(tokenCache.getTokenMap().get(oAuthEndpoint.getId()));
         // Second token generation operation. Since the token response was not cached, the token endpoint will be
         // called during this operation.
-        tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch, false);
+        tokenResponse = OAuthTokenGenerator.generateToken(oAuthEndpoint, latch);
         Assert.assertNotNull(tokenResponse);
         // Token endpoint will be called two times (during the first and second token generation operations).
         PowerMockito.verifyStatic(OAuthClient.class, Mockito.times(2));

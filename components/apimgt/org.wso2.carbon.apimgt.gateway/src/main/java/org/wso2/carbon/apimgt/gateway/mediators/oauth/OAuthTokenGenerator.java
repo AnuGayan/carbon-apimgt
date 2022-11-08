@@ -48,26 +48,19 @@ public class OAuthTokenGenerator {
      * @return TokenResponse object
      * @throws APISecurityException In the event of errors when generating new token
      */
-    public static TokenResponse generateToken(OAuthEndpoint oAuthEndpoint, CountDownLatch latch, boolean fromOAuthResponseMediator)
+    public static TokenResponse generateToken(OAuthEndpoint oAuthEndpoint, CountDownLatch latch)
             throws APISecurityException {
 
         try {
             TokenResponse tokenResponse = null;
             if (ServiceReferenceHolder.getInstance().isRedisEnabled()) {
-                if (!fromOAuthResponseMediator) {
                     Object previousResponseObject = ServiceReferenceHolder.getInstance().getRedisCacheUtils()
                             .getObject(oAuthEndpoint.getId(), TokenResponse.class);
                     if (previousResponseObject != null) {
                         tokenResponse = (TokenResponse) previousResponseObject;
                     }
                 } else {
-                    ServiceReferenceHolder.getInstance().getRedisCacheUtils()
-                            .deleteKey(oAuthEndpoint.getId());
-                }
-            } else if (!fromOAuthResponseMediator){
                 tokenResponse = TokenCache.getInstance().getTokenMap().get(oAuthEndpoint.getId());
-            } else {
-                TokenCache.getInstance().getTokenMap().put(oAuthEndpoint.getId(), null);
             }
             if (tokenResponse != null) {
                 long validTill = tokenResponse.getValidTill();
