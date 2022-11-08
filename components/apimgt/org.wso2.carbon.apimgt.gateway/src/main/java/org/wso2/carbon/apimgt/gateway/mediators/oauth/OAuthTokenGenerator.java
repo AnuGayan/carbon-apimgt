@@ -54,12 +54,13 @@ public class OAuthTokenGenerator {
         try {
             TokenResponse tokenResponse = null;
             if (ServiceReferenceHolder.getInstance().isRedisEnabled()) {
-                    Object previousResponseObject = ServiceReferenceHolder.getInstance().getRedisCacheUtils()
-                            .getObject(oAuthEndpoint.getId(), TokenResponse.class);
-                    if (previousResponseObject != null) {
-                        tokenResponse = (TokenResponse) previousResponseObject;
-                    }
-                } else {
+                Object previousResponseObject =
+                        ServiceReferenceHolder.getInstance().getRedisCacheUtils().getObject(oAuthEndpoint.getId(),
+                                TokenResponse.class);
+                if (previousResponseObject != null) {
+                    tokenResponse = (TokenResponse) previousResponseObject;
+                }
+            } else {
                 tokenResponse = TokenCache.getInstance().getTokenMap().get(oAuthEndpoint.getId());
             }
             if (tokenResponse != null) {
