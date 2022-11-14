@@ -98,6 +98,7 @@ public class OAS2Parser extends APIDefinition {
     private static final Log log = LogFactory.getLog(OAS2Parser.class);
     private static final String SWAGGER_SECURITY_SCHEMA_KEY = "default";
     private List<String> otherSchemes;
+    private static boolean hardValidation = true;
     private List<String> getOtherSchemes() {
         return otherSchemes;
     }
@@ -663,6 +664,9 @@ public class OAS2Parser extends APIDefinition {
                 errorItem.setMessage(ExceptionCodes.INVALID_OAS2_FOUND.getErrorMessage());
                 errorItem.setDescription(ExceptionCodes.INVALID_OAS2_FOUND.getErrorMessage());
                 validationResponse.getErrorItems().add(errorItem);
+                swaggerErrorFound = true;
+            }
+            if (hardValidation) {
                 swaggerErrorFound = true;
             }
         }
@@ -1728,4 +1732,11 @@ public class OAS2Parser extends APIDefinition {
         return getSwaggerJsonString(swagger);
     }
 
+    public static boolean isHardValidation() {
+        return hardValidation;
+    }
+
+    public static void setHardValidation(boolean hardValidation) {
+        OAS2Parser.hardValidation = hardValidation;
+    }
 }
