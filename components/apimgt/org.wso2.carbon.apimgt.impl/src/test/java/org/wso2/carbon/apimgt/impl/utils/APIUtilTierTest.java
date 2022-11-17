@@ -300,6 +300,7 @@ public class APIUtilTierTest {
         try {
             mockPolicyRetrieval(apiMgtDAO);
             APIUtil.addDefaultTenantAdvancedThrottlePolicies("carbon.super",1);
+            APIUtil.addDefaultTenantAsyncThrottlePolicies("carbon.super",1);
             Mockito.verify(apiMgtDAO, Mockito.times(appPolicies.length)).addApplicationPolicy(Mockito.any(ApplicationPolicy.class));
         } catch (APIManagementException e) {
             Assert.assertTrue("Exception thrown", false);
@@ -330,6 +331,7 @@ public class APIUtilTierTest {
         try {
             mockPolicyRetrieval(apiMgtDAO);
             APIUtil.addDefaultTenantAdvancedThrottlePolicies("carbon.super",1);
+            APIUtil.addDefaultTenantAsyncThrottlePolicies("carbon.super",1);
             Mockito.verify(apiMgtDAO, Mockito.never()).addApplicationPolicy(Mockito.any(ApplicationPolicy.class));
         } catch (APIManagementException e) {
             Assert.assertTrue("Exception thrown", false);
@@ -361,6 +363,7 @@ public class APIUtilTierTest {
         try {
             mockPolicyRetrieval(apiMgtDAO);
             APIUtil.addDefaultTenantAdvancedThrottlePolicies("carbon.super",1);
+            APIUtil.addDefaultTenantAsyncThrottlePolicies("carbon.super",1);
             Mockito.verify(apiMgtDAO, Mockito.times(subPolicies.length)).addSubscriptionPolicy(Mockito.any(SubscriptionPolicy.class));
         } catch (APIManagementException e) {
             Assert.assertTrue("Exception thrown", false);
@@ -393,6 +396,7 @@ public class APIUtilTierTest {
         try {
             mockPolicyRetrieval(apiMgtDAO);
             APIUtil.addDefaultTenantAdvancedThrottlePolicies("carbon.super",1);
+            APIUtil.addDefaultTenantAsyncThrottlePolicies("carbon.super",1);
         } catch (APIManagementException e) {
             Assert.assertTrue("Exception thrown", false);
         }
@@ -419,6 +423,7 @@ public class APIUtilTierTest {
         try {
             mockPolicyRetrieval(apiMgtDAO);
             APIUtil.addDefaultTenantAdvancedThrottlePolicies("carbon.super",1);
+            APIUtil.addDefaultTenantAsyncThrottlePolicies("carbon.super",1);
             Mockito.verify(apiMgtDAO, Mockito.times(apiPolicies.length)).addAPIPolicy(Mockito.any(APIPolicy.class));
         } catch (APIManagementException e) {
             Assert.assertTrue("Exception thrown", false);
@@ -446,6 +451,7 @@ public class APIUtilTierTest {
         try {
             mockPolicyRetrieval(apiMgtDAO);
             APIUtil.addDefaultTenantAdvancedThrottlePolicies("carbon.super",1);
+            APIUtil.addDefaultTenantAsyncThrottlePolicies("carbon.super",1);
         } catch (APIManagementException e) {
             Assert.assertTrue("Exception thrown", false);
         }
@@ -473,6 +479,7 @@ public class APIUtilTierTest {
         }
         mockPolicyRetrieval(apiMgtDAO);
         APIUtil.addDefaultTenantAdvancedThrottlePolicies(tenantDomain, tenantId);
+        APIUtil.addDefaultTenantAsyncThrottlePolicies(tenantDomain, tenantId);
         Mockito.verify(apiMgtDAO, Mockito.times(appPolicies.length)).
                 addApplicationPolicy(Mockito.any(ApplicationPolicy.class));
     }
@@ -500,6 +507,7 @@ public class APIUtilTierTest {
         }
         mockPolicyRetrieval(apiMgtDAO);
         APIUtil.addDefaultTenantAdvancedThrottlePolicies(tenantDomain, tenantId);
+        APIUtil.addDefaultTenantAsyncThrottlePolicies(tenantDomain, tenantId);
         Mockito.verify(apiMgtDAO, Mockito.never()).
                 addApplicationPolicy(Mockito.any(ApplicationPolicy.class));
         Mockito.verify(apiMgtDAO, Mockito.never()).
@@ -535,6 +543,7 @@ public class APIUtilTierTest {
         }
 
         APIUtil.addDefaultTenantAdvancedThrottlePolicies(tenantDomain, tenantId);
+        APIUtil.addDefaultTenantAsyncThrottlePolicies(tenantDomain, tenantId);
         Mockito.verify(apiMgtDAO, Mockito.times(policies.length)).
                 addSubscriptionPolicy(Mockito.any(SubscriptionPolicy.class));
     }
@@ -567,6 +576,7 @@ public class APIUtilTierTest {
         }
 
         APIUtil.addDefaultTenantAdvancedThrottlePolicies(tenantDomain, tenantId);
+        APIUtil.addDefaultTenantAsyncThrottlePolicies(tenantDomain, tenantId);
         Mockito.verify(apiMgtDAO, Mockito.never()).
                 addSubscriptionPolicy(Mockito.any(SubscriptionPolicy.class));
         Mockito.verify(apiMgtDAO, Mockito.never()).
@@ -597,6 +607,7 @@ public class APIUtilTierTest {
         }
 
         APIUtil.addDefaultTenantAdvancedThrottlePolicies(tenantDomain, tenantId);
+        APIUtil.addDefaultTenantAsyncThrottlePolicies(tenantDomain, tenantId);
         Mockito.verify(apiMgtDAO, Mockito.times(policies.length)).
                 addAPIPolicy(Mockito.any(APIPolicy.class));
     }
@@ -625,6 +636,7 @@ public class APIUtilTierTest {
         }
 
         APIUtil.addDefaultTenantAdvancedThrottlePolicies(tenantDomain, tenantId);
+        APIUtil.addDefaultTenantAsyncThrottlePolicies(tenantDomain, tenantId);
         Mockito.verify(apiMgtDAO, Mockito.never()).
                 addAPIPolicy(Mockito.any(APIPolicy.class));
         Mockito.verify(apiMgtDAO, Mockito.never()).
