@@ -35,6 +35,7 @@ import Select from '@material-ui/core/Select';
 import Input from '@material-ui/core/Input';
 import Box from '@material-ui/core/Box';
 import { useIntl } from 'react-intl';
+import ChipInput from 'material-ui-chip-input';
 
 
 const styles = theme => ({
@@ -236,6 +237,41 @@ const AppConfiguration = (props) => {
                                 </Select>
                                 <FormHelperText>{(config.required && hasMandatoryError(selectedValue)) || getAppConfigToolTip()}</FormHelperText>
                             </FormControl>
+                        </>
+                    ) : (config.type === 'input' && config.multiple === true) ? (
+                        <>
+                            <ChipInput
+                                value={selectedValue}
+                                fullWidth
+                                variant='outlined'
+                                id="multi-input-outlined"
+                                label={config.label}
+                                onAdd={(tag) => {
+                                    const e = {target:{name:config.name,value:[...selectedValue, tag]}}
+                                    handleAppRequestChange(e)
+                                    }
+                                }
+                                chipRenderer={({ value }, key) => (
+                                    <Chip
+                                        key={key}
+                                        size='small'
+                                        label={value}
+                                        onDelete={() => {
+                                            const e = {target:{name:config.name,value:selectedValue.filter(
+                                            (oldScope)=> oldScope !== value)}}
+                                            handleAppRequestChange(e);
+                                        }}
+                                        style={{
+                                            margin: '0 8px 12px 0',
+                                            float: 'left',
+                                        }}
+                                    />
+                                )}
+                                style={{ display: 'flex' }}
+                            />
+                            <Typography variant='caption'>
+                                {config.tooltip}
+                            </Typography>
                         </>
                     ) : (config.type === 'input') ? (
                         <TextField
