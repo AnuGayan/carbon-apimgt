@@ -19,6 +19,7 @@ package org.wso2.carbon.apimgt.gateway.handlers.security.jwt;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.util.DateUtils;
 import org.apache.axis2.Constants;
+import org.apache.axis2.util.JavaUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -148,15 +149,20 @@ public class JWTValidator {
         org.apache.axis2.context.MessageContext axis2MsgContext =
                 ((Axis2MessageContext) synCtx).getAxis2MessageContext();
         String httpMethod = (String) axis2MsgContext.getProperty(Constants.Configuration.HTTP_METHOD);
+        Boolean disableCNFValidation = (Boolean) axis2MsgContext.getProperty(
+                APISecurityConstants.DISABLE_CNF_VALIDATION);
         String matchingResource = (String) synCtx.getProperty(APIConstants.API_ELECTED_RESOURCE);
         String jwtTokenIdentifier = getJWTTokenIdentifier(signedJWTInfo);
         String jwtHeader = signedJWTInfo.getSignedJWT().getHeader().toString();
 
-        try {
-            X509Certificate clientCertificate = Utils.getClientCertificate(axis2MsgContext);
-            signedJWTInfo.setX509ClientCertificate(clientCertificate);
-        } catch (APIManagementException e) {
-            log.error("Error while obtaining client certificate. " + GatewayUtils.getMaskedToken(jwtHeader));
+        // Check for CNF validation
+        if (!isCNFValidationDisabled(disableCNFValidation, false)) {
+            try {
+                X509Certificate clientCertificate = Utils.getClientCertificate(axis2MsgContext);
+                signedJWTInfo.setX509ClientCertificate(clientCertificate);
+            } catch (APIManagementException e) {
+                log.error("Error while obtaining client certificate. " + GatewayUtils.getMaskedToken(jwtHeader));
+            }
         }
         if (StringUtils.isNotEmpty(jwtTokenIdentifier)) {
             if (RevokedJWTDataHolder.isJWTTokenSignatureExistsInRevokedMap(jwtTokenIdentifier)) {
@@ -646,5 +652,16 @@ public class JWTValidator {
         }
 
         return new HashMap<>();
+    }
+
+    /**
+     * Check whether CNF claim validation is disabled or not.
+     *
+     * @param disableCNFValidation The Boolean property set in MessageContext for CNF claim validation
+     * @param defaultVal   The default value (false: normally validation should be performed.)
+     * @return a Boolean value depicting whether to perform CNF validation
+     */
+    private boolean isCNFValidationDisabled(Boolean disableCNFValidation, boolean defaultVal) {
+        return JavaUtils.isTrueExplicitly(disableCNFValidation, defaultVal);
     }
 }
