@@ -190,7 +190,7 @@ public class ImportUtils {
 
             String apiType = importedApiDTO.getType().toString();
 
-            APIProvider apiProvider = RestApiCommonUtil.getProvider(importedApiDTO.getProvider());
+            APIProvider apiProvider = RestApiCommonUtil.getLoggedInUserProvider();
 
             // Validate swagger content except for streaming APIs
             if (!PublisherCommonUtils.isStreamingAPI(importedApiDTO)
