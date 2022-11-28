@@ -8,6 +8,8 @@ const disableAuthorizeAndInfoPlugin = function () {
         wrapComponents: {
             info: () => () => null,
             authorizeBtn: () => () => null,
+            errSelectors: () => () => null,
+            errors: () => () => null,
         },
     };
 };

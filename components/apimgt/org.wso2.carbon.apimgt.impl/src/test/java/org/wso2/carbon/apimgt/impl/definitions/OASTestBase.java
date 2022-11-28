@@ -23,6 +23,7 @@ import org.json.JSONObject;
 import org.junit.Assert;
 import org.wso2.carbon.apimgt.api.APIDefinition;
 import org.wso2.carbon.apimgt.api.APIDefinitionValidationResponse;
+import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.model.API;
 import org.wso2.carbon.apimgt.api.model.APIIdentifier;
 import org.wso2.carbon.apimgt.api.model.Scope;
@@ -99,6 +100,12 @@ public class OASTestBase {
         itemGet.setThrottlingTiers("Unlimited");
         itemGet.setScope(sampleScope);
         itemGet.setScopes(sampleScope);
+    }
+
+    protected static APIDefinitionValidationResponse validateSwaggerDefinitionWithDefaultBehaviour(
+            String content, int validationLevel) throws APIManagementException {
+        OASParserUtil.setValidationLevel(validationLevel);
+        return OASParserUtil.validateAPIDefinition(content, true);
     }
 
     public void testGetURITemplates(APIDefinition parser, String content) throws Exception {

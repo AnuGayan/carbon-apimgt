@@ -284,5 +284,10 @@ export default {
                 background: 'radial-gradient(#29bb89, #f7ea00)',
             },
         },
+        listView: {
+            tableHeadBackground: '#fff',
+            tableBodyOddBackgrund: '#aa6f70',
+            tableBodyEvenBackgrund: '#690606',
+        },
     },
 };
