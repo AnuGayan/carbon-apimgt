@@ -142,6 +142,8 @@ public class OASParserUtil {
     private static final String REF_PREFIX = "#/components/";
     private static final String ARRAY_DATA_TYPE = "array";
 
+    private static int validationLevel = 1;
+
     static class SwaggerUpdateContext {
         private final Paths paths = new Paths();
         private final Set<Scope> aggregatedScopes = new HashSet<>();
@@ -1630,4 +1632,11 @@ public class OASParserUtil {
         }
     }
 
+    public static int getValidationLevel() {
+        return validationLevel;
+    }
+
+    public static void setValidationLevel(int level) {
+        validationLevel = level;
+    }
 }
