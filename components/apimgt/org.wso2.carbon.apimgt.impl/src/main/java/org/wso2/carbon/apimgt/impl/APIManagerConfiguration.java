@@ -37,6 +37,7 @@ import org.wso2.carbon.apimgt.common.gateway.dto.ClaimMappingDto;
 import org.wso2.carbon.apimgt.common.gateway.dto.JWKSConfigurationDTO;
 import org.wso2.carbon.apimgt.common.gateway.dto.TokenIssuerDto;
 import org.wso2.carbon.apimgt.common.gateway.extensionlistener.ExtensionListener;
+import org.wso2.carbon.apimgt.impl.definitions.OASParserUtil;
 import org.wso2.carbon.apimgt.impl.definitions.OAS2Parser;
 import org.wso2.carbon.apimgt.impl.dto.EventHubConfigurationDto;
 import org.wso2.carbon.apimgt.impl.dto.ExtendedJWTConfigurationDto;
@@ -157,7 +158,6 @@ public class APIManagerConfiguration {
     }
 
     private GatewayArtifactSynchronizerProperties gatewayArtifactSynchronizerProperties = new GatewayArtifactSynchronizerProperties();
-    ;
 
     /**
      * Returns the configuration of the Identity Provider.
@@ -1506,15 +1506,14 @@ public class APIManagerConfiguration {
     }
 
     public void setSwaggerValidationProperties(OMElement omElement) {
-        boolean hardValidation = false;
-        if (omElement.getFirstChildWithName(new QName(APIConstants.HARD_VALIDATION)).getText() != null) {
-            hardValidation = Boolean.parseBoolean(
-                    omElement.getFirstChildWithName(new QName(APIConstants.HARD_VALIDATION)).getText());
-            OAS2Parser.setHardValidation(hardValidation);
+        int validationLevel = 1;
+        if (omElement.getFirstChildWithName(new QName(APIConstants.VALIDATION_LEVEL)).getText() != null) {
+            validationLevel = Integer.parseInt(
+                    omElement.getFirstChildWithName(new QName(APIConstants.VALIDATION_LEVEL)).getText());
+            OASParserUtil.setValidationLevel(validationLevel);
         } else {
-            OAS2Parser.setHardValidation(hardValidation);
+            OASParserUtil.setValidationLevel(validationLevel);
         }
-
     }
 
     public ThrottleProperties getThrottleProperties() {
