@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.apimgt.impl;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.simple.JSONObject;
@@ -44,6 +45,7 @@ import org.wso2.carbon.apimgt.api.model.AccessTokenInfo;
 import org.wso2.carbon.apimgt.api.model.AccessTokenRequest;
 import org.wso2.carbon.apimgt.api.model.ApiTypeWrapper;
 import org.wso2.carbon.apimgt.api.model.Application;
+import org.wso2.carbon.apimgt.api.model.ApplicationConstants;
 import org.wso2.carbon.apimgt.api.model.Comment;
 import org.wso2.carbon.apimgt.api.model.KeyManager;
 import org.wso2.carbon.apimgt.api.model.KeyManagerConfiguration;
@@ -96,6 +98,7 @@ import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -128,6 +131,8 @@ import static org.wso2.carbon.base.CarbonBaseConstants.CARBON_HOME;
 public class APIConsumerImplTest {
 
     private static final Log log = LogFactory.getLog(APIConsumerImplTest.class);
+    private final String KEY_TYPE = "PRODUCTION";
+    private final String[] REDIRECT_URIS = new String[]{"http://locahost, https://client.example.org/callback"};
     private ApiMgtDAO apiMgtDAO;
     private UserRealm userRealm;
     private RealmService realmService;
@@ -1112,6 +1117,65 @@ public class APIConsumerImplTest {
         } catch (APIManagementException e) {
             Assert.assertTrue(e.getMessage().contains("Cannot update the application while it is INACTIVE"));
         }
+    }
+
+    @Test
+    public void testUpdateApplicationOwner() throws APIManagementException {
+        String newOwner = "admin";
+        String oldOwner = "user1";
+        String appName = "app";
+        String UUId = UUID.randomUUID().toString();
+        Subscriber oldSubscriber = new Subscriber(oldOwner);
+        Application application = new Application(appName, oldSubscriber);
+        application.setUUID(UUId);
+        Mockito.when(apiMgtDAO.getSubscriber(newOwner)).thenReturn(new Subscriber(newOwner));
+
+        application.setStatus(APIConstants.PUBLISHED_STATUS);
+        application.setOwner(oldOwner);
+        Mockito.when(apiMgtDAO.getApplicationById(Mockito.anyInt())).thenReturn(application);
+
+        APIIdentifier identifier = new APIIdentifier(API_PROVIDER, SAMPLE_API_NAME, SAMPLE_API_VERSION);
+        identifier.setUuid(UUId);
+        SubscribedAPI subscribedAPI = new SubscribedAPI(oldSubscriber, identifier);
+        subscribedAPI.setApplication(application);
+        application.addSubscribedAPIs(Collections.singleton(subscribedAPI));
+
+        APIKey apiKey = new APIKey();
+        apiKey.setKeyManager("default");
+        apiKey.setConsumerKey(UUID.randomUUID().toString());
+        apiKey.setType(APIConstants.API_KEY_TYPE_PRODUCTION);
+        apiKey.setState(UUID.randomUUID().toString());
+        APIConsumerImpl apiConsumer = new APIConsumerImplWrapper(apiMgtDAO);
+        Map<String,String> consumerKeyMap = new HashMap<>();
+        consumerKeyMap.put("default",apiKey.getConsumerKey());
+        Set<APIKey> apiKeys = new HashSet<>();
+        apiKeys.add(apiKey);
+        application.addKey(apiKey);
+        application.setTokenType(APIConstants.TOKEN_TYPE_OAUTH);
+
+        OAuthApplicationInfo oAuthApplicationInfo = new OAuthApplicationInfo();
+        oAuthApplicationInfo.setAppOwner(oldOwner);
+        oAuthApplicationInfo.setCallBackURL(StringUtils.join(REDIRECT_URIS, ","));
+        oAuthApplicationInfo.setClientName(appName);
+        oAuthApplicationInfo.addParameter(ApplicationConstants.OAUTH_CLIENT_NAME, appName);
+        oAuthApplicationInfo.addParameter(ApplicationConstants.OAUTH_CLIENT_USERNAME, oldOwner);
+        oAuthApplicationInfo.addParameter(ApplicationConstants.APP_KEY_TYPE, KEY_TYPE);
+
+        OAuthAppRequest oauthAppRequest = new OAuthAppRequest();
+        oauthAppRequest.setOAuthApplicationInfo(oAuthApplicationInfo);
+
+        Mockito.when(keyManager.retrieveApplication(apiKey.getConsumerKey())).thenReturn(oAuthApplicationInfo);
+
+        BDDMockito.when(ApplicationUtils.createOauthAppRequest(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(),
+                Mockito.anyString(), Mockito.anyString(), Mockito.anyString(),
+                Mockito.anyString(), Mockito.anyString())).thenReturn(oauthAppRequest);
+
+        BDDMockito.when(MultitenantUtils.getTenantDomain(oldOwner)).thenReturn
+                ("carbon.super");
+        BDDMockito.when(MultitenantUtils.getTenantDomain(newOwner)).thenReturn
+                ("carbon.super");
+        apiConsumer.updateApplicationOwner(newOwner, application);
+        Assert.assertEquals(oauthAppRequest.getOAuthApplicationInfo().getAppOwner(), newOwner);
     }
 
     @Test
