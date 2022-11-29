@@ -733,6 +733,9 @@ public class OAS3Parser extends APIDefinition {
                 validationResponse.setValid(false);
             }
         } else {
+            validationResponse.setValid(true);
+        }
+        if (validationResponse.isValid()){
             // Workaround to populate the null descriptions of response objects with the empty string.
             populateNullDescriptions(parseAttemptForV3.getOpenAPI());
             OpenAPI openAPI = parseAttemptForV3.getOpenAPI();
