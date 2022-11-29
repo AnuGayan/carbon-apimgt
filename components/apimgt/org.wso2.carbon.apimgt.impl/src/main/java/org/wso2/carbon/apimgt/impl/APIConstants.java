@@ -2365,6 +2365,8 @@ public final class APIConstants {
     public static final String CLONED_ITERATION_INDEX_PROPERTY = "CLONED_ITERATION_INDEX";
     public static final String TENANT_DOMAIN_INFO_PROPERTY = "tenant.info.domain";
     public static final String TENANT_ID_INFO_PROPERTY = "tenant.info.id";
+    public static final String SWAGGER_VALIDATION = "SwaggerValidation";
+    public static final String VALIDATION_LEVEL = "validationLevel";
 
     public static class CertificateReLoaderConfiguration {
 

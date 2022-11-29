@@ -20,9 +20,6 @@
 package org.wso2.carbon.apimgt.impl.definitions;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import io.swagger.models.HttpMethod;
-import io.swagger.models.Path;
-import io.swagger.models.Swagger;
 import io.swagger.oas.inflector.examples.ExampleBuilder;
 import io.swagger.oas.inflector.examples.XmlExampleSerializer;
 import io.swagger.oas.inflector.examples.models.Example;
@@ -89,7 +86,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.wso2.carbon.apimgt.impl.APIConstants.APPLICATION_JSON_MEDIA_TYPE;
-import static org.wso2.carbon.apimgt.impl.APIConstants.APPLICATION_XML_MEDIA_TYPE;
 
 /**
  * Models API definition using OAS (OpenAPI 3.0) parser
@@ -721,7 +717,6 @@ public class OAS3Parser extends APIDefinition {
         options.setResolve(true);
         SwaggerParseResult parseAttemptForV3 = openAPIV3Parser.readContents(apiDefinition, null, options);
         if (CollectionUtils.isNotEmpty(parseAttemptForV3.getMessages())) {
-            validationResponse.setValid(false);
             for (String message : parseAttemptForV3.getMessages()) {
                 OASParserUtil.addErrorToValidationResponse(validationResponse, message);
                 if (message.contains(APIConstants.OPENAPI_IS_MISSING_MSG)) {
@@ -732,7 +727,15 @@ public class OAS3Parser extends APIDefinition {
                     validationResponse.getErrorItems().add(errorItem);
                 }
             }
+            if (OASParserUtil.getValidationLevel() == 0 && parseAttemptForV3.getOpenAPI() != null) {
+                validationResponse.setValid(true);
+            } else {
+                validationResponse.setValid(false);
+            }
         } else {
+            validationResponse.setValid(true);
+        }
+        if (validationResponse.isValid()){
             // Workaround to populate the null descriptions of response objects with the empty string.
             populateNullDescriptions(parseAttemptForV3.getOpenAPI());
             OpenAPI openAPI = parseAttemptForV3.getOpenAPI();
