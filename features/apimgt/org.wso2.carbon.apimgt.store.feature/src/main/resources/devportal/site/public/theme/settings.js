@@ -43,4 +43,5 @@ const Settings = {
             'Policy 3',
         ],
     },
+    swaggerValidationBehaviour: 'default',
 };

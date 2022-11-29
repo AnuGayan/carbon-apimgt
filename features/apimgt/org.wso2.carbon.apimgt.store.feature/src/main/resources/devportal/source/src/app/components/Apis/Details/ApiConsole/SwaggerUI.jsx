@@ -2,16 +2,28 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import 'swagger-ui-react/swagger-ui.css';
 import SwaggerUILib from 'swagger-ui-react';
+import Configurations from 'Config';
+
 
 const disableAuthorizeAndInfoPlugin = function () {
-    return {
-        wrapComponents: {
-            info: () => () => null,
-            authorizeBtn: () => () => null,
-            errSelectors: () => () => null,
-            errors: () => () => null,
-        },
-    };
+    if (Configurations.swaggerValidationBehaviour === 'default'
+        || Configurations.swaggerValidationBehaviour === null) {
+        return {
+            wrapComponents: {
+                info: () => () => null,
+                authorizeBtn: () => () => null,
+            },
+        };
+    } else {
+        return {
+            wrapComponents: {
+                info: () => () => null,
+                authorizeBtn: () => () => null,
+                errSelectors: () => () => null,
+                errors: () => () => null,
+            },
+        };
+    }
 };
 /**
  *

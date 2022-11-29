@@ -21,16 +21,28 @@ import PropTypes from 'prop-types';
 import 'swagger-ui-react/swagger-ui.css';
 import './swagger-ui-overrides.css';
 import SwaggerUILib from 'swagger-ui-react';
+import Configurations from 'Config';
+
 
 const disableAuthorizeAndInfoPlugin = function () {
-    return {
-        wrapComponents: {
-            info: () => () => null,
-            authorizeBtn: () => () => null,
-            errors: () => () => null,
-            errSelectors: () => () => null,
-        },
-    };
+    if (Configurations.swaggerValidationBehaviour === 'default'
+        || Configurations.swaggerValidationBehaviour === null) {
+        return {
+            wrapComponents: {
+                info: () => () => null,
+                authorizeBtn: () => () => null,
+            },
+        };
+    } else {
+        return {
+            wrapComponents: {
+                info: () => () => null,
+                authorizeBtn: () => () => null,
+                errors: () => () => null,
+                errSelectors: () => () => null,
+            },
+        };
+    }
 };
 /**
  *

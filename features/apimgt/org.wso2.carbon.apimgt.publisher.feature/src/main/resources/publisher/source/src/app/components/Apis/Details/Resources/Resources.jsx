@@ -29,6 +29,7 @@ import Banner from 'AppComponents/Shared/Banner';
 import API from 'AppData/api';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import PropTypes from 'prop-types';
+import SwaggerParser from '@apidevtools/swagger-parser';
 import { isRestricted } from 'AppData/AuthManager';
 import CONSTS from 'AppData/Constants';
 import Configurations from 'Config';
@@ -329,18 +330,34 @@ export default function Resources(props) {
          */
         const specCopy = cloneDeep(rawSpec);
         /*
-        * Used OpenAPI validate Rest endpoint because we can get the errors as well.
+        * Used SwaggerParser.validate() because we can get the errors as well.
         */
-        API.validateOpenAPIByInlineDefinition(specCopy)
-            .then((response) => {
+        if (Configurations.swaggerValidationBehaviour === 'default'
+            || Configurations.swaggerValidationBehaviour === null) {
+            SwaggerParser.validate(specCopy, (err, result) => {
                 setResolvedSpec(() => {
-                    const errors = response.body.errors ? response.body.errors : [];
+                    const errors = err ? [err] : [];
                     return {
-                        spec: response.body.info,
+                        spec: result,
                         errors,
                     };
                 });
             });
+        } else {
+            /*
+            * Used OpenAPI validate Rest endpoint because we can get the errors as well.
+            */
+            API.validateOpenAPIByInlineDefinition(specCopy)
+                .then((response) => {
+                    setResolvedSpec(() => {
+                        const errors = response.body.errors ? response.body.errors : [];
+                        return {
+                            spec: response.body.info,
+                            errors,
+                        };
+                    });
+                });
+        }
         operationsDispatcher({ action: 'init', data: rawSpec.paths });
         setOpenAPISpec(rawSpec);
         setSecurityDefScopesFromSpec(rawSpec);
