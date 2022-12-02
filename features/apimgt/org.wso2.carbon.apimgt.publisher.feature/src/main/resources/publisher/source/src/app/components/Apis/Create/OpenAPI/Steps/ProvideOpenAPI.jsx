@@ -44,16 +44,8 @@ import ListItemText from '@material-ui/core/ListItemText';
 import APIValidation from 'AppData/APIValidation';
 import API from 'AppData/api';
 import DropZoneLocal, { humanFileSize } from 'AppComponents/Shared/DropZoneLocal';
-import { AccordionDetails, AccordionSummary } from '@material-ui/core';
-import Accordion from '@material-ui/core/Accordion';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import ErrorOutlineOutlinedIcon from '@material-ui/icons/ErrorOutlineOutlined';
-import WarningOutlined from '@material-ui/icons/WarningOutlined';
-import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
-import ErrorTableHead from 'AppComponents/Apis/Create/OpenAPI/Steps/ErrorTableHead';
-import ErrorTableContent from 'AppComponents/Apis/Create/OpenAPI/Steps/ErrorTableContent';
-import classNames from 'classnames';
+import ErrorAccordion from "AppComponents/Apis/Create/OpenAPI/Steps/ErrorAccordion";
 
 
 const useStyles = makeStyles((theme) => ({
@@ -65,11 +57,6 @@ const useStyles = makeStyles((theme) => ({
         color: theme.palette.error.contrastText,
         boxShadow: 'none',
     },
-    warningAccordion: {
-        backgroundColor: theme.palette.warning.light,
-        color: theme.palette.warning.contrastText,
-        boxShadow: 'none',
-    },
     appTablePaperPosition: {
         width: '100%',
         display: 'inline-table',
@@ -77,34 +64,6 @@ const useStyles = makeStyles((theme) => ({
     appErrorPaperPosition: {
         width: '90%',
         display: 'inline-table',
-    },
-    errorTablePaper: {
-        '& table tr td': {
-            paddingLeft: theme.spacing(1),
-        },
-        '& table tr td:first-child, & table tr th:first-child': {
-            paddingLeft: theme.spacing(2),
-        },
-        '& table tr:nth-child(even)': {
-            backgroundColor: theme.custom.listView.tableBodyEvenBackgrund,
-            '& td, & a, & .material-icons': {
-                color: theme.palette.getContrastText(theme.custom.listView.tableBodyEvenBackgrund),
-            },
-        },
-        '& table tr:nth-child(odd)': {
-            backgroundColor: theme.custom.listView.tableBodyOddBackgrund,
-            '& td, & a, & .material-icons': {
-                color: theme.palette.getContrastText(theme.custom.listView.tableBodyOddBackgrund),
-            },
-        },
-        '& table th': {
-            backgroundColor: theme.custom.listView.tableHeadBackground,
-            color: theme.palette.getContrastText(theme.custom.listView.tableHeadBackground),
-            paddingLeft: theme.spacing(1),
-        },
-        '& table tr td button.Mui-disabled span.material-icons': {
-            color: theme.palette.action.disabled,
-        },
     },
     tableRow: {
         height: theme.spacing(5),
@@ -284,80 +243,11 @@ export default function ProvideOpenAPI(props) {
                 </Grid>
                 <Grid item xs={12}>
                     <Paper className={classes.appErrorPaperPosition} elevation={3}>
-                        {errorDetails.isValid && noOfErrors > 0
-                            && (
-                                <Accordion className={classes.warningAccordion}>
-                                    <AccordionSummary
-                                        expandIcon={<ExpandMoreIcon />}
-                                        aria-controls='panel1a-content'
-                                        id='panel1a-header'
-                                    >
-                                        <Typography>
-                                            <WarningOutlined
-                                                style={{ float: 'left', marginRight: 4 }}
-                                            />
-                                            {' Found '}
-                                            {noOfErrors}
-                                            {' errors while parsing the file'}
-                                        </Typography>
-                                    </AccordionSummary>
-                                    <AccordionDetails>
-                                        <Grid item xs={12}>
-                                            <Paper className={classNames(
-                                                classes.errorTablePaper,
-                                                classes.warningAccordion,
-                                                classes.appTablePaperPosition,
-                                            )}
-                                            >
-                                                <ErrorTableHead
-                                                    errorTableHeader={false}
-                                                />
-                                                <ErrorTableContent
-                                                    errors={errorDetails}
-                                                    isValid={isValid}
-                                                />
-                                            </Paper>
-                                        </Grid>
-                                    </AccordionDetails>
-                                </Accordion>
-                            )}
-                        {isValid.file && (
-                            <Accordion className={classes.errorAccordion}>
-                                <AccordionSummary
-                                    expandIcon={<ExpandMoreIcon />}
-                                    aria-controls='panel1a-content'
-                                >
-                                    <Typography>
-                                        <ErrorOutlineOutlinedIcon
-                                            style={{ float: 'left', marginRight: 4 }}
-                                        />
-                                        {' Found '}
-                                        {noOfErrors}
-                                        {' errors while parsing the file'}
-                                    </Typography>
-                                </AccordionSummary>
-                                <AccordionDetails>
-                                    <Grid item xs={12}>
-                                        <Paper
-                                            className={classNames(
-                                                classes.errorTablePaper,
-                                                classes.errorAccordion,
-                                                classes.appTablePaperPosition,
-                                            )}
-                                            elevation={3}
-                                        >
-                                            <ErrorTableHead
-                                                errorTableHeader
-                                            />
-                                            <ErrorTableContent
-                                                errors={errorDetails}
-                                                isValid={isValid}
-                                            />
-                                        </Paper>
-                                    </Grid>
-                                </AccordionDetails>
-                            </Accordion>
-                        )}
+                        <ErrorAccordion
+                            errorDetails={errorDetails}
+                            noOfErrors={noOfErrors}
+                            isValid={isValid}
+                        />
                     </Paper>
                 </Grid>
                 <Grid item xs={10} md={11}>

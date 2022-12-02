@@ -63,8 +63,11 @@ const StyledTableCell = withStyles((theme) => ({
 
 const StyledTableRow = withStyles((theme) => ({
     root: {
-        '&:nth-of-type(odd)': {
+        '&:nth-of-type(even)': {
             backgroundColor: theme.palette.background.default,
+        },
+        '& td': {
+            borderRadius: '10px'
         },
     },
 }))(TableRow);
@@ -104,11 +107,9 @@ class ErrorTableContent extends Component {
                 {errors.errors.map((error) => {
                     return (
                         <StyledTableRow className={classes.tableRow}>
-                            <StyledTableCell align='left' className={classes.appName}>
-                                {error.code}
-                            </StyledTableCell>
-                            <StyledTableCell align='left'>{error.message}</StyledTableCell>
-                            <StyledTableCell align='left'>{error.description}</StyledTableCell>
+                            <StyledTableCell align='left'>{
+                                error.description.charAt(0).toUpperCase() + error.description.slice(1)
+                            }</StyledTableCell>
                         </StyledTableRow>
                     );
                 })}

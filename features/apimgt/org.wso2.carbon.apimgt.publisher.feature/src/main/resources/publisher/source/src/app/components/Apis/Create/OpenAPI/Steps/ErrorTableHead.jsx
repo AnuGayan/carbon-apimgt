@@ -49,15 +49,6 @@ const errorTableHead = (props) => {
     } = props;
     const columnData = [
         {
-            id: 'errorCode',
-            numeric: true,
-            disablePadding: true,
-            label: (<FormattedMessage
-                id='API.Error.ErrorTableHead.errorCode'
-                defaultMessage='Error Code'
-            />),
-        },
-        {
             id: 'message',
             numeric: false,
             disablePadding: true,

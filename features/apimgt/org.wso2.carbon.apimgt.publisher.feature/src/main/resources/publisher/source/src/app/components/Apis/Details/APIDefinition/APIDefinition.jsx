@@ -50,6 +50,7 @@ import ResourceNotFound from '../../../Base/Errors/ResourceNotFound';
 import APISecurityAudit from './APISecurityAudit';
 import ImportDefinition from './ImportDefinition';
 import DefinitionOutdated from './DefinitionOutdated';
+import ErrorAccordion from "AppComponents/Apis/Create/OpenAPI/Steps/ErrorAccordion";
 
 const EditorDialog = lazy(() => import('./SwaggerEditorDrawer' /* webpackChunkName: "EditorDialog" */));
 const MonacoEditor = lazy(() => import('react-monaco-editor' /* webpackChunkName: "APIDefMonacoEditor" */));
@@ -127,6 +128,9 @@ class APIDefinition extends React.Component {
             asyncAPI: null,
             asyncAPIModified: null,
             isAsyncAPIValid: true,
+            errorDetails: {},
+            noOfErrors: 0,
+            isValid: {},
         };
         this.handleNo = this.handleNo.bind(this);
         this.handleSave = this.handleSave.bind(this);
@@ -468,9 +472,15 @@ class APIDefinition extends React.Component {
             })
             .catch((err) => {
                 console.log(err);
-                const { response: { body: { description, message } } } = err;
+                const { response: { body: { description, message, error } } } = err;
+                const isValid = false;
+                const newParams = {isValid, errors: error}
+                const file = "{ message: 'OpenAPI content validation failed!' }"
+                const url = null;
+                const isValidFile = { file, url }
                 if (description && message) {
-                    Alert.error(`${message} ${description}`);
+                    this.setState({errorDetails: newParams, noOfErrors: err.response.body.error.length,
+                        isValid: isValidFile})
                 } else {
                     Alert.error(intl.formatMessage({
                         id: 'Apis.Details.APIDefinition.APIDefinition.error.while.updating.api.definition',
@@ -670,7 +680,7 @@ class APIDefinition extends React.Component {
         const {
             swagger, graphQL, openEditor, openDialog, format, convertTo, notFound, isAuditApiClicked,
             securityAuditProperties, isSwaggerValid, swaggerModified, isUpdating,
-            asyncAPI, asyncAPIModified, isAsyncAPIValid,
+            asyncAPI, asyncAPIModified, isAsyncAPIValid, errorDetails, noOfErrors, isValid
         } = this.state;
 
         const {
@@ -875,6 +885,9 @@ class APIDefinition extends React.Component {
                                 swagger={swaggerModified}
                                 language={format}
                                 onEditContent={this.onChangeSwaggerContent}
+                                errorDetails={errorDetails}
+                                noOfErrors={noOfErrors}
+                                isValid={isValid}
                             />
                         ) : (
                             <AsyncAPIEditor

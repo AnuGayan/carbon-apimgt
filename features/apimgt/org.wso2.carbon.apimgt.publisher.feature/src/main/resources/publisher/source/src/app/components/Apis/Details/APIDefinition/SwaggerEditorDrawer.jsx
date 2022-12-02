@@ -20,6 +20,7 @@ import Grid from '@material-ui/core/Grid';
 import PropTypes from 'prop-types';
 import withStyles from '@material-ui/core/styles/withStyles';
 import SwaggerUI from './swaggerUI/SwaggerUI';
+import ErrorAccordion from "AppComponents/Apis/Create/OpenAPI/Steps/ErrorAccordion";
 
 const styles = () => ({
     editorPane: {
@@ -30,6 +31,16 @@ const styles = () => ({
     editorRoot: {
         height: '100%',
     },
+    errorPane:{
+        width: 'auto',
+        paddingTop: '10px',
+        paddingRight: '10px',
+    },
+    swaggerPane: {
+        '& .swagger-ui': {
+            width: '100%'
+        }
+    }
 });
 
 const MonacoEditor = lazy(() => import('react-monaco-editor' /* webpackChunkName: "APIDefMonacoEditor" */));
@@ -62,7 +73,7 @@ class SwaggerEditorDrawer extends React.Component {
      * @inheritDoc
      */
     render() {
-        const { classes, language, swagger } = this.props;
+        const { classes, language, swagger, errorDetails, noOfErrors, isValid } = this.props;
         const swaggerUrl = 'data:text/' + language + ',' + encodeURIComponent(swagger);
         return (
             <>
@@ -79,7 +90,18 @@ class SwaggerEditorDrawer extends React.Component {
                         />
                     </Grid>
                     <Grid item className={classes.editorPane}>
-                        <SwaggerUI url={swaggerUrl} />
+                        {isValid.file &&(
+                            <Grid item className={classes.errorPane}>
+                                <ErrorAccordion
+                                    errorDetails={errorDetails}
+                                    noOfErrors={noOfErrors}
+                                    isValid={isValid}
+                                />
+                            </Grid>
+                        )}
+                        <Grid item className={classes.swaggerPane}>
+                            <SwaggerUI url={swaggerUrl}/>
+                        </Grid>
                     </Grid>
                 </Grid>
             </>
@@ -92,6 +114,9 @@ SwaggerEditorDrawer.propTypes = {
     language: PropTypes.string.isRequired,
     swagger: PropTypes.string.isRequired,
     onEditContent: PropTypes.func.isRequired,
+    errorDetails: PropTypes.object,
+    noOfErrors: PropTypes.number,
+    isValid: PropTypes.object
 };
 
 export default withStyles(styles)(SwaggerEditorDrawer);
