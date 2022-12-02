@@ -45,7 +45,7 @@ import APIValidation from 'AppData/APIValidation';
 import API from 'AppData/api';
 import DropZoneLocal, { humanFileSize } from 'AppComponents/Shared/DropZoneLocal';
 import Paper from '@material-ui/core/Paper';
-import ErrorAccordion from "AppComponents/Apis/Create/OpenAPI/Steps/ErrorAccordion";
+import ErrorAccordion from 'AppComponents/Apis/Create/OpenAPI/Steps/ErrorAccordion';
 
 
 const useStyles = makeStyles((theme) => ({
@@ -122,7 +122,14 @@ export default function ProvideOpenAPI(props) {
                 }
             })
             .catch((error) => {
+                const errors = [];
+                const errorData = {
+                    description: 'OpenAPI content validation failed!',
+                };
+                errors.push(errorData);
                 setValidity({ ...isValid, file: { message: 'OpenAPI content validation failed!' } });
+                setErrorDetails({ isValid: false, errors });
+                setNoOfErrors(1);
                 console.error(error);
             })
             .finally(() => {

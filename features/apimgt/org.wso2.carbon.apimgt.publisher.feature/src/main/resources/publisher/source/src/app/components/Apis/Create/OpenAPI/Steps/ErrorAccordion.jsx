@@ -16,22 +16,18 @@
  * under the License.
  */
 
-import React, {Component, useState} from 'react';
+import React from 'react';
 import classNames from 'classnames';
-import ResourceNotFound from 'AppComponents/Base/Errors/ResourceNotFound';
 import PropTypes from 'prop-types';
-import {makeStyles} from '@material-ui/core/styles';
-import {AccordionDetails, AccordionSummary} from "@material-ui/core";
-import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
-import Typography from "@material-ui/core/Typography";
-import WarningOutlined from "@material-ui/icons/WarningOutlined";
-import Grid from "@material-ui/core/Grid";
-import Paper from "@material-ui/core/Paper";
-import ErrorTableHead from "AppComponents/Apis/Create/OpenAPI/Steps/ErrorTableHead";
-import ErrorTableContent from "AppComponents/Apis/Create/OpenAPI/Steps/ErrorTableContent";
-import Accordion from "@material-ui/core/Accordion";
-import ErrorOutlineOutlinedIcon from "@material-ui/icons/ErrorOutlineOutlined";
-import Table from "@material-ui/core/Table";
+import { makeStyles } from '@material-ui/core/styles';
+import { AccordionDetails, AccordionSummary } from '@material-ui/core';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import Typography from '@material-ui/core/Typography';
+import WarningOutlined from '@material-ui/icons/WarningOutlined';
+import Grid from '@material-ui/core/Grid';
+import Paper from '@material-ui/core/Paper';
+import Accordion from '@material-ui/core/Accordion';
+import ErrorOutlineOutlinedIcon from '@material-ui/icons/ErrorOutlineOutlined';
 
 /**
  * @inheritdoc
@@ -81,6 +77,30 @@ const useStyles = makeStyles((theme) => ({
             color: theme.palette.action.disabled,
         },
     },
+    errorContentGrid: {
+        padding: '10px',
+        backgroundColor: theme.palette.background.default,
+    },
+    errorGrid: {
+        margin: theme.spacing(1),
+    },
+    warningPaper: {
+        backgroundColor: theme.palette.warning.light,
+        alignItems: 'center',
+        height: theme.spacing(5),
+        display: 'flex',
+        paddingLeft: '10px',
+        paddingRight: '10px',
+    },
+    errorPaper: {
+        backgroundColor: theme.palette.error.dark,
+        color: theme.palette.error.contrastText,
+        alignItems: 'center',
+        height: theme.spacing(5),
+        display: 'flex',
+        paddingLeft: '10px',
+        paddingRight: '10px',
+    },
 }));
 
 /**
@@ -90,10 +110,8 @@ const useStyles = makeStyles((theme) => ({
  * @extends {Component}
  */
 export default function ErrorAccordion(props) {
-
     const { errorDetails, noOfErrors, isValid } = props;
     const classes = useStyles();
-
 
     return (
         <>
@@ -101,17 +119,17 @@ export default function ErrorAccordion(props) {
                 && (
                     <Accordion className={classes.warningAccordion}>
                         <AccordionSummary
-                            expandIcon={<ExpandMoreIcon/>}
+                            expandIcon={<ExpandMoreIcon />}
                             aria-controls='panel1a-content'
                             id='panel1a-header'
                         >
                             <Typography>
                                 <WarningOutlined
-                                    style={{float: 'left', marginRight: 4}}
+                                    style={{ float: 'left', marginRight: 4 }}
                                 />
                                 {' Found '}
                                 {noOfErrors}
-                                {' errors while parsing the file'}
+                                {' warnings while parsing the file'}
                             </Typography>
                         </AccordionSummary>
                         <AccordionDetails>
@@ -122,12 +140,20 @@ export default function ErrorAccordion(props) {
                                     classes.appTablePaperPosition,
                                 )}
                                 >
-                                    <Table>
-                                        <ErrorTableContent
-                                            errors={errorDetails}
-                                            isValid={isValid}
-                                        />
-                                    </Table>
+                                    <Grid item xs={12} className={classes.errorContentGrid}>
+                                        {errorDetails.errors.map((error) => {
+                                            return (
+                                                <Grid item xs={12} className={classes.errorGrid}>
+                                                    <Paper elevation={2} className={classes.warningPaper}>
+                                                        {
+                                                            error.description.charAt(0).toUpperCase()
+                                                            + error.description.slice(1)
+                                                        }
+                                                    </Paper>
+                                                </Grid>
+                                            );
+                                        })}
+                                    </Grid>
                                 </Paper>
                             </Grid>
                         </AccordionDetails>
@@ -136,12 +162,12 @@ export default function ErrorAccordion(props) {
             {isValid.file && (
                 <Accordion className={classes.errorAccordion}>
                     <AccordionSummary
-                        expandIcon={<ExpandMoreIcon/>}
+                        expandIcon={<ExpandMoreIcon />}
                         aria-controls='panel1a-content'
                     >
                         <Typography>
                             <ErrorOutlineOutlinedIcon
-                                style={{float: 'left', marginRight: 4}}
+                                style={{ float: 'left', marginRight: 4 }}
                             />
                             {' Found '}
                             {noOfErrors}
@@ -158,12 +184,20 @@ export default function ErrorAccordion(props) {
                                 )}
                                 elevation={3}
                             >
-                                <Table>
-                                <ErrorTableContent
-                                    errors={errorDetails}
-                                    isValid={isValid}
-                                />
-                                </Table>
+                                <Grid item xs={12} className={classes.errorContentGrid}>
+                                    {errorDetails.errors.map((error) => {
+                                        return (
+                                            <Grid item xs={12} className={classes.errorGrid}>
+                                                <Paper elevation={2} className={classes.errorPaper}>
+                                                    {
+                                                        error.description.charAt(0).toUpperCase()
+                                                        + error.description.slice(1)
+                                                    }
+                                                </Paper>
+                                            </Grid>
+                                        );
+                                    })}
+                                </Grid>
                             </Paper>
                         </Grid>
                     </AccordionDetails>
@@ -174,7 +208,7 @@ export default function ErrorAccordion(props) {
 }
 
 ErrorAccordion.propTypes = {
-    errorDetails: PropTypes.object.isRequired,
+    errorDetails: PropTypes.objectOf(PropTypes.object).isRequired,
     noOfErrors: PropTypes.number.isRequired,
-    isValid: PropTypes.object
+    isValid: PropTypes.objectOf(PropTypes.object).isRequired,
 };
