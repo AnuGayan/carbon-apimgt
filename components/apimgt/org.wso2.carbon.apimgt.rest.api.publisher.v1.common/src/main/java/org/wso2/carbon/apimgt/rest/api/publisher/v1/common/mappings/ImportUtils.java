@@ -251,6 +251,8 @@ public class ImportUtils {
                                 importedApiDTO.getProvider());
             }
 
+            apiProvider = RestApiCommonUtil.getLoggedInUserProvider();
+
             // Retrieving the life cycle action to do the lifecycle state change explicitly later
             lifecycleAction = getLifeCycleAction(currentTenantDomain, currentStatus, targetStatus, apiProvider);
 

@@ -2367,6 +2367,7 @@ public final class APIConstants {
     public static final String TENANT_ID_INFO_PROPERTY = "tenant.info.id";
     public static final String SWAGGER_VALIDATION = "SwaggerValidation";
     public static final String VALIDATION_LEVEL = "validationLevel";
+
     public static class CertificateReLoaderConfiguration {
 
         public static final String CERTIFICATE_RELOADER_CONFIGURATION_ROOT = "CertificateReLoaderConfiguration";

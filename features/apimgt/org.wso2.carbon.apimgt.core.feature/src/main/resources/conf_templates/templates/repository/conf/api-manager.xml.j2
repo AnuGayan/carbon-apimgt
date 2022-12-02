@@ -984,9 +984,11 @@
         {% endif %}
     </Monetization>
 
+    {% if apim.swagger.validation_level is defined %}
     <SwaggerValidation>
         <validationLevel>{{apim.swagger.validation_level}}</validationLevel>
     </SwaggerValidation>
+    {% endif %}
 
     {% if apim.devportal.recommendations is defined %}
     <APIRecommendations>
