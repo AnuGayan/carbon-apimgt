@@ -52,25 +52,6 @@ const useStyles = makeStyles((theme) => ({
     mandatoryStar: {
         color: theme.palette.error.main,
     },
-    errorAccordion: {
-        backgroundColor: theme.palette.error.dark,
-        color: theme.palette.error.contrastText,
-        boxShadow: 'none',
-    },
-    appTablePaperPosition: {
-        width: '100%',
-        display: 'inline-table',
-    },
-    appErrorPaperPosition: {
-        width: '90%',
-        display: 'inline-table',
-    },
-    tableRow: {
-        height: theme.spacing(5),
-        '& td': {
-            padding: theme.spacing(0.5),
-        },
-    },
 }));
 
 /**
@@ -248,8 +229,8 @@ export default function ProvideOpenAPI(props) {
                         </RadioGroup>
                     </FormControl>
                 </Grid>
-                <Grid item xs={12}>
-                    <Paper className={classes.appErrorPaperPosition} elevation={3}>
+                <Grid item xs={10} md={11}>
+                    <Paper elevation={3}>
                         <ErrorAccordion
                             errorDetails={errorDetails}
                             noOfErrors={noOfErrors}

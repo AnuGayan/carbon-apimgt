@@ -232,7 +232,7 @@ class APIDefinition extends React.Component {
      */
     onChangeFormatClick() {
         const {
-            format, swagger, convertTo, asyncAPI, errorDetails, noOfErrors, isValid,
+            format, swagger, convertTo, asyncAPI,
         } = this.state;
         let formattedString = '';
         if (asyncAPI === null) {
@@ -488,16 +488,28 @@ class APIDefinition extends React.Component {
                 console.log(err);
                 const { response: { body: { description, message, error } } } = err;
                 const isValid = false;
-                const newParams = { isValid, errors: error };
                 const file = "{ message: 'OpenAPI content validation failed!' }";
                 const url = null;
                 const isValidFile = { file, url };
                 if (description && message) {
-                    this.setState({
-                        errorDetails: newParams,
-                        noOfErrors: err.response.body.error.length,
-                        isValid: isValidFile,
-                    });
+                    if (error.length > 0) {
+                        const newParams = { isValid, errors: error };
+                        this.setState({
+                            errorDetails: newParams,
+                            noOfErrors: err.response.body.error.length,
+                            isValid: isValidFile,
+                        });
+                    } else {
+                        const errorMsg = {};
+                        errorMsg.description = message + ', ' + description;
+                        error.push(errorMsg);
+                        const newParams = { isValid, errors: error };
+                        this.setState({
+                            errorDetails: newParams,
+                            noOfErrors: error.length,
+                            isValid: isValidFile,
+                        });
+                    }
                 } else {
                     Alert.error(intl.formatMessage({
                         id: 'Apis.Details.APIDefinition.APIDefinition.error.while.updating.api.definition',

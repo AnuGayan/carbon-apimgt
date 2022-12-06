@@ -34,23 +34,6 @@ import ErrorOutlineOutlinedIcon from '@material-ui/icons/ErrorOutlineOutlined';
  * @param {*} theme theme object
  */
 const useStyles = makeStyles((theme) => ({
-    fullHeight: {
-        height: '100%',
-    },
-    tableRow: {
-        height: theme.spacing(5),
-        '& td': {
-            padding: theme.spacing(0.5),
-        },
-    },
-    appOwner: {
-        pointerEvents: 'none',
-    },
-    appName: {
-        '& a': {
-            color: '#1b9ec7 !important',
-        },
-    },
     errorAccordion: {
         backgroundColor: theme.palette.error.dark,
         color: theme.palette.error.contrastText,
@@ -61,22 +44,6 @@ const useStyles = makeStyles((theme) => ({
         color: theme.palette.warning.contrastText,
         boxShadow: 'none',
     },
-    errorTablePaper: {
-        '& table tr td': {
-            paddingLeft: theme.spacing(1),
-        },
-        '& table tr td:first-child, & table tr th:first-child': {
-            paddingLeft: theme.spacing(2),
-        },
-        '& table th': {
-            backgroundColor: theme.custom.listView.tableHeadBackground,
-            color: theme.palette.getContrastText(theme.custom.listView.tableHeadBackground),
-            paddingLeft: theme.spacing(1),
-        },
-        '& table tr td button.Mui-disabled span.material-icons': {
-            color: theme.palette.action.disabled,
-        },
-    },
     errorContentGrid: {
         padding: '10px',
         backgroundColor: theme.palette.background.default,
@@ -86,20 +53,19 @@ const useStyles = makeStyles((theme) => ({
     },
     warningPaper: {
         backgroundColor: theme.palette.warning.light,
+        color: theme.palette.warning.contrastText,
         alignItems: 'center',
-        height: theme.spacing(5),
         display: 'flex',
-        paddingLeft: '10px',
-        paddingRight: '10px',
+        padding: '5px 10px 5px 10px',
+        wordBreak: 'break-word',
     },
     errorPaper: {
         backgroundColor: theme.palette.error.dark,
         color: theme.palette.error.contrastText,
         alignItems: 'center',
-        height: theme.spacing(5),
         display: 'flex',
-        paddingLeft: '10px',
-        paddingRight: '10px',
+        padding: '5px 10px 5px 10px',
+        wordBreak: 'break-word',
     },
 }));
 
@@ -135,20 +101,20 @@ export default function ErrorAccordion(props) {
                         <AccordionDetails>
                             <Grid item xs={12}>
                                 <Paper className={classNames(
-                                    classes.errorTablePaper,
                                     classes.warningAccordion,
                                     classes.appTablePaperPosition,
                                 )}
                                 >
                                     <Grid item xs={12} className={classes.errorContentGrid}>
                                         {errorDetails.errors.map((error) => {
+                                            const warnDescription = error.description.charAt(0).toUpperCase()
+                                                + error.description.slice(1);
                                             return (
                                                 <Grid item xs={12} className={classes.errorGrid}>
                                                     <Paper elevation={2} className={classes.warningPaper}>
-                                                        {
-                                                            error.description.charAt(0).toUpperCase()
-                                                            + error.description.slice(1)
-                                                        }
+                                                        <Typography>
+                                                            {warnDescription}
+                                                        </Typography>
                                                     </Paper>
                                                 </Grid>
                                             );
@@ -178,7 +144,6 @@ export default function ErrorAccordion(props) {
                         <Grid item xs={12}>
                             <Paper
                                 className={classNames(
-                                    classes.errorTablePaper,
                                     classes.errorAccordion,
                                     classes.appTablePaperPosition,
                                 )}
@@ -186,13 +151,14 @@ export default function ErrorAccordion(props) {
                             >
                                 <Grid item xs={12} className={classes.errorContentGrid}>
                                     {errorDetails.errors.map((error) => {
+                                        const errorDescription = error.description.charAt(0).toUpperCase()
+                                            + error.description.slice(1);
                                         return (
                                             <Grid item xs={12} className={classes.errorGrid}>
                                                 <Paper elevation={2} className={classes.errorPaper}>
-                                                    {
-                                                        error.description.charAt(0).toUpperCase()
-                                                        + error.description.slice(1)
-                                                    }
+                                                    <Typography>
+                                                        {errorDescription}
+                                                    </Typography>
                                                 </Paper>
                                             </Grid>
                                         );
