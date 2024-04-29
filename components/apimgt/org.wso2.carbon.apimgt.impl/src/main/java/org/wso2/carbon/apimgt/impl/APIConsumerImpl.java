@@ -4181,6 +4181,8 @@ APIConstants.AuditLogConstants.DELETED, this.username);
                         api.setMonetizationEnabled(publiserAPI.getMonetizationStatus());
                         api.setAdvertiseOnly(publiserAPI.getAdvertiseOnly());
                         api.setRating(APIUtil.getAverageRating(publiserAPI.getId()));
+                        api.setDescription(publiserAPI.getDescription());
+                        api.setType(publiserAPI.getTransportType());
                         apiSet.add(api);
                     }
                 }
