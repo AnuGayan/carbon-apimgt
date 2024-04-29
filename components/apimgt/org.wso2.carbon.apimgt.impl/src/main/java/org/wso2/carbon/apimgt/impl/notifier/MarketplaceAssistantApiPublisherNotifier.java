@@ -67,14 +67,37 @@ public class MarketplaceAssistantApiPublisherNotifier extends ApisNotifier{
         APIEvent apiEvent;
         apiEvent = (APIEvent) event;
 
-        if (!APIConstants.API_GLOBAL_VISIBILITY.equals(apiEvent.getApiVisibility())) {
-            return;
-        }
-
-        if (APIConstants.EventType.API_LIFECYCLE_CHANGE.name().equals(event.getType())) {
-            String lifecycleEvent = apiEvent.getLifecycleEvent();
+        if (APIConstants.EventType.API_UPDATE.name().equals(event.getType())) {
             String currentStatus = apiEvent.getCurrentStatus().toUpperCase();
-            switch (lifecycleEvent) {
+            if (!APIConstants.API_GLOBAL_VISIBILITY.equals(apiEvent.getApiVisibility())) {
+                switch (currentStatus) {
+                case APIConstants.PROTOTYPED:
+                case APIConstants.PUBLISHED:
+                        deleteRequest(apiEvent);
+                        break;
+                default:
+                    break;
+                }
+            } else {
+                switch (currentStatus) {
+                case APIConstants.PROTOTYPED:
+                case APIConstants.PUBLISHED:
+                        postRequest(apiEvent);
+                    break;
+                default:
+                    break;
+                }
+            }
+        } else {
+
+            if (!APIConstants.API_GLOBAL_VISIBILITY.equals(apiEvent.getApiVisibility())) {
+                return;
+            }
+
+            if (APIConstants.EventType.API_LIFECYCLE_CHANGE.name().equals(event.getType())) {
+                String lifecycleEvent = apiEvent.getLifecycleEvent();
+                String currentStatus = apiEvent.getCurrentStatus().toUpperCase();
+                switch (lifecycleEvent) {
                 case APIConstants.DEMOTE_TO_CREATED:
                 case APIConstants.BLOCK:
                     deleteRequest(apiEvent);
@@ -95,26 +118,17 @@ public class MarketplaceAssistantApiPublisherNotifier extends ApisNotifier{
                     break;
                 default:
                     break;
-            }
-        } else if (APIConstants.EventType.API_DELETE.name().equals(event.getType())) {
-            String currentStatus = apiEvent.getApiStatus().toUpperCase();
-            switch (currentStatus) {
+                }
+            } else if (APIConstants.EventType.API_DELETE.name().equals(event.getType())) {
+                String currentStatus = apiEvent.getApiStatus().toUpperCase();
+                switch (currentStatus) {
                 case APIConstants.PROTOTYPED:
                 case APIConstants.PUBLISHED:
                     deleteRequest(apiEvent);
                     break;
                 default:
                     break;
-            }
-        } else if (APIConstants.EventType.API_UPDATE.name().equals(event.getType())) {
-            String currentStatus = apiEvent.getApiStatus().toUpperCase();
-            switch (currentStatus) {
-                case APIConstants.PROTOTYPED:
-                case APIConstants.PUBLISHED:
-                    postRequest(apiEvent);
-                    break;
-                default:
-                    break;
+                }
             }
         }
     }
