@@ -63,7 +63,7 @@ public class MarketplaceAssistantApiPublisherNotifier extends ApisNotifier{
      * @param event APIEvent to undeploy APIs from external gateway
      * @throws NotifierException if error occurs
      */
-    private void process (Event event) throws NotifierException {
+    private void process(Event event) throws NotifierException {
         APIEvent apiEvent;
         apiEvent = (APIEvent) event;
 
@@ -71,21 +71,21 @@ public class MarketplaceAssistantApiPublisherNotifier extends ApisNotifier{
             String currentStatus = apiEvent.getCurrentStatus().toUpperCase();
             if (!APIConstants.API_GLOBAL_VISIBILITY.equals(apiEvent.getApiVisibility())) {
                 switch (currentStatus) {
-                case APIConstants.PROTOTYPED:
-                case APIConstants.PUBLISHED:
+                    case APIConstants.PROTOTYPED:
+                    case APIConstants.PUBLISHED:
                         deleteRequest(apiEvent);
                         break;
-                default:
-                    break;
+                    default:
+                        break;
                 }
             } else {
                 switch (currentStatus) {
-                case APIConstants.PROTOTYPED:
-                case APIConstants.PUBLISHED:
+                    case APIConstants.PROTOTYPED:
+                    case APIConstants.PUBLISHED:
                         postRequest(apiEvent);
-                    break;
-                default:
-                    break;
+                        break;
+                    default:
+                        break;
                 }
             }
         } else {
@@ -98,36 +98,36 @@ public class MarketplaceAssistantApiPublisherNotifier extends ApisNotifier{
                 String lifecycleEvent = apiEvent.getLifecycleEvent();
                 String currentStatus = apiEvent.getCurrentStatus().toUpperCase();
                 switch (lifecycleEvent) {
-                case APIConstants.DEMOTE_TO_CREATED:
-                case APIConstants.BLOCK:
-                    deleteRequest(apiEvent);
-                    break;
-                case APIConstants.DEPRECATE:
-                    if (APIConstants.PUBLISHED.equals(currentStatus)){
+                    case APIConstants.DEMOTE_TO_CREATED:
+                    case APIConstants.BLOCK:
                         deleteRequest(apiEvent);
                         break;
-                    }
-                case APIConstants.PUBLISH:
-                case APIConstants.DEPLOY_AS_A_PROTOTYPE:
-                    if (APIConstants.CREATED.equals(currentStatus)) {
+                    case APIConstants.DEPRECATE:
+                        if (APIConstants.PUBLISHED.equals(currentStatus)) {
+                            deleteRequest(apiEvent);
+                            break;
+                        }
+                    case APIConstants.PUBLISH:
+                    case APIConstants.DEPLOY_AS_A_PROTOTYPE:
+                        if (APIConstants.CREATED.equals(currentStatus)) {
+                            postRequest(apiEvent);
+                        }
+                        break;
+                    case APIConstants.REPUBLISH:
                         postRequest(apiEvent);
-                    }
-                    break;
-                case APIConstants.REPUBLISH:
-                    postRequest(apiEvent);
-                    break;
-                default:
-                    break;
+                        break;
+                    default:
+                        break;
                 }
             } else if (APIConstants.EventType.API_DELETE.name().equals(event.getType())) {
                 String currentStatus = apiEvent.getApiStatus().toUpperCase();
                 switch (currentStatus) {
-                case APIConstants.PROTOTYPED:
-                case APIConstants.PUBLISHED:
-                    deleteRequest(apiEvent);
-                    break;
-                default:
-                    break;
+                    case APIConstants.PROTOTYPED:
+                    case APIConstants.PUBLISHED:
+                        deleteRequest(apiEvent);
+                        break;
+                    default:
+                        break;
                 }
             }
         }
