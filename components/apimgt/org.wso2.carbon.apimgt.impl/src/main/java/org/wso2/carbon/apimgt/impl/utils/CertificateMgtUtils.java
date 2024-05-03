@@ -621,7 +621,8 @@ public class CertificateMgtUtils {
                 Certificate generatedCertificate = cf.generateCertificate(serverCert);
                 X509Certificate x509Certificate = (X509Certificate) generatedCertificate;
                 uniqueIdentifier = x509Certificate.getSerialNumber() + "_" + x509Certificate.getSubjectDN();
-                uniqueIdentifier = uniqueIdentifier.replaceAll(",", "#").replaceAll("\"", "'");
+                uniqueIdentifier = uniqueIdentifier.replaceAll(",", "#").replaceAll("\"", "'")
+                        .replaceAll("&(?!amp;)", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
             }
         } catch (CertificateException e) {
             log.error("Error while getting serial number of the certificate.", e);
