@@ -2107,7 +2107,8 @@ public class APIMappingUtil {
             log.error("Unrecognized state : " + stateChangeResponse.getStateChangeStatus());
             workflowResponseDTO.setWorkflowStatus(WorkflowResponseDTO.WorkflowStatusEnum.CREATED);
         }
-
+        
+        workflowResponseDTO.setJsonPayload(stateChangeResponse.getWorkflowResponse().getJSONPayload());
         workflowResponseDTO.setLifecycleState(lifecycleStateDTO);
         return workflowResponseDTO;
     }
