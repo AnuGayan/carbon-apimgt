@@ -2926,7 +2926,20 @@ APIConstants.AuditLogConstants.DELETED, this.username);
             JSONObject appLogObject = new JSONObject();
             appLogObject.put(APIConstants.AuditLogConstants.APPLICATION_NAME, updatedAppInfo.getClientName());
             appLogObject.put("Updated Oauth app with Call back URL", callbackUrl);
-            appLogObject.put("Updated Oauth app with grant types", jsonString);
+            String modifiedJsonString = jsonString;
+            // Remove Sensitive data from the audit logs
+            try {
+                JSONParser parser = new JSONParser();
+                JSONObject jsonObject = (JSONObject) parser.parse(jsonString);
+                jsonObject.remove("client_secret");
+                modifiedJsonString = jsonObject.toJSONString();
+            } catch (Exception e) {
+                if(log.isDebugEnabled()) {
+                    log.debug("Error occurred while parsing the JSON string when removing the sensitive data " +
+                            "from audit logs: ", e);
+                }
+            }
+            appLogObject.put("Updated Oauth app with grant types", modifiedJsonString);
 
             APIUtil.logAuditMessage(APIConstants.AuditLogConstants.APPLICATION, appLogObject.toString(),
                     APIConstants.AuditLogConstants.UPDATED, this.username);
