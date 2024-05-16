@@ -865,7 +865,7 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
 
         WorkflowResponse workflowResponse = null;
         String tenantAwareUsername = MultitenantUtils.getTenantAwareUsername(userId);
-        checkSubscriptionAllowed(apiTypeWrapper);
+        checkSubscriptionAllowed(apiTypeWrapper, apiTypeWrapper.getTier());
         int subscriptionId;
         if (APIConstants.PUBLISHED.equals(state) || APIConstants.PROTOTYPED.equals(state)) {
             subscriptionId = apiMgtDAO.addSubscription(apiTypeWrapper, application,
@@ -1061,7 +1061,7 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
             apiContext = api.getContext();
             apiOrgId = api.getOrganization();
         }
-        checkSubscriptionAllowed(apiTypeWrapper, apiTypeWrapper.getTier());
+        checkSubscriptionAllowed(apiTypeWrapper, requestedThrottlingPolicy);
         WorkflowResponse workflowResponse = null;
         int subscriptionId;
         if (APIConstants.PUBLISHED.equals(state) || APIConstants.PROTOTYPED.equals(state)) {
