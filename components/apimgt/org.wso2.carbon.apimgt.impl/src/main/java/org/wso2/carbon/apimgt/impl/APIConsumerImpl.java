@@ -1061,7 +1061,7 @@ public class APIConsumerImpl extends AbstractAPIManager implements APIConsumer {
             apiContext = api.getContext();
             apiOrgId = api.getOrganization();
         }
-        checkSubscriptionAllowed(apiTypeWrapper);
+        checkSubscriptionAllowed(apiTypeWrapper, apiTypeWrapper.getTier());
         WorkflowResponse workflowResponse = null;
         int subscriptionId;
         if (APIConstants.PUBLISHED.equals(state) || APIConstants.PROTOTYPED.equals(state)) {
@@ -4473,7 +4473,7 @@ APIConstants.AuditLogConstants.DELETED, this.username);
      *                                subscription, this will throw an instance of APIMgtAuthorizationFailedException
       *                                with the reason as the message
      */
-    private void checkSubscriptionAllowed(ApiTypeWrapper apiTypeWrapper)
+    private void checkSubscriptionAllowed(ApiTypeWrapper apiTypeWrapper, String requestedThrottlingPolicy)
             throws APIManagementException {
 
         Set<Tier> tiers;
@@ -4531,7 +4531,7 @@ APIConstants.AuditLogConstants.DELETED, this.username);
         List<String> allowedTierList = new ArrayList<>();
         while (iterator.hasNext()) {
             Tier t = iterator.next();
-            if (t.getName() != null && (t.getName()).equals(apiTypeWrapper.getTier())) {
+            if (t.getName() != null && (t.getName()).equals(requestedThrottlingPolicy)) {
                 isTierAllowed = true;
             }
             allowedTierList.add(t.getName());
