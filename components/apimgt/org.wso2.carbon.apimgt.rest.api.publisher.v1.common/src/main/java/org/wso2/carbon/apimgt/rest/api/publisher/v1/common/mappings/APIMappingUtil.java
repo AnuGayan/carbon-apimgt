@@ -445,6 +445,13 @@ public class APIMappingUtil {
         if (dto.getAudience() != null) {
             model.setAudience(dto.getAudience().toString());
         }
+        if (dto.getAudiences() != null) {
+            List<String> audiences = dto.getAudiences();
+            if (audiences.isEmpty()) {
+                audiences.add(APIConstants.ALL_AUDIENCES);
+            }
+            model.setAudiences(new HashSet<>(audiences));
+        }
         if (dto.getGatewayVendor() != null) {
             model.setGatewayVendor(dto.getGatewayVendor());
         }
@@ -678,6 +685,13 @@ public class APIMappingUtil {
         if (api.getAudience() != null) {
             apiInfoDTO.setAudience(org.wso2.carbon.apimgt.rest.api.publisher.v1.dto.APIInfoDTO.AudienceEnum
                     .valueOf(api.getAudience()));
+        }
+        if (api.getAudiences() != null) {
+            Set<String> audiences = api.getAudiences();
+            if (audiences.contains(APIConstants.ALL_AUDIENCES) && audiences.size() > 1) {
+                audiences.remove(APIConstants.ALL_AUDIENCES);
+            }
+            apiInfoDTO.setAudiences(new ArrayList<>(audiences));
         }
         if (api.getCreatedTime() != null) {
             Date createdTime = new Date(Long.parseLong(api.getCreatedTime()));
@@ -1395,6 +1409,14 @@ public class APIMappingUtil {
         
         if (model.getAudience() != null) {
             dto.setAudience(AudienceEnum.valueOf(model.getAudience()));
+        }
+
+        if (model.getAudiences() != null) {
+            Set<String> audiences = model.getAudiences();
+            if (audiences.contains(APIConstants.ALL_AUDIENCES) && audiences.size() > 1) {
+                audiences.remove(APIConstants.ALL_AUDIENCES);
+            }
+            dto.setAudiences(new ArrayList<>(model.getAudiences()));
         }
 
         String gatewayVendor = StringUtils.toRootLowerCase(model.getGatewayVendor());
@@ -2305,6 +2327,9 @@ public class APIMappingUtil {
             if (apiProduct.getApiSecurity() != null) {
                 productDto.setSecurityScheme(Arrays.asList(apiProduct.getApiSecurity().split(",")));
             }
+            if (apiProduct.getAudiences() != null) {
+                productDto.setAudiences(new ArrayList<>(apiProduct.getAudiences()));
+            }
             productDto.setBusinessOwner(apiProduct.getBusinessOwner());
             productDto.setBusinessOwnerEmail(apiProduct.getBusinessOwnerEmail());
             productDto.setTechnicalOwner(apiProduct.getTechnicalOwner());
@@ -2354,6 +2379,14 @@ public class APIMappingUtil {
         productDto.setIsRevision(product.isRevision());
         productDto.setRevisionedApiProductId(product.getRevisionedApiProductId());
         productDto.setRevisionId(product.getRevisionId());
+
+        if (product.getAudiences() != null) {
+            Set<String> audiences = product.getAudiences();
+            if (audiences.contains(APIConstants.ALL_AUDIENCES) && audiences.size() > 1) {
+                audiences.remove(APIConstants.ALL_AUDIENCES);
+            }
+            productDto.setAudiences(new ArrayList<>(product.getAudiences()));
+        }
 
         if (APIConstants.ENABLED.equals(product.getResponseCache())) {
             productDto.setResponseCachingEnabled(Boolean.TRUE);
@@ -2615,6 +2648,14 @@ public class APIMappingUtil {
             product.setBusinessOwnerEmail(dto.getBusinessInformation().getBusinessOwnerEmail());
             product.setTechnicalOwner(dto.getBusinessInformation().getTechnicalOwner());
             product.setTechnicalOwnerEmail(dto.getBusinessInformation().getTechnicalOwnerEmail());
+        }
+
+        if (dto.getAudiences() != null) {
+            List<String> audiences = dto.getAudiences();
+            if (audiences.isEmpty()) {
+                audiences.add(APIConstants.ALL_AUDIENCES);
+            }
+            product.setAudiences(new HashSet<>(audiences));
         }
 
         Set<Tier> apiTiers = new HashSet<>();
