@@ -348,7 +348,7 @@ public class APIMappingUtil {
                     propertyKey = entry.getKey();
                 }
                 // If this property already added from the additional properties, avoid overriding it
-                if (propertyKey != null && model.getProperty(propertyKey) == null) {
+                if (propertyKey != null && !model.getAdditionalProperties().containsKey(propertyKey)) {
                     model.addProperty(propertyKey, entry.getValue().getValue());
                 }
             }
