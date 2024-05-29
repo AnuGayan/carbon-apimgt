@@ -404,7 +404,8 @@ public class ImportUtils {
                     .equals(importedApi.getType().toLowerCase(), APIConstants.API_TYPE_SOAPTOREST.toLowerCase())) {
                 List<SOAPToRestSequence> sequences = getSOAPToRESTSequences(extractedFolderPath);
                 if (sequences != null && !sequences.isEmpty()) {
-                    addSOAPToREST(importedApi, apiProvider, sequences);
+                    String tenantDomain = RestApiCommonUtil.getLoggedInUserTenantDomain();
+                    apiProvider.updateSoapToRestSequences(tenantDomain, importedApi.getUuid(), sequences);
                 }
             }
 
@@ -2328,24 +2329,13 @@ public class ImportUtils {
     }
     
     /**
-     * This method adds API sequences to the imported API.
+     * This method retrieve soap to rest sequences from the exported zip file.
      * 
-     * @param importedApi    API
-     * @param list SOAPToRest Sequences
-     * @param apiProvider    API Provider
-     * @throws APIManagementException If an error occurs while updating the API or generating the sequences
-     * @throws FaultGatewaysException If an error occurs while updating the API
+     * @param extractedFolderPath folder path.
+     * @return List<SOAPToRestSequence> list of soap to rest sequences
+     * @throws APIManagementException
      */
-    private static void addSOAPToREST(API importedApi, APIProvider apiProvider, List<SOAPToRestSequence> list)
-            throws APIManagementException, FaultGatewaysException {
-
-        String tenantDomain = RestApiCommonUtil.getLoggedInUserTenantDomain();
-        API updatedAPI = apiProvider.getAPIbyUUID(importedApi.getUuid(), tenantDomain);
-        updatedAPI.setSoapToRestSequences(list);
-        apiProvider.updateAPI(updatedAPI, importedApi);
-    }
-
-    public static List<SOAPToRestSequence> getSOAPToRESTSequences(String extractedFolderPath)
+    private static List<SOAPToRestSequence> getSOAPToRESTSequences(String extractedFolderPath)
             throws APIManagementException {
 
         List<SOAPToRestSequence> list = new ArrayList<SOAPToRestSequence>();
