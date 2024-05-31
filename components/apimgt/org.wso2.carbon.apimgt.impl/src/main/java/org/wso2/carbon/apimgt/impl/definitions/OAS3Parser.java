@@ -817,6 +817,7 @@ public class OAS3Parser extends APIDefinition {
                 };
             }
         }
+
         if (validationResponse.isValid()){
             OpenAPI openAPI = parseAttemptForV3.getOpenAPI();
             io.swagger.v3.oas.models.info.Info info = openAPI.getInfo();
