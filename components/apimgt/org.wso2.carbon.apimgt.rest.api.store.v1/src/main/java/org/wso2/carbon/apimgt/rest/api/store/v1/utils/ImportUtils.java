@@ -190,7 +190,7 @@ public class ImportUtils {
                                     tenantDomain);
                             if (StringUtils.isNotEmpty(uuidFromIdentifier)) {
                                 ApiTypeWrapper apiTypeWrapper = apiConsumer.getAPIorAPIProductByUUID(
-                                        uuidFromIdentifier, organization);
+                                        uuidFromIdentifier, tenantDomain);
                                 // Tier of the imported subscription
                                 String targetTier = importedSubscriptionMap.get(existingSubscriptionKey).
                                         getThrottlingPolicy();
