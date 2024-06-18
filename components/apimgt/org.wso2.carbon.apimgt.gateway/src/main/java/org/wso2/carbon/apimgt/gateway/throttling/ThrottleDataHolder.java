@@ -69,6 +69,16 @@ public class ThrottleDataHolder {
         throttledAPIKeysMap.put(key,value);
     }
 
+    private static final ThrottleDataHolder instance = new ThrottleDataHolder();
+
+    private ThrottleDataHolder() {
+
+    }
+
+    public static ThrottleDataHolder getInstance() {
+        return instance;
+    }
+
     public void addThrottledApiConditions(String key, String conditionKey, List<ConditionDto> conditionValue) {
 
         Map<String, List<ConditionDto>> conditionMap;
