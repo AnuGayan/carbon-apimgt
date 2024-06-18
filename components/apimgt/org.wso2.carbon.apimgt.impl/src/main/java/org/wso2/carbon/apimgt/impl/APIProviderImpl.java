@@ -6957,6 +6957,9 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                 } else {
                     uriTemplate.setThrottlingTier(api.getApiLevelPolicy());
                 }
+                if (StringUtils.isEmpty(uriTemplate.getAuthType())) {
+                    uriTemplate.setAuthType("Any");
+                }
             }
         }
     }
