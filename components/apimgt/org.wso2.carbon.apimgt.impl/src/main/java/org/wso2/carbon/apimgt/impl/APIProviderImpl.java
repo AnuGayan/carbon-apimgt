@@ -5614,7 +5614,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                     resource.getContent(), resource.getContentType());
             InputStream content = iconResourceFile.getContent();
             if (content.available() > 0) {
-                // Content will be reset to re-read the stream from the beginning
                 apiPersistenceInstance.saveThumbnail(new Organization(organization), apiId, iconResourceFile);
             } else {
                 // Thumbnail deletion from publisher originally handled through the same PUT call
