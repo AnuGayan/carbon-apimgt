@@ -46,6 +46,7 @@ public class JWTConfigurationDto {
     private long ttl;
 
     private boolean useKid;
+    private boolean isEncodeX5tWithoutPadding;
 
     public boolean useKid() {
         return useKid;
@@ -199,5 +200,13 @@ public class JWTConfigurationDto {
 
     public void setUseSHA256Hash(boolean useSHA256Hash) {
         this.useSHA256Hash = useSHA256Hash;
+    }
+
+    public boolean isEncodeX5tWithoutPadding() {
+        return isEncodeX5tWithoutPadding;
+    }
+
+    public void setEncodeX5tWithoutPadding(boolean encodeX5tWithoutPadding) {
+        isEncodeX5tWithoutPadding = encodeX5tWithoutPadding;
     }
 }
