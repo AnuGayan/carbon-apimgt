@@ -223,13 +223,10 @@ public class DocumentIndexer extends RXTIndexer {
                 case APIConstants.TXT_EXTENSION:
                 case APIConstants.WSDL_EXTENSION:
                 case APIConstants.XML_DOC_EXTENSION:
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-                    String line;
                     StringBuilder contentBuilder = new StringBuilder();
                     while ((line = reader.readLine()) != null) {
                         contentBuilder.append(line);
                     }
-                    contentString = contentBuilder.toString();
                     break;
                 }
             } finally {
@@ -254,8 +251,12 @@ public class DocumentIndexer extends RXTIndexer {
                     instream = contentResource.getContentStream();
                     reader = new BufferedReader(new InputStreamReader(instream));
                     StringBuilder contentBuilder = new StringBuilder();
-                    while ((line = reader.readLine()) != null) {
-                        contentBuilder.append(line);
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            contentBuilder.append(line);
+                        }
+                        contentString = contentBuilder.toString();
                     }
                     contentString = contentBuilder.toString();
                 } finally {
