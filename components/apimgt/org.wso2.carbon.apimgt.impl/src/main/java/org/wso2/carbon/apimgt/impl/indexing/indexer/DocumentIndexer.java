@@ -224,8 +224,12 @@ public class DocumentIndexer extends RXTIndexer {
                 case APIConstants.WSDL_EXTENSION:
                 case APIConstants.XML_DOC_EXTENSION:
                     StringBuilder contentBuilder = new StringBuilder();
-                    while ((line = reader.readLine()) != null) {
-                        contentBuilder.append(line);
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            contentBuilder.append(line);
+                        }
+                        contentString = contentBuilder.toString();
                     }
                     break;
                 }
@@ -240,10 +244,8 @@ public class DocumentIndexer extends RXTIndexer {
             String pathToContent = pathToDocFile.substring(0, pathToDocFile.lastIndexOf(fileName))
                     + APIConstants.INLINE_DOCUMENT_CONTENT_DIR +
                     RegistryConstants.PATH_SEPARATOR + fileName;
-
             if (registry.resourceExists(pathToContent)) {
                 Resource contentResource = registry.get(pathToContent);
-
                 InputStream instream = null;
                 BufferedReader reader = null;
                 String line;
@@ -251,12 +253,8 @@ public class DocumentIndexer extends RXTIndexer {
                     instream = contentResource.getContentStream();
                     reader = new BufferedReader(new InputStreamReader(instream));
                     StringBuilder contentBuilder = new StringBuilder();
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-                        String line;
-                        while ((line = reader.readLine()) != null) {
-                            contentBuilder.append(line);
-                        }
-                        contentString = contentBuilder.toString();
+                    while ((line = reader.readLine()) != null) {
+                        contentBuilder.append(line);
                     }
                     contentString = contentBuilder.toString();
                 } finally {
