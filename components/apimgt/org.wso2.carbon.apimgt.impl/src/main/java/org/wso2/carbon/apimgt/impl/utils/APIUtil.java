@@ -6839,7 +6839,10 @@ public final class APIUtil {
         dbf.setNamespaceAware(true);
         dbf.setXIncludeAware(false);
         dbf.setExpandEntityReferences(false);
+        dbf.setNamespaceAware(true);
         try {
+            // Enable secure processing
+            dbf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
             dbf.setFeature(Constants.SAX_FEATURE_PREFIX + Constants.EXTERNAL_GENERAL_ENTITIES_FEATURE, false);
             dbf.setFeature(Constants.SAX_FEATURE_PREFIX + Constants.EXTERNAL_PARAMETER_ENTITIES_FEATURE, false);
             dbf.setFeature(Constants.XERCES_FEATURE_PREFIX + Constants.LOAD_EXTERNAL_DTD_FEATURE, false);
