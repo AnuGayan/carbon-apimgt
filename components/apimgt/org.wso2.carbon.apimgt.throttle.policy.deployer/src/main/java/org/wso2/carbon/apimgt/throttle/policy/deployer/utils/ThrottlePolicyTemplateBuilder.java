@@ -35,6 +35,7 @@ import org.wso2.carbon.apimgt.api.model.policy.JWTClaimsCondition;
 import org.wso2.carbon.apimgt.api.model.policy.PolicyConstants;
 import org.wso2.carbon.apimgt.api.model.policy.QueryParameterCondition;
 import org.wso2.carbon.apimgt.impl.APIConstants;
+import org.wso2.carbon.apimgt.impl.APIManagerConfiguration;
 import org.wso2.carbon.apimgt.impl.template.APITemplateException;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.throttle.policy.deployer.dto.APIPolicyConditionGroup;
@@ -43,6 +44,7 @@ import org.wso2.carbon.apimgt.throttle.policy.deployer.dto.ApplicationPolicy;
 import org.wso2.carbon.apimgt.throttle.policy.deployer.dto.Condition;
 import org.wso2.carbon.apimgt.throttle.policy.deployer.dto.GlobalPolicy;
 import org.wso2.carbon.apimgt.throttle.policy.deployer.dto.SubscriptionPolicy;
+import org.wso2.carbon.apimgt.throttle.policy.deployer.internal.ServiceReferenceHolder;
 import org.wso2.carbon.utils.CarbonUtils;
 
 import java.io.File;
@@ -77,9 +79,16 @@ public class ThrottlePolicyTemplateBuilder {
      * @return combined condition string
      */
     private static String getPolicyCondition(Set<Condition> conditions) {
+        APIManagerConfiguration apiManagerConfiguration =
+                ServiceReferenceHolder.getInstance().getAPIMConfiguration();
         StringBuilder conditionString = new StringBuilder();
         int i = 0;
         for (Condition condition : conditions) {
+            if (apiManagerConfiguration.getThrottleProperties().isHeaderConditionsCaseInsensitive() && "Header".equals(
+                    condition.getConditionType())) {
+                // set the header name of header based conditions, to lower case to make the condition case-insensitive
+                condition.setName(condition.getName().toLowerCase(Locale.ENGLISH));
+            }
             org.wso2.carbon.apimgt.api.model.policy.Condition mappedCondition =
                     PolicyMappingUtil.mapCondition(condition);
             if (i == 0) {

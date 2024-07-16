@@ -46,6 +46,7 @@ public class ThrottleProperties {
     private boolean enableHeaderConditions = false;
     private boolean enableJwtConditions = false;
     private boolean enableQueryParamConditions =false;
+    private boolean headerConditionsCaseInsensitive = false;
     private String[] skipRedeployingPolicies = new String[]{};
     private Map<String, Long> defaultThrottleTierLimits = new HashMap<String, Long>();
     private TrafficManager trafficManager;
@@ -152,6 +153,14 @@ public class ThrottleProperties {
 
     public void setEnableQueryParamConditions(boolean enableQueryParamConditions) {
         this.enableQueryParamConditions = enableQueryParamConditions;
+    }
+
+    public boolean isHeaderConditionsCaseInsensitive() {
+        return headerConditionsCaseInsensitive;
+    }
+
+    public void setHeaderConditionsCaseInsensitive(boolean headerConditionsCaseInsensitive) {
+        this.headerConditionsCaseInsensitive = headerConditionsCaseInsensitive;
     }
 
     public void setTrafficManager(TrafficManager trafficManager) {
