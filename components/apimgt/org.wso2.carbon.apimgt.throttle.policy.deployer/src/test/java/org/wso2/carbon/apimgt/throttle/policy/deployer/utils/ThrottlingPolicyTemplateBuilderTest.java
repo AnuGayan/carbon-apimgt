@@ -28,6 +28,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.APIManagerConfiguration;
+import org.wso2.carbon.apimgt.impl.dto.ThrottleProperties;
 import org.wso2.carbon.apimgt.throttle.policy.deployer.dto.ApiPolicy;
 import org.wso2.carbon.apimgt.throttle.policy.deployer.dto.ApplicationPolicy;
 import org.wso2.carbon.apimgt.throttle.policy.deployer.dto.GlobalPolicy;
@@ -55,6 +56,9 @@ public class ThrottlingPolicyTemplateBuilderTest {
                 thenReturn("not-defined");
         Mockito.when(serviceReferenceHolder.getAPIMConfiguration()).
                 thenReturn(apiManagerConfiguration);
+        ThrottleProperties throttleProperties = Mockito.mock(ThrottleProperties.class);
+        Mockito.when(apiManagerConfiguration.getThrottleProperties()).thenReturn(throttleProperties);
+        Mockito.when(throttleProperties.isHeaderConditionsCaseInsensitive()).thenReturn(true);
     }
 
     @Test
@@ -66,6 +70,12 @@ public class ThrottlingPolicyTemplateBuilderTest {
 
         String defaultPolicyString = templateBuilder.getThrottlePolicyForAPILevelDefault(policy);
         Assert.assertNotNull(defaultPolicyString);
+
+        // Test that execution plans are deployed with lower-case header names even though the header condition of the
+        // policy had the header name in upper-case (or mix-case)
+        boolean isPolicyStringContainsLowerCasedHeader =
+                defaultPolicyString.contains(TestUtil.HEADER_CONDITION_HEADER_NAME.toLowerCase());
+        Assert.assertTrue(isPolicyStringContainsLowerCasedHeader);
     }
 
     @Test

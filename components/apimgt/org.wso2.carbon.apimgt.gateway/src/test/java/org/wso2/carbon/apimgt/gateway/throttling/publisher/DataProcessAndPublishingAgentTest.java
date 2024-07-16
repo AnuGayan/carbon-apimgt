@@ -24,23 +24,32 @@ import org.apache.synapse.MessageContext;
 import org.apache.synapse.core.axis2.Axis2MessageContext;
 import org.apache.synapse.rest.RESTConstants;
 import org.apache.synapse.transport.nhttp.NhttpConstants;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 import org.wso2.carbon.apimgt.gateway.APIMgtGatewayConstants;
 import org.wso2.carbon.apimgt.gateway.handlers.security.AuthenticationContext;
 import org.wso2.carbon.apimgt.gateway.handlers.throttling.APIThrottleConstants;
 import org.wso2.carbon.apimgt.impl.APIConstants;
+import org.wso2.carbon.apimgt.impl.APIManagerConfiguration;
 import org.wso2.carbon.apimgt.impl.dto.ThrottleProperties;
 import org.wso2.carbon.apimgt.impl.dto.VerbInfoDTO;
 import org.wso2.carbon.apimgt.keymgt.model.entity.API;
 import org.wso2.carbon.databridge.agent.DataPublisher;
 import org.wso2.carbon.databridge.commons.Event;
+import org.wso2.carbon.apimgt.gateway.internal.ServiceReferenceHolder;
 
 import java.util.ArrayList;
 import java.util.TreeMap;
 import java.util.UUID;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(ServiceReferenceHolder.class)
 public class DataProcessAndPublishingAgentTest {
     String applicationLevelThrottleKey = "Gold";
     String applicationLevelTier = "Gold";
@@ -58,6 +67,17 @@ public class DataProcessAndPublishingAgentTest {
     String apiName = "API1";
     String appId = "1";
 
+    @Before
+    public void setUp() {
+        PowerMockito.mockStatic(ServiceReferenceHolder.class);
+        ServiceReferenceHolder serviceReferenceHolder = Mockito.mock(ServiceReferenceHolder.class);
+        PowerMockito.when(ServiceReferenceHolder.getInstance()).thenReturn(serviceReferenceHolder);
+        APIManagerConfiguration apiManagerConfiguration = Mockito.mock(APIManagerConfiguration.class);
+        PowerMockito.when(serviceReferenceHolder.getAPIManagerConfiguration()).thenReturn(apiManagerConfiguration);
+        ThrottleProperties throttleProperties = Mockito.mock(ThrottleProperties.class);
+        Mockito.when(apiManagerConfiguration.getThrottleProperties()).thenReturn(throttleProperties);
+        Mockito.when(throttleProperties.isHeaderConditionsCaseInsensitive()).thenReturn(true);
+    }
 
     @Test
     public void setDataReference() throws Exception {
