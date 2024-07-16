@@ -1204,6 +1204,13 @@ public class APIManagerConfiguration {
                 throttleProperties.setEnableHeaderConditions(JavaUtils.isTrueExplicitly(enableHeaderConditionsElement
                         .getText()));
             }
+
+            OMElement setHeaderConditionsCaseSensitiveElement = throttleConfigurationElement.getFirstChildWithName(
+                    new QName(APIConstants.AdvancedThrottleConstants.SET_HEADER_CONDITIONS_CASE_INSENSITIVE));
+            if (setHeaderConditionsCaseSensitiveElement != null) {
+                throttleProperties.setHeaderConditionsCaseInsensitive(
+                        JavaUtils.isTrueExplicitly(setHeaderConditionsCaseSensitiveElement.getText()));
+            }
             // Check JWT condition enable
             OMElement enableJwtElement = throttleConfigurationElement
                     .getFirstChildWithName(new QName(APIConstants.AdvancedThrottleConstants

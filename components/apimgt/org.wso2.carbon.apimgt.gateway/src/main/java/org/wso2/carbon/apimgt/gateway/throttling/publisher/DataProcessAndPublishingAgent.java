@@ -16,6 +16,7 @@ import org.wso2.carbon.apimgt.gateway.handlers.throttling.APIThrottleConstants;
 import org.wso2.carbon.apimgt.gateway.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.gateway.utils.GatewayUtils;
 import org.wso2.carbon.apimgt.impl.APIConstants;
+import org.wso2.carbon.apimgt.impl.APIManagerConfiguration;
 import org.wso2.carbon.apimgt.impl.dto.ThrottleProperties;
 import org.wso2.carbon.apimgt.impl.dto.VerbInfoDTO;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
@@ -147,8 +148,21 @@ public class DataProcessAndPublishingAgent implements Runnable {
                 .getAxis2MessageContext();
         Map<String, String> transportHeaderMap = (Map<String, String>) axis2MessageContext
                 .getProperty(org.apache.axis2.context.MessageContext.TRANSPORT_HEADERS);
+
+        APIManagerConfiguration apiManagerConfiguration = ServiceReferenceHolder.getInstance()
+                .getAPIManagerConfiguration();
         if (transportHeaderMap != null) {
-            this.headersMap = new HashMap<>(transportHeaderMap);
+            if (apiManagerConfiguration.getThrottleProperties().isHeaderConditionsCaseInsensitive()) {
+                // convert all transport headers to lower case in order to make the header condition based throttling
+                // case-insensitive
+                Map<String, String> lowerCaseTransportHeaderMap = new HashMap<>();
+                for (Map.Entry<String, String> entry : transportHeaderMap.entrySet()) {
+                    lowerCaseTransportHeaderMap.put(entry.getKey().toLowerCase(), String.valueOf(entry.getValue()));
+                }
+                this.headersMap = new HashMap<>(lowerCaseTransportHeaderMap);
+            } else {
+                this.headersMap = new HashMap<>(transportHeaderMap);
+            }
         }
 
         if (messageContext.getProperty(APIThrottleConstants.CUSTOM_PROPERTY) != null) {
