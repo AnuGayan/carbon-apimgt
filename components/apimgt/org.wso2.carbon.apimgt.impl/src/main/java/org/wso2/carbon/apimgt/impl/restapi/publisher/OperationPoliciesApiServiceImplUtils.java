@@ -18,13 +18,11 @@
 
 package org.wso2.carbon.apimgt.impl.restapi.publisher;
 
-import org.apache.commons.lang3.StringUtils;
 import org.wso2.carbon.apimgt.api.model.OperationPolicyData;
 import org.wso2.carbon.apimgt.api.model.OperationPolicyDefinition;
 import org.wso2.carbon.apimgt.api.model.OperationPolicySpecification;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -92,17 +90,15 @@ public class OperationPoliciesApiServiceImplUtils {
      * @return Map of query params
      */
     public static Map<String, String> getQueryParams(String query) {
-        if (query == null || StringUtils.isBlank(query)) {
-            return Collections.emptyMap();
-        }
         Map<String, String> queryParamMap = new HashMap<>();
-        String[] pairs = query.split("&");
-        for (String pair : pairs) {
-            String[] keyValue = pair.split(":");
-            if (keyValue.length == 2) {
-                queryParamMap.put(keyValue[0], keyValue[1]);
+        String[] queryParams = query.split(" ");
+        for (String param : queryParams) {
+            String[] keyVal = param.split(":");
+            if (keyVal.length == 2) {
+                queryParamMap.put(keyVal[0], keyVal[1]);
             }
         }
+
         return queryParamMap;
     }
 
