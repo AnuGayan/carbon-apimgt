@@ -6945,7 +6945,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                     importedSpec.setName(importedSpec.getName() + "_imported");
                     importedSpec.setDisplayName(importedSpec.getDisplayName() + " Imported");
                     importedPolicyData.setSpecification(importedSpec);
-                    importedPolicyData.setMd5Hash(APIUtil.getHashOfOperationPolicy(importedPolicyData));
+                    importedPolicyData.setMd5Hash(APIUtil.getMd5OfOperationPolicy(importedPolicyData));
                     policyId = addAPISpecificOperationPolicy(importedPolicyData.getApiUUID(), importedPolicyData,
                             organization);
                     if (log.isDebugEnabled()) {
@@ -6958,7 +6958,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                 importedSpec.setName(importedSpec.getName() + "_imported");
                 importedSpec.setDisplayName(importedSpec.getDisplayName() + " Imported");
                 importedPolicyData.setSpecification(importedSpec);
-                importedPolicyData.setMd5Hash(APIUtil.getHashOfOperationPolicy(importedPolicyData));
+                importedPolicyData.setMd5Hash(APIUtil.getMd5OfOperationPolicy(importedPolicyData));
                 policyId = addAPISpecificOperationPolicy(importedPolicyData.getApiUUID(), importedPolicyData,
                         organization);
                 if (log.isDebugEnabled()) {

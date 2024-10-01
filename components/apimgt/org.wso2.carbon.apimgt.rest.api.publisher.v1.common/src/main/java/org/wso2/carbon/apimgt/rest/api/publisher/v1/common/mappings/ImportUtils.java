@@ -757,8 +757,6 @@ public class ImportUtils {
                         }
                         operationPolicyData.setMd5Hash(
                                 APIUtil.getMd5OfOperationPolicy(operationPolicyData));
-                        policyID = provider.importOperationPolicy(operationPolicyData, tenantDomain);
-                                APIUtil.getHashOfOperationPolicy(operationPolicyData));
                         policyID = provider.importOperationPolicyOfGivenType(operationPolicyData,
                                 policyType, tenantDomain);
                         importedPolicies.put(policyFileName, policyID);
