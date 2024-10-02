@@ -36,6 +36,7 @@ public class SettingsDTO   {
     private Boolean externalStoresEnabled = null;
     private Boolean docVisibilityEnabled = null;
     private Boolean portalConfigurationOnlyModeEnabled = false;
+    private Boolean retryCallWithNewOAuthTokenEnabled = true;
     private Boolean crossTenantSubscriptionEnabled = false;
     private String defaultAdvancePolicy = null;
     private String defaultSubscriptionPolicy = null;
@@ -222,6 +223,24 @@ public class SettingsDTO   {
   }
 
   /**
+   * Is Retry Call With New OAuth Token Enabled
+   **/
+  public SettingsDTO retryCallWithNewOAuthTokenEnabled(Boolean retryCallWithNewOAuthTokenEnabled) {
+    this.retryCallWithNewOAuthTokenEnabled = retryCallWithNewOAuthTokenEnabled;
+    return this;
+  }
+
+
+  @ApiModelProperty(example = "true", value = "Is Retry Call With New OAuth Token Enabled ")
+  @JsonProperty("retryCallWithNewOAuthTokenEnabled")
+  public Boolean isRetryCallWithNewOAuthTokenEnabled() {
+    return retryCallWithNewOAuthTokenEnabled;
+  }
+  public void setRetryCallWithNewOAuthTokenEnabled(Boolean retryCallWithNewOAuthTokenEnabled) {
+    this.retryCallWithNewOAuthTokenEnabled = retryCallWithNewOAuthTokenEnabled;
+  }
+
+  /**
    * Is Cross Tenant Subscriptions Enabled 
    **/
   public SettingsDTO crossTenantSubscriptionEnabled(Boolean crossTenantSubscriptionEnabled) {
@@ -348,6 +367,7 @@ public class SettingsDTO   {
         Objects.equals(externalStoresEnabled, settings.externalStoresEnabled) &&
         Objects.equals(docVisibilityEnabled, settings.docVisibilityEnabled) &&
         Objects.equals(portalConfigurationOnlyModeEnabled, settings.portalConfigurationOnlyModeEnabled) &&
+        Objects.equals(retryCallWithNewOAuthTokenEnabled, settings.retryCallWithNewOAuthTokenEnabled) &&
         Objects.equals(crossTenantSubscriptionEnabled, settings.crossTenantSubscriptionEnabled) &&
         Objects.equals(defaultAdvancePolicy, settings.defaultAdvancePolicy) &&
         Objects.equals(defaultSubscriptionPolicy, settings.defaultSubscriptionPolicy) &&
@@ -358,7 +378,7 @@ public class SettingsDTO   {
 
   @Override
   public int hashCode() {
-    return Objects.hash(devportalUrl, environment, gatewayTypes, scopes, monetizationAttributes, subscriberContactAttributes, securityAuditProperties, externalStoresEnabled, docVisibilityEnabled, portalConfigurationOnlyModeEnabled, crossTenantSubscriptionEnabled, defaultAdvancePolicy, defaultSubscriptionPolicy, authorizationHeader, isJWTEnabledForLoginTokens, customProperties);
+    return Objects.hash(devportalUrl, environment, gatewayTypes, scopes, monetizationAttributes, subscriberContactAttributes, securityAuditProperties, externalStoresEnabled, docVisibilityEnabled, portalConfigurationOnlyModeEnabled, retryCallWithNewOAuthTokenEnabled, crossTenantSubscriptionEnabled, defaultAdvancePolicy, defaultSubscriptionPolicy, authorizationHeader, isJWTEnabledForLoginTokens, customProperties);
   }
 
   @Override
@@ -376,6 +396,7 @@ public class SettingsDTO   {
     sb.append("    externalStoresEnabled: ").append(toIndentedString(externalStoresEnabled)).append("\n");
     sb.append("    docVisibilityEnabled: ").append(toIndentedString(docVisibilityEnabled)).append("\n");
     sb.append("    portalConfigurationOnlyModeEnabled: ").append(toIndentedString(portalConfigurationOnlyModeEnabled)).append("\n");
+    sb.append("    retryCallWithNewOAuthTokenEnabled: ").append(toIndentedString(retryCallWithNewOAuthTokenEnabled)).append("\n");
     sb.append("    crossTenantSubscriptionEnabled: ").append(toIndentedString(crossTenantSubscriptionEnabled)).append("\n");
     sb.append("    defaultAdvancePolicy: ").append(toIndentedString(defaultAdvancePolicy)).append("\n");
     sb.append("    defaultSubscriptionPolicy: ").append(toIndentedString(defaultSubscriptionPolicy)).append("\n");
