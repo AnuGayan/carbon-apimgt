@@ -853,6 +853,7 @@ public class GatewayUtils {
         APIKeyValidationInfoDTO apiKeyValidationInfoDTO = null;
         boolean apiKeySubValidationEnabled = isAPIKeySubscriptionValidationEnabled();
         JSONObject application;
+        String keyType = (String) payload.getClaim(APIConstants.JwtTokenConstants.KEY_TYPE);
         int appId = 0;
         if (payload.getClaim(APIConstants.JwtTokenConstants.APPLICATION) != null) {
             try {
@@ -870,7 +871,7 @@ public class GatewayUtils {
         // if the appId is equal to 0 then it's a internal key
         if (apiKeySubValidationEnabled && appId != 0) {
             apiKeyValidationInfoDTO =
-                    apiKeyValidator.validateSubscription(apiContext, apiVersion, appId, getTenantDomain());
+                    apiKeyValidator.validateSubscription(apiContext, apiVersion, appId, getTenantDomain(), keyType);
         }
 
         if (payload.getClaim(APIConstants.JwtTokenConstants.SUBSCRIBED_APIS) != null) {
@@ -947,6 +948,7 @@ public class GatewayUtils {
         APIKeyValidationInfoDTO apiKeyValidationInfoDTO = null;
         boolean apiKeySubValidationEnabled = isAPIKeySubscriptionValidationEnabled();
         JSONObject application;
+        String keyType = (String) payload.getClaim(APIConstants.JwtTokenConstants.KEY_TYPE);
         int appId = 0;
         if (payload.getClaim(APIConstants.JwtTokenConstants.APPLICATION) != null) {
             try {
@@ -964,7 +966,7 @@ public class GatewayUtils {
         // if the appId is equal to 0 then it's a internal key
         if (apiKeySubValidationEnabled && appId != 0) {
             apiKeyValidationInfoDTO =
-                    apiKeyValidator.validateSubscription(apiContext, apiVersion, appId, getTenantDomain());
+                    apiKeyValidator.validateSubscription(apiContext, apiVersion, appId, getTenantDomain(), keyType);
         }
 
         if (payload.getClaim(APIConstants.JwtTokenConstants.SUBSCRIBED_APIS) != null) {
