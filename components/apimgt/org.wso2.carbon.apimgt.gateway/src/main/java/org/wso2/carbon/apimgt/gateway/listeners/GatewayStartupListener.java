@@ -221,7 +221,10 @@ public class GatewayStartupListener extends AbstractAxis2ConfigurationContextObs
             jmsTransportHandlerForEventHub.subscribeForJmsEvents(APIConstants.TopicNames.TOPIC_ASYNC_WEBHOOKS_DATA,
                     new GatewayJMSMessageListener());
             copyTenantArtifacts();
-            APILoggerManager.getInstance().initializeAPILoggerList();
+            Thread thread = new Thread(() -> {
+                APILoggerManager.getInstance().initializeAPILoggerList();
+            });
+            thread.start();
         } else {
             log.info("Running on migration enabled mode: Stopped at Gateway Startup listener completed");
         }
