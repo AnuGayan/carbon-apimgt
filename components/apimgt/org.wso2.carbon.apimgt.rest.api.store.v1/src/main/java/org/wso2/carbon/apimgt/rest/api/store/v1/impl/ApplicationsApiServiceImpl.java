@@ -102,6 +102,7 @@ import javax.ws.rs.core.Response;
 
 public class ApplicationsApiServiceImpl implements ApplicationsApiService {
     private static final Log log = LogFactory.getLog(ApplicationsApiServiceImpl.class);
+    public static final String SP_NAME_APPLICATION = "sp.name.application";
 
 
     /**
@@ -513,6 +514,27 @@ public class ApplicationsApiServiceImpl implements ApplicationsApiService {
         application.setUUID(oldApplication != null ? oldApplication.getUUID() : null);
 
         apiConsumer.updateApplication(application);
+
+        // Added to use the application name as part of sp name instead of application UUID when specified
+        String applicationSpNameProp = System.getProperty(SP_NAME_APPLICATION);
+        boolean applicationSpName = Boolean.parseBoolean(applicationSpNameProp);
+        //If application name is renamed, need to update SP app as well
+        if (applicationSpName && !application.getName().equals(oldApplication.getName())) {
+            //Fetch Application Keys
+            Set<APIKey> applicationKeys = getApplicationKeys(applicationId, apiConsumer.getRequestedTenant());
+            //Check what application JSON params are
+            for (APIKey key : applicationKeys) {
+                if (!APIConstants.OAuthAppMode.MAPPED.name().equals(key.getCreateMode())) {
+                    JsonObject jsonParams = new JsonObject();
+                    String grantTypes = StringUtils.join(key.getGrantTypes(), ',');
+                    jsonParams.addProperty(APIConstants.JSON_GRANT_TYPES, grantTypes);
+                    jsonParams.addProperty(APIConstants.JSON_USERNAME, username);
+                    apiConsumer.updateAuthClient(username, application,
+                            key.getType(), key.getCallbackUrl(), null, null, null,
+                            application.getGroupId(), new Gson().toJson(jsonParams), key.getKeyManager());
+                }
+            }
+        }
 
         //retrieves the updated application and send as the response
         return apiConsumer.getApplicationByUUID(applicationId);
