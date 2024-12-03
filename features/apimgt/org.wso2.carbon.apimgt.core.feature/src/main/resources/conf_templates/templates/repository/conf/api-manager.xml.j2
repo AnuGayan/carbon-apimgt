@@ -35,7 +35,8 @@
     <JWTConfiguration>
         <!-- Enable/Disable JWT generation. Default is false. -->
         <EnableJWTGeneration>{{apim.jwt.enable}}</EnableJWTGeneration>
-
+        <!-- Enable/Disable JWKS in memory API deployment. Default is true. -->
+        <EnableJWKSApi>{{apim.jwt.enable_jwks_api}}</EnableJWKSApi>
         <!-- Name of the security context header to be added to the validated requests. -->
         <JWTHeader>{{apim.jwt.header}}</JWTHeader>
 
@@ -97,6 +98,9 @@
             </ExcludedClaims>
             <EnableUserClaimRetrievalFromKeyManager>{{apim.jwt.gateway_generator.enable_claim_retrieval}}</EnableUserClaimRetrievalFromKeyManager>
             </Configuration>
+            {% if apim.jwt.enable_base64_padding is defined %}
+            <EnableBase64Padding>{{apim.jwt.enable_base64_padding}}</EnableBase64Padding>
+            {% endif %}
         </GatewayJWTGeneration>
     </JWTConfiguration>
 
@@ -1085,11 +1089,15 @@
                 <java.naming.factory.initial>{{apim.throttling.jms.java_naming_factory_initial}}</java.naming.factory.initial>
                 {% if apim.throttling.jms.topic_connection_factory is defined %}
                 <connectionfactory.TopicConnectionFactory>{{apim.throttling.jms.topic_connection_factory}}</connectionfactory.TopicConnectionFactory>
-                {% elif apim.throttling.throttle_decision_endpoints is defined %}
+                {% elif apim.throttling.throttle_decision_endpoints is defined and (apim.throttling.jms.ssl is not defined) %}
                 <connectionfactory.TopicConnectionFactory>amqp://<![CDATA[{{apim.throttling.jms.username}}]]>:<![CDATA[{{apim.throttling.jms.password}}]]>@clientid/carbon?brokerlist='{% for url in apim.throttling.throttle_decision_endpoints %}{{url}}?{% if apim.throttling.jms.ssl is defined %}ssl='{{apim.throttling.jms.ssl}}'{% endif %}%26retries='5'%26connectdelay='50';{% endfor %}'</connectionfactory.TopicConnectionFactory>
                 {% elif apim.throttling.jms.username is defined %}
                 {% if apim.throttling.jms.password is defined %}
+                {% if apim.throttling.throttle_decision_endpoints is not defined %}
                 <connectionfactory.TopicConnectionFactory>amqp://<![CDATA[{{apim.throttling.jms.username}}]]>:<![CDATA[{{apim.throttling.jms.password}}]]>@clientid/carbon?brokerlist='tcp://${carbon.local.ip}:${jms.port}'</connectionfactory.TopicConnectionFactory>
+                {% else %}
+                <connectionfactory.TopicConnectionFactory>amqp://<![CDATA[{{apim.throttling.jms.username}}]]>:<![CDATA[{{apim.throttling.jms.password}}]]>@clientid/carbon?brokerlist='{% for url in apim.throttling.throttle_decision_endpoints %}{{url}}?{% if apim.throttling.jms.ssl is defined %}ssl='{{apim.throttling.jms.ssl}}'{% endif %}%26retries='5'%26connectdelay='50';{% endfor %}'</connectionfactory.TopicConnectionFactory>
+                {% endif %}
                 {% endif %}
                 {% else %}
                 <connectionfactory.TopicConnectionFactory>amqp://${admin.username}:${admin.password}@clientid/carbon?brokerlist='tcp://${carbon.local.ip}:${jms.port}'</connectionfactory.TopicConnectionFactory>
@@ -1121,6 +1129,9 @@
         <EnableQueryParamConditions>{{apim.throttling.enable_query_param_based_throttling}}</EnableQueryParamConditions>
         <SkipRedeployingPolicies>RequestPreProcessorExecutionPlan{% for policy in apim.throttling.skip_redeploying_policies %}{{ "," if loop.first }}{{policy}}{{ "," if not loop.last }}{% endfor %}</SkipRedeployingPolicies>
         <EnablePolicyDeployment>{{apim.throttling.enable_policy_deployment}}</EnablePolicyDeployment>
+        {% if apim.throttling.set_header_based_throttling_case_insensitive is defined %}
+        <SetHeaderConditionsCaseInsensitive>{{apim.throttling.set_header_based_throttling_case_insensitive}}</SetHeaderConditionsCaseInsensitive>
+        {% endif %}
     </ThrottlingConfigurations>
 
     <WorkflowConfigurations>
@@ -1348,9 +1359,7 @@
         </ApplicationAttributes>
     </ApplicationConfiguration>
     {% endif %}
-
     <EnableEmptyValuesInApplicationAttributes>{{apim.devportal.enable_empty_values_in_application_attributes}}</EnableEmptyValuesInApplicationAttributes>
-
     {% if apim.ai_security is defined %}
     <AISecurityHandler>
         {% if apim.ai_security.operation_mode is defined %}
