@@ -63,7 +63,10 @@ public class DefaultAPIHandler extends AbstractSynapseHandler {
             }
         }
 
-        if (isJWKSEndpoint) {
+        boolean isJWKSApiEnabled =  ServiceReferenceHolder
+                .getInstance().getAPIManagerConfiguration().getJwtConfigurationDto().isJWKSApiEnabled();
+
+        if (isJWKSEndpoint && isJWKSApiEnabled) {
             try {
                 InMemoryAPIDeployer.deployJWKSSynapseAPI(tenantDomain);
             } catch(APIManagementException e){

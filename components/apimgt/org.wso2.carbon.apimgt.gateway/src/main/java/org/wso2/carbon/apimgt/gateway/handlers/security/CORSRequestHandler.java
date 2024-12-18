@@ -178,25 +178,29 @@ public class CORSRequestHandler extends AbstractHandler implements ManagedLifecy
                     Set<Resource> acceptableResources
                             = Utils.getAcceptableResources(allAPIResources, httpMethod, corsRequestMethod);
 
-                    if (!acceptableResources.isEmpty()) {
-                        for (RESTDispatcher dispatcher : RESTUtils.getDispatchers()) {
-                            Resource resource = dispatcher.findResource(messageContext, acceptableResources);
-                            if (resource != null) {
-                                selectedResource = resource;
+                if (!acceptableResources.isEmpty()) {
+                    for (RESTDispatcher dispatcher : RESTUtils.getDispatchers()) {
+                        Resource resource = dispatcher.findResource(messageContext, acceptableResources);
+                        if (resource != null) {
+                            selectedResource = resource;
+                            if (selectedResource.getDispatcherHelper()
+                                    .getString() != null && !selectedResource.getDispatcherHelper().getString()
+                                    .contains("/*")) {
                                 break;
                             }
                         }
-                        if (selectedResource == null) {
-                            handleResourceNotFound(messageContext, Arrays.asList(allAPIResources));
-                            return false;
-                        }
                     }
-                    //If no acceptable resources are found
-                    else {
-                        //We're going to send a 405 or a 404. Run the following logic to determine which.
+                    if (selectedResource == null) {
                         handleResourceNotFound(messageContext, Arrays.asList(allAPIResources));
                         return false;
                     }
+                }
+                //If no acceptable resources are found
+                else {
+                    //We're going to send a 405 or a 404. Run the following logic to determine which.
+                    handleResourceNotFound(messageContext, Arrays.asList(allAPIResources));
+                    return false;
+                }
 
                 }
                 //No matching resource found
