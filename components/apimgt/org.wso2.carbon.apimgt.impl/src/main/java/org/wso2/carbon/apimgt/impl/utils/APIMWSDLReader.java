@@ -310,6 +310,16 @@ public class APIMWSDLReader {
         try {
             inputStream = new FileInputStream(new File(file));
             DocumentBuilderFactory factory = getSecuredDocumentBuilder();
+            // Enable secure processing
+            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+
+            // Enable namespace awareness
+            factory.setNamespaceAware(true);
+
+            // Disable external entities to prevent XXE attacks
+            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+
             DocumentBuilder builder = factory.newDocumentBuilder();
             return builder.parse(inputStream);
         } catch (ParserConfigurationException | IOException | SAXException e) {
