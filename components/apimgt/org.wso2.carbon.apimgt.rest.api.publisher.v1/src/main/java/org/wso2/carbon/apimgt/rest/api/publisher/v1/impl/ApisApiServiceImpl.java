@@ -97,7 +97,7 @@ public class ApisApiServiceImpl implements ApisApiService {
     private static final String API_PRODUCT_TYPE = "APIPRODUCT";
 
     @Override
-    public Response getAllAPIs(Integer limit, Integer offset, String sortBy, String sortOrder, String xWSO2Tenant,
+    public Response getAllAPIs(Integer limit, Integer offset, String xWSO2Tenant,
                                String query, String ifNoneMatch, String accept,
                                MessageContext messageContext) {
 
@@ -109,8 +109,6 @@ public class ApisApiServiceImpl implements ApisApiService {
         limit = limit != null ? limit : RestApiConstants.PAGINATION_LIMIT_DEFAULT;
         offset = offset != null ? offset : RestApiConstants.PAGINATION_OFFSET_DEFAULT;
         query = query == null ? "" : query;
-        sortBy = sortBy != null ? sortBy : RestApiConstants.DEFAULT_SORT_CRITERION;
-        sortOrder = sortOrder != null ? sortOrder : RestApiConstants.DESCENDING_SORT_ORDER;
         try {
 
             //revert content search back to normal search by name to avoid doc result complexity and to comply with REST api practices
@@ -132,7 +130,7 @@ public class ApisApiServiceImpl implements ApisApiService {
             }*/
             Map<String, Object> result;
 
-            result = apiProvider.searchPaginatedAPIs(query, organization, offset, limit, sortBy, sortOrder);
+            result = apiProvider.searchPaginatedAPIs(query, organization, offset, limit);
 
             Set<API> apis = (Set<API>) result.get("apis");
             allMatchedApis.addAll(apis);
