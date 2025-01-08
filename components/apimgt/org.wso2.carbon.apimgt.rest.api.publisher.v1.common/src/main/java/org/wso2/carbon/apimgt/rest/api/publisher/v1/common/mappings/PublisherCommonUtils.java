@@ -107,6 +107,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.wso2.carbon.apimgt.api.model.policy.PolicyConstants.EVENT_COUNT_TYPE;
+
 /**
  * This is a publisher rest api utility class.
  */
@@ -328,9 +330,22 @@ public class PublisherCommonUtils {
             if ((tiersFromDTO == null || tiersFromDTO.isEmpty() && !(APIConstants.CREATED.equals(originalStatus)
                     || APIConstants.PROTOTYPED.equals(originalStatus)))
                     && !apiDtoToUpdate.getAdvertiseInfo().isAdvertised()) {
-                throw new APIManagementException(
-                        "A tier should be defined if the API is not in CREATED or PROTOTYPED state",
-                        ExceptionCodes.TIER_CANNOT_BE_NULL);
+                Set<Tier> availableThrottlingPolicyList = apiProvider.getTiers();
+                tiersFromDTO = new ArrayList<>();
+                for (Tier tier : availableThrottlingPolicyList) {
+                    if ((isAsyncAPI && EVENT_COUNT_TYPE.equals(tier.getQuotaPolicyType())) ||
+                            (!isAsyncAPI && !EVENT_COUNT_TYPE.equals(tier.getQuotaPolicyType()))) {
+                        tiersFromDTO.add(tier.getName());
+                        break;
+                    }
+                }
+                apiDtoToUpdate.setPolicies(tiersFromDTO);
+
+                if (tiersFromDTO.isEmpty()) {
+                    throw new APIManagementException(
+                            "A tier should be defined if the API is not in CREATED or PROTOTYPED state",
+                            ExceptionCodes.TIER_CANNOT_BE_NULL);
+                }
             }
         }
 
