@@ -223,14 +223,14 @@ public class SettingsDTO   {
   }
 
   /**
-   * Is Retry Call With New OAuth Token Enabled
+   * Is Retry Call With New OAuth Token Enabled 
    **/
   public SettingsDTO retryCallWithNewOAuthTokenEnabled(Boolean retryCallWithNewOAuthTokenEnabled) {
     this.retryCallWithNewOAuthTokenEnabled = retryCallWithNewOAuthTokenEnabled;
     return this;
   }
 
-
+  
   @ApiModelProperty(example = "true", value = "Is Retry Call With New OAuth Token Enabled ")
   @JsonProperty("retryCallWithNewOAuthTokenEnabled")
   public Boolean isRetryCallWithNewOAuthTokenEnabled() {
