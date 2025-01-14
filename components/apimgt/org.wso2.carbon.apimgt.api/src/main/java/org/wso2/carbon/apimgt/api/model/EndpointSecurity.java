@@ -46,6 +46,12 @@ public class EndpointSecurity {
 
     private ProxyConfigs proxyConfigs;
 
+    private int connectionTimeoutDuration = -1;
+
+    private int connectionRequestTimeoutDuration = -1;
+
+    private int socketTimeoutDuration = -1;
+
     public EndpointSecurity(EndpointSecurity endpointSecurity) {
 
         this.uniqueIdentifier = endpointSecurity.uniqueIdentifier;
@@ -60,6 +66,9 @@ public class EndpointSecurity {
         this.customParameters = endpointSecurity.customParameters;
         this.additionalProperties = endpointSecurity.additionalProperties;
         this.proxyConfigs = endpointSecurity.proxyConfigs;
+        this.connectionTimeoutDuration = endpointSecurity.connectionTimeoutDuration;
+        this.connectionRequestTimeoutDuration = endpointSecurity.connectionRequestTimeoutDuration;
+        this.socketTimeoutDuration = endpointSecurity.socketTimeoutDuration;
     }
 
     public ProxyConfigs getProxyConfigs() {
@@ -184,6 +193,30 @@ public class EndpointSecurity {
         this.additionalProperties = additionalProperties;
     }
 
+    public int getConnectionTimeoutDuration() {
+        return connectionTimeoutDuration;
+    }
+
+    public void setConnectionTimeoutDuration(int connectionTimeoutDuration) {
+        this.connectionTimeoutDuration = connectionTimeoutDuration;
+    }
+
+    public int getConnectionRequestTimeoutDuration() {
+        return connectionRequestTimeoutDuration;
+    }
+
+    public void setConnectionRequestTimeoutDuration(int connectionRequestTimeoutDuration) {
+        this.connectionRequestTimeoutDuration = connectionRequestTimeoutDuration;
+    }
+
+    public int getSocketTimeoutDuration() {
+        return socketTimeoutDuration;
+    }
+
+    public void setSocketTimeoutDuration(int socketTimeoutDuration) {
+        this.socketTimeoutDuration = socketTimeoutDuration;
+    }
+
     public static class ProxyConfigs {
         private boolean proxyEnabled;
         private String proxyHost;
@@ -244,10 +277,21 @@ public class EndpointSecurity {
     @Override
     public String toString() {
 
-        return "EndpointSecurity{" + "uniqueIdentifier='" + uniqueIdentifier + '\'' + ", password='" + password + '\''
-                + ", type='" + type + '\'' + ", enabled=" + enabled + ", username='" + username + '\'' + ", grantType='"
-                + grantType + '\'' + ", tokenUrl='" + tokenUrl + '\'' + ", clientId='" + clientId + '\''
-                + ", clientSecret='" + clientSecret + '\'' + ", customParameters='" + customParameters + '\''
-                + ", additionalProperties=" + additionalProperties + '}';
+        return "EndpointSecurity{" +
+                "uniqueIdentifier='" + uniqueIdentifier + '\'' +
+                ", password='" + password + '\'' +
+                ", type='" + type + '\'' +
+                ", enabled=" + enabled +
+                ", username='" + username + '\'' +
+                ", grantType='" + grantType + '\'' +
+                ", tokenUrl='" + tokenUrl + '\'' +
+                ", clientId='" + clientId + '\'' +
+                ", clientSecret='" + clientSecret + '\'' +
+                ", customParameters='" + customParameters + '\'' +
+                ", additionalProperties=" + additionalProperties +
+                ", connectionTimeoutDuration=" + connectionTimeoutDuration +
+                ", connectionRequestTimeoutDuration=" + connectionRequestTimeoutDuration +
+                ", socketTimeoutDuration=" + socketTimeoutDuration +
+                '}';
     }
 }
