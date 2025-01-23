@@ -52,8 +52,6 @@ public class EndpointSecurity {
 
     private int socketTimeoutDuration = -1;
 
-    private ProxyConfigs proxyConfigs;
-
     public EndpointSecurity(EndpointSecurity endpointSecurity) {
 
         this.uniqueIdentifier = endpointSecurity.uniqueIdentifier;
@@ -71,7 +69,6 @@ public class EndpointSecurity {
         this.connectionTimeoutDuration = endpointSecurity.connectionTimeoutDuration;
         this.connectionRequestTimeoutDuration = endpointSecurity.connectionRequestTimeoutDuration;
         this.socketTimeoutDuration = endpointSecurity.socketTimeoutDuration;
-        this.proxyConfigs = endpointSecurity.proxyConfigs;
     }
 
     public ProxyConfigs getProxyConfigs() {
@@ -84,13 +81,6 @@ public class EndpointSecurity {
 
     public EndpointSecurity() {
 
-    }
-    public ProxyConfigs getProxyConfigs() {
-        return proxyConfigs;
-    }
-
-    public void setProxyConfigs(ProxyConfigs proxyConfigs) {
-        this.proxyConfigs = proxyConfigs;
     }
 
     public String getUniqueIdentifier() {
