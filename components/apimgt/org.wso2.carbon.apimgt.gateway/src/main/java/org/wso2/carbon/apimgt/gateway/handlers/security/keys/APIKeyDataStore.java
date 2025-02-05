@@ -96,6 +96,18 @@ public interface APIKeyDataStore {
     APIKeyValidationInfoDTO validateSubscription(String context, String version, String consumerKey,
                                                  String tenantDomain, String keyManager)
             throws APISecurityException;
+    /**
+     * Validate API subscriptions.
+     *
+     * @param context Context of an API
+     * @param version A valid version of the API
+     * @param appId ApplicationId
+     * @param tenantDomain  Tenant domain
+     * @return an APIKeyValidationInfoDTO instance containing key validation data
+     * @throws org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityException on error
+     */
+    APIKeyValidationInfoDTO validateSubscription(String context, String version, int appId, String tenantDomain)
+            throws APISecurityException;
 
     /**
      * Validate API subscriptions.
