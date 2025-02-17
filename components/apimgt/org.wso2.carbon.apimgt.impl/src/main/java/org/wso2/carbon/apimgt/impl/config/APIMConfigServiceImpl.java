@@ -194,6 +194,9 @@ public class APIMConfigServiceImpl implements APIMConfigService {
         String[] scopesToCheck = {
                 "apim:admin_tier_view",
                 "apim:admin_tier_manage",
+                "apim:api_provider_change",
+                "apim:gateway_policy_manage",
+                "apim:gateway_policy_view",
                 "apim:keymanagers_manage",
                 "apim:api_category"
             };
