@@ -48,7 +48,9 @@ import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Config Service Implementation for retrieve configurations.
@@ -190,18 +192,18 @@ public class APIMConfigServiceImpl implements APIMConfigService {
         if (systemConfig == null) {
             return null;
         }
+
         // List of newly introduced scopes
-        String[] scopesToCheck = {
-                "apim:admin_tier_view",
-                "apim:admin_tier_manage",
-                "apim:api_provider_change",
-                "apim:gateway_policy_manage",
-                "apim:gateway_policy_view",
-                "apim:keymanagers_manage",
-                "apim:api_category"
-            };
+        Map<String, String> scopesToCheck = new HashMap<>();
+        scopesToCheck.put("apim:admin_tier_view", "admin");
+        scopesToCheck.put("apim:admin_tier_manage", "admin");
+        scopesToCheck.put("apim:keymanagers_manage", "admin");
+        scopesToCheck.put("apim:api_category", "admin");
+        scopesToCheck.put("apim:api_provider_change", "admin");
+        scopesToCheck.put("apim:gateway_policy_manage", "admin");
+        scopesToCheck.put("apim:gateway_policy_view", "admin,Internal/creator,Internal/publisher,Internal/observer");
         
-        ArrayList<String> missingScopesList = new ArrayList<>(Arrays.asList(scopesToCheck));
+        ArrayList<String> missingScopesList = new ArrayList<>(scopesToCheck.keySet());
         
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(systemConfig).getAsJsonObject();
@@ -230,7 +232,7 @@ public class APIMConfigServiceImpl implements APIMConfigService {
         for (String missingScope : missingScopesList) {
             JsonObject newScope = new JsonObject();
             newScope.addProperty("Name", missingScope);
-            newScope.addProperty("Roles", "admin");
+            newScope.addProperty("Roles", scopesToCheck.get(missingScope));
             scopeArray.add(newScope);
         }
               
