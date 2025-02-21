@@ -81,6 +81,7 @@ import org.wso2.carbon.apimgt.api.model.Label;
 import org.wso2.carbon.apimgt.api.model.LifeCycleEvent;
 import org.wso2.carbon.apimgt.api.model.OperationPolicy;
 import org.wso2.carbon.apimgt.api.model.OrganizationInfo;
+import org.wso2.carbon.apimgt.api.model.OrganizationTiers;
 import org.wso2.carbon.apimgt.api.model.ResourceFile;
 import org.wso2.carbon.apimgt.api.model.SOAPToRestSequence;
 import org.wso2.carbon.apimgt.api.model.ServiceEntry;
@@ -270,6 +271,14 @@ public class PublisherCommonUtils {
                 visibleOrgs = visibleOrgs + "," + orginfo.getOrganizationId();
                 apiToUpdate.setVisibleOrganizations(visibleOrgs);
             }
+            OrganizationTiers parentOrgTiers = new OrganizationTiers(orginfo.getOrganizationId(),
+                    apiToUpdate.getAvailableTiers());
+            Set<OrganizationTiers> currentOrganizationTiers = apiToUpdate.getAvailableTiersForOrganizations();
+            if (currentOrganizationTiers == null) {
+                currentOrganizationTiers = new HashSet<>();
+            }
+            currentOrganizationTiers.add(parentOrgTiers);
+            apiToUpdate.setAvailableTiersForOrganizations(currentOrganizationTiers);
         }
         
         apiProvider.updateAPI(apiToUpdate, originalAPI);
@@ -281,6 +290,13 @@ public class PublisherCommonUtils {
             String visibleOrgs = StringUtils.join(orgList, ',');
             apiUpdated.setVisibleOrganizations(visibleOrgs);
         }
+        // Remove parentOrgTiers from OrganizationTiers list
+        Set<OrganizationTiers> updatedOrganizationTiers = apiUpdated.getAvailableTiersForOrganizations();
+        if (updatedOrganizationTiers != null) {
+            updatedOrganizationTiers.removeIf(tier -> tier.getOrganizationID().equals(orginfo.getOrganizationId()));
+            apiUpdated.setAvailableTiersForOrganizations(updatedOrganizationTiers);
+        }
+
         if (apiUpdated != null && !StringUtils.isEmpty(apiUpdated.getEndpointConfig())) {
             JsonObject endpointConfig = JsonParser.parseString(apiUpdated.getEndpointConfig()).getAsJsonObject();
             if (!APIConstants.ENDPOINT_TYPE_SEQUENCE.equals(
@@ -576,24 +592,28 @@ public class PublisherCommonUtils {
                         ExceptionCodes.TIER_NAME_INVALID);
             }
         }
+
+        boolean isSubscriptionValidationDisablingEnabled
+                = tiersFromDTO.contains(APIConstants.DEFAULT_SUB_POLICY_SUBSCRIPTIONLESS)
+                || tiersFromDTO.contains(APIConstants.DEFAULT_SUB_POLICY_ASYNC_SUBSCRIPTIONLESS);
         // Organization based subscription policies
         if (APIUtil.isOrganizationAccessControlEnabled()) {
             for (OrganizationPoliciesDTO organizationPoliciesDTO : organizationPoliciesDTOs) {
                 List<String> organizationTiersFromDTO = organizationPoliciesDTO.getPolicies();
-
-                // Remove the subscriptionless tier if other tiers are available.
-                if (organizationTiersFromDTO != null && organizationTiersFromDTO.size() > 1) {
-                    String tierToDrop = null;
-                    for (String tier : organizationTiersFromDTO) {
-                        if (tier.contains(APIConstants.DEFAULT_SUB_POLICY_SUBSCRIPTIONLESS)) {
-                            tierToDrop = tier;
-                            break;
-                        }
-                    }
-                    if (tierToDrop != null) {
-                        organizationTiersFromDTO.remove(tierToDrop);
-                        organizationPoliciesDTO.setPolicies(tiersFromDTO);
-                    }
+                if (isSubscriptionValidationDisablingEnabled) {
+                    /* If subscription validation is disabled for root organization
+                    it should be disabled for shared organizations */
+                    organizationTiersFromDTO = tiersFromDTO;
+                    organizationPoliciesDTO.setPolicies(organizationTiersFromDTO);
+                } else if (organizationTiersFromDTO.contains(APIConstants.DEFAULT_SUB_POLICY_SUBSCRIPTIONLESS)
+                        || organizationTiersFromDTO.contains(APIConstants.DEFAULT_SUB_POLICY_ASYNC_SUBSCRIPTIONLESS)) {
+                    /* If subscription validation is enabled for root organization
+                    it should not be disabled for shared organizations */
+                    organizationTiersFromDTO = tiersFromDTO;
+                    organizationPoliciesDTO.setPolicies(organizationTiersFromDTO);
+                    log.warn("Subscription validation can not be disabled for the organization with ID: "
+                            + organizationPoliciesDTO.getOrganizationID()
+                            + ". Therefore root organization subscription policies will be assigned.");
                 }
                 boolean conditionForOrganization = (
                         (organizationTiersFromDTO == null || organizationTiersFromDTO.isEmpty() && !(
@@ -611,15 +631,9 @@ public class PublisherCommonUtils {
                             throw new APIManagementException("A tier should be defined if the API is not in CREATED "
                                     + "or PROTOTYPED state", ExceptionCodes.TIER_CANNOT_BE_NULL);
                         } else if (apiSecurity.contains(APIConstants.DEFAULT_API_SECURITY_OAUTH2)) {
-                            // Internally set the default tier when no tiers are defined in order to support
-                            // subscription validation disabling for OAuth2 secured APIs
+                            // Use the root organization tiers if no tiers are set
                             if (organizationTiersFromDTO != null && organizationTiersFromDTO.isEmpty()) {
-                                if (isAsyncAPI) {
-                                    organizationTiersFromDTO.add(
-                                            APIConstants.DEFAULT_SUB_POLICY_ASYNC_SUBSCRIPTIONLESS);
-                                } else {
-                                    organizationTiersFromDTO.add(APIConstants.DEFAULT_SUB_POLICY_SUBSCRIPTIONLESS);
-                                }
+                                organizationTiersFromDTO = tiersFromDTO;
                                 organizationPoliciesDTO.setPolicies(organizationTiersFromDTO);
                             }
                         }
@@ -633,6 +647,7 @@ public class PublisherCommonUtils {
                     }
                 }
             }
+            apiDtoToUpdate.setOrganizationPolicies(organizationPoliciesDTOs);
         }
 
         if (apiDtoToUpdate.getAccessControlRoles() != null) {
@@ -1486,7 +1501,7 @@ public class PublisherCommonUtils {
             if (!StringUtils.isEmpty(visibleOrgs) && APIConstants.VISIBLE_ORG_ALL.equals(visibleOrgs)) {
                 // IF visibility is all
                 apiToAdd.setVisibleOrganizations(APIConstants.VISIBLE_ORG_ALL);
-            } else if (StringUtils.isEmpty(visibleOrgs) && APIConstants.VISIBLE_ORG_NONE.equals(visibleOrgs)) {
+            } else if (StringUtils.isEmpty(visibleOrgs) || APIConstants.VISIBLE_ORG_NONE.equals(visibleOrgs)) {
                 // IF visibility is none 
                 apiToAdd.setVisibleOrganizations(orgInfo.getOrganizationId()); // set to current org
             } else {
@@ -1494,6 +1509,17 @@ public class PublisherCommonUtils {
                 visibleOrgs = visibleOrgs + "," + orgInfo.getOrganizationId();
                 apiToAdd.setVisibleOrganizations(visibleOrgs);
             }
+            OrganizationTiers parentOrgTiers = new OrganizationTiers(orgInfo.getOrganizationId(),
+                    apiToAdd.getAvailableTiers());
+            Set<OrganizationTiers> currentOrganizationTiers = apiToAdd.getAvailableTiersForOrganizations();
+            if (currentOrganizationTiers == null) {
+                currentOrganizationTiers = new HashSet<>();
+            }
+            currentOrganizationTiers.add(parentOrgTiers);
+            apiToAdd.setAvailableTiersForOrganizations(currentOrganizationTiers);
+        } else {
+            // Set the visibility to tenant domain if user does not belong to an organization.
+            apiToAdd.setVisibleOrganizations(organization);
         }
 
         //adding the api
@@ -1506,6 +1532,12 @@ public class PublisherCommonUtils {
         }
         apiProvider.addAPI(apiToAdd);
         checkGovernanceComplianceAsync(apiToAdd.getUuid(), APIMGovernableState.API_CREATE, artifactType, organization);
+        // Remove parentOrgTiers from OrganizationTiers list
+        Set<OrganizationTiers> updatedOrganizationTiers = apiToAdd.getAvailableTiersForOrganizations();
+        if (updatedOrganizationTiers != null) {
+            updatedOrganizationTiers.removeIf(tier -> tier.getOrganizationID().equals(orgInfo.getOrganizationId()));
+            apiToAdd.setAvailableTiersForOrganizations(updatedOrganizationTiers);
+        }
         return apiToAdd;
     }
 
@@ -2280,6 +2312,10 @@ public class PublisherCommonUtils {
 
         SwaggerData swaggerData = new SwaggerData(existingAPI);
         String updatedApiDefinition = oasParser.populateCustomManagementInfo(apiDefinition, swaggerData);
+
+        //Validate API with Federated Gateway before persisting to registry
+        APIUtil.validateApiWithFederatedGateway(existingAPI);
+
         apiProvider.saveSwaggerDefinition(existingAPI, updatedApiDefinition, organization);
         existingAPI.setSwaggerDefinition(updatedApiDefinition);
     }
@@ -3491,6 +3527,18 @@ public class PublisherCommonUtils {
         return errorPropertyNames;
     }
 
+    /**
+     * This method is used to check governance compliance synchronously.
+     *
+     * @param artifactID             API ID
+     * @param state                  API state
+     * @param type                   API type
+     * @param organization           Organization of the logged-in user
+     * @param revisionId             Revision ID
+     * @param artifactProjectContent Content of the artifact project
+     * @return Map of compliance violations
+     * @throws APIManagementException If an error occurs while checking governance compliance
+     */
     public static Map<String, String> checkGovernanceComplianceSync(String artifactID, APIMGovernableState state,
                                                                     ArtifactType type, String organization,
                                                                     String revisionId, Map<RuleType,
@@ -3512,18 +3560,26 @@ public class PublisherCommonUtils {
                 }
             }
         } catch (APIMGovernanceException e) {
-            log.error("Error occurred while executing governance for API " + artifactID, e);
+            log.error("Error occurred while executing governance compliance validation for API " + artifactID, e);
         }
         return responseMap;
     }
 
+    /**
+     * Check governance compliance for the API artifact asynchronously.
+     *
+     * @param artifactID   API ID
+     * @param state        API state
+     * @param type         API type
+     * @param organization Organization of the logged-in user
+     */
     public static void checkGovernanceComplianceAsync(String artifactID, APIMGovernableState state, ArtifactType type,
                                                       String organization) {
         CompletableFuture.runAsync(() -> {
             try {
                 apimGovernanceService.evaluateComplianceAsync(artifactID, type, state, organization);
             } catch (APIMGovernanceException e) {
-                log.error("Error occurred while scheduling governance validation for " + artifactID, e);
+                log.error("Error occurred while scheduling governance compliance validation for " + artifactID, e);
             }
         });
     }
@@ -3536,7 +3592,7 @@ public class PublisherCommonUtils {
      * @return Map of compliance violations
      */
     public static String checkGovernanceComplianceDryRun(InputStream fileInputStream,
-                                                         String organization) {
+                                                         String organization) throws APIComplianceException {
 
         try {
             byte[] fileBytes = IOUtils.toByteArray(fileInputStream);
@@ -3545,11 +3601,12 @@ public class PublisherCommonUtils {
                     .evaluateComplianceDryRunSync(ArtifactType.API, fileBytes, organization);
             return ArtifactComplianceDryRunInfo.toJson(dryRunResults);
         } catch (APIMGovernanceException e) {
-            log.error("Error occurred while executing governance for API in dry run mode", e);
+            throw new APIComplianceException("Error occurred while executing governance compliance validation in dry " +
+                    "run mode: " + e.getMessage(), ExceptionCodes.ERROR_WHILE_EXECUTING_COMPLIANCE_DRY_RUN);
         } catch (IOException e) {
-            log.error("Error occurred while reading the input stream ", e);
+            throw new APIComplianceException("Error occurred while reading the input stream: " + e.getMessage(),
+                    ExceptionCodes.ERROR_WHILE_EXECUTING_COMPLIANCE_DRY_RUN);
         }
-        return null;
     }
 
     /**
@@ -3602,6 +3659,14 @@ public class PublisherCommonUtils {
         return violationDetails;
     }
 
+    /**
+     * Execute governance on label attach.
+     *
+     * @param labels       List of label Ids
+     * @param artifactType Type of the artifact
+     * @param artifactId   Id of the artifact
+     * @param organization Organization of the logged-in user
+     */
     public static void executeGovernanceOnLabelAttach(List<Label> labels, String artifactType, String artifactId,
                                                       String organization) {
         List<String> labelsIdList = new ArrayList<>();
@@ -3616,16 +3681,13 @@ public class PublisherCommonUtils {
         }
     }
 
-    public static void deleteGovernanceDataOnLabelDelete(List<Label> label, String organization) {
-        try {
-            for (Label labelId : label) {
-                apimGovernanceService.deleteGovernanceDataForLabel(labelId.getLabelId(), organization);
-            }
-        } catch (APIMGovernanceException e) {
-            log.info("Error occurred while deleting governance data on deletion of label " + label, e);
-        }
-    }
-
+    /**
+     * Clear governance data on deletion of an artifact.
+     *
+     * @param artifactId   Id of the artifact
+     * @param artifactType Type of the artifact
+     * @param organization Organization of the logged-in user
+     */
     public static void clearArtifactComplianceInfo(String artifactId, String artifactType, String organization) {
         try {
             apimGovernanceService.clearArtifactComplianceInfo(artifactId, ArtifactType.fromString(artifactType),
