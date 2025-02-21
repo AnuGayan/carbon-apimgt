@@ -617,10 +617,11 @@ public class ComplianceManager {
                     }
 
                     // Send target content and ruleset for validation
-                    List<RuleViolation> ruleViolations = validationEngine.validate(
-                            contentToValidate, ruleset);
+                    List<RuleViolation> ruleViolations = validationEngine.validate(contentToValidate, ruleset);
 
-                    artifactComplianceDryRunInfo.addRuleViolationsForRuleset(policy, rulesetInfo, ruleViolations);
+                    if (!ruleViolations.isEmpty()) {
+                        artifactComplianceDryRunInfo.addRuleViolationsForRuleset(policy, rulesetInfo, ruleViolations);
+                    }
 
                 } else {
                     if (log.isDebugEnabled()) {
