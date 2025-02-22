@@ -276,7 +276,7 @@ public class SQLConstants {
             "WHERE REQ_ID = ?";
 
     public static final String UPDATE_GOV_REQ_STATUS_TO_PROCESSING = "UPDATE GOV_REQUEST " +
-            "SET STATUS = 'PROCESSING', PROCESSING_TIMESTAMP = ? WHERE REQ_ID = ?" +
+            "SET STATUS = 'PROCESSING', PROCESSING_TIMESTAMP = ? WHERE REQ_ID = ? " +
             "AND STATUS = 'PENDING'";
 
     public static final String DELETE_GOV_REQ = "DELETE FROM GOV_REQUEST" +
