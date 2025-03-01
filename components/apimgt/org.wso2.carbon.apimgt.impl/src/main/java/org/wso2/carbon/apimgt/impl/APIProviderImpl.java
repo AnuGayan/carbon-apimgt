@@ -1314,7 +1314,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                                         EndpointSecurity.class);
                                 if (endpointSecurity.isEnabled() && oldEndpointSecurity.isEnabled() &&
                                         StringUtils.isBlank(endpointSecurity.getPassword())) {
-                                    endpointSecurity.setUsername(oldEndpointSecurity.getUsername());
                                     endpointSecurity.setPassword(oldEndpointSecurity.getPassword());
                                     if (StringUtils.isBlank(endpointSecurity.getType())) {
                                         ErrorHandler errorHandler = ExceptionCodes.from(
@@ -1362,7 +1361,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                                                 EndpointSecurity.class);
                                 if (endpointSecurity.isEnabled() && oldEndpointSecurity.isEnabled() &&
                                         StringUtils.isBlank(endpointSecurity.getPassword())) {
-                                    endpointSecurity.setUsername(oldEndpointSecurity.getUsername());
                                     endpointSecurity.setPassword(oldEndpointSecurity.getPassword());
                                     if (StringUtils.isBlank(endpointSecurity.getType())) {
                                         ErrorHandler errorHandler = ExceptionCodes.from(
@@ -2514,6 +2512,27 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
             }
         } catch (DocumentationPersistenceException e) {
             handleException("Failed to search documentation for name " + docName, e);
+        }
+        return exist;
+    }
+
+    @Override
+    public boolean isAnotherOverviewDocumentationExist(String uuid, String documentId, String docOtherTypeName, String organization) throws APIManagementException {
+        boolean exist = false;
+        UserContext ctx = null;
+        try {
+            DocumentSearchResult result = apiPersistenceInstance.searchDocumentation(new Organization(organization), uuid, 0, 0,
+                    "other:_overview", ctx);
+            if (result != null && result.getDocumentationList() != null && !result.getDocumentationList().isEmpty()) {
+                String returnDocOtherTypeName = result.getDocumentationList().get(0).getOtherTypeName();
+                String returnDocId = result.getDocumentationList().get(0).getId();
+                if ((documentId == null || !documentId.equals(returnDocId))
+                        && returnDocOtherTypeName != null && returnDocOtherTypeName.equals(docOtherTypeName)) {
+                    exist = true;
+                }
+            }
+        } catch (DocumentationPersistenceException e) {
+            handleException("Failed to search documentation for other type name " + docOtherTypeName, e);
         }
         return exist;
     }
@@ -5810,13 +5829,15 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
             PublisherAPI publisherAPI = apiPersistenceInstance.getPublisherAPI(org, uuid);
             if (publisherAPI != null) {
                 API api = APIMapper.INSTANCE.toApi(publisherAPI);
-                checkAccessControlPermission(userNameWithoutChange, api.getAccessControl(), api.getAccessControlRoles());
+                checkAccessControlPermission(userNameWithoutChange, api.getAccessControl(),
+                        api.getAccessControlRoles());
                 // populate relevant external info environment
                 List<Environment> environments = null;
                 if (api.getEnvironments() != null) {
                     environments = APIUtil.getEnvironmentsOfAPI(api);
                 }
-                api.setEnvironments(APIUtil.extractEnvironmentsForAPI(environments, organization, userNameWithoutChange));
+                api.setEnvironments(APIUtil.extractEnvironmentsForAPI(environments, organization,
+                        userNameWithoutChange));
                 //CORS . if null is returned, set default config from the configuration
                 if (api.getCorsConfiguration() == null) {
                     api.setCorsConfiguration(APIUtil.getDefaultCorsConfiguration());
