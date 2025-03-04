@@ -98,9 +98,8 @@ public class SynapseArtifactGenerator implements GatewayArtifactGenerator {
                                 apiProductDTO.setId(runTimeArtifact.getApiId());
                                 APIProduct apiProduct = APIMappingUtil.fromDTOtoAPIProduct(apiProductDTO,
                                         apiProductDTO.getProvider());
-                                APIDefinitionValidationResponse apiDefinitionValidationResponse =
-                                        ImportUtils.retrieveValidatedSwaggerDefinitionFromArchive(extractedFolderPath);
-                                apiProduct.setDefinition(apiDefinitionValidationResponse.getContent());
+                                String openApiDefinition = ImportUtils.loadSwaggerFile(extractedFolderPath);
+                                apiProduct.setDefinition(openApiDefinition);
                                 gatewayAPIDTO = TemplateBuilderUtil.retrieveGatewayAPIDto(apiProduct, environment,
                                         tenantDomain, extractedFolderPath);
                             } else {
@@ -113,11 +112,7 @@ public class SynapseArtifactGenerator implements GatewayArtifactGenerator {
                                     String apiDefinition = parser.generateAPIDefinition(swaggerData);
                                     api.setSwaggerDefinition(apiDefinition);
                                     GraphqlComplexityInfo graphqlComplexityInfo = APIUtil.getComplexityDetails(api);
-                                    GraphQLValidationResponseDTO graphqlSchemaGraphQLValidationResponseDTO =
-                                            ImportUtils.retrieveValidatedGraphqlSchemaFromArchive(extractedFolderPath);
-                                    String graphqlSchema =
-                                            graphqlSchemaGraphQLValidationResponseDTO.getGraphQLInfo()
-                                                    .getGraphQLSchema().getSchemaDefinition();
+                                    String graphqlSchema = ImportUtils.loadGraphqlSDLFile(extractedFolderPath);
                                     api.setGraphQLSchema(graphqlSchema);
                                     GraphQLSchemaDefinition graphQLSchemaDefinition = new GraphQLSchemaDefinition();
                                     graphqlSchema = graphQLSchemaDefinition.buildSchemaWithAdditionalInfo(api,
@@ -131,20 +126,18 @@ public class SynapseArtifactGenerator implements GatewayArtifactGenerator {
                                                 || APIConstants.API_TYPE_SOAPTOREST.equals(api.getType())
                                                 || APIConstants.APITransportType.WEBHOOK.toString()
                                                         .equals(api.getType()))) {
-                                    APIDefinitionValidationResponse apiDefinitionValidationResponse = ImportUtils
-                                            .retrieveValidatedSwaggerDefinitionFromArchive(extractedFolderPath);
-                                    api.setSwaggerDefinition(apiDefinitionValidationResponse.getContent());
+                                    String openApiDefinition = ImportUtils.loadSwaggerFile(extractedFolderPath);
+                                    api.setSwaggerDefinition(openApiDefinition);
                                     gatewayAPIDTO = TemplateBuilderUtil.retrieveGatewayAPIDto(api, environment,
-                                            tenantDomain, apidto, extractedFolderPath, apiDefinitionValidationResponse);
+                                            tenantDomain, apidto, extractedFolderPath, openApiDefinition);
                                 } else if (api.getType() != null &&
                                         (APIConstants.APITransportType.WS.toString().equals(api.getType()) ||
                                                 APIConstants.APITransportType.SSE.toString().equals(api.getType()) ||
                                                 APIConstants.APITransportType.WEBSUB.toString()
                                                         .equals(api.getType()))) {
-                                    APIDefinitionValidationResponse asyncApiDefinition =
-                                            ImportUtils.retrieveValidatedAsyncApiDefinitionFromArchive(
-                                                    extractedFolderPath);
-                                    api.setAsyncApiDefinition(asyncApiDefinition.getContent());
+                                    String asyncApiDefinition =
+                                            ImportUtils.loadAsyncApiDefinitionFromFile(extractedFolderPath);
+                                    api.setAsyncApiDefinition(asyncApiDefinition);
                                     gatewayAPIDTO = TemplateBuilderUtil.retrieveGatewayAPIDtoForStreamingAPI(api,
                                             environment, tenantDomain, apidto, extractedFolderPath);
                                 }
