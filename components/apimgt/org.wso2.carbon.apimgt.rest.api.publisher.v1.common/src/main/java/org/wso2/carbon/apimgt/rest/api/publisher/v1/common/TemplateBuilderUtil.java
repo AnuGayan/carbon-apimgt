@@ -495,7 +495,7 @@ public class TemplateBuilderUtil {
     public static GatewayAPIDTO retrieveGatewayAPIDto(API api, Environment environment, String tenantDomain,
                                                       APIDTO apidto, String extractedFolderPath,
                                                       String apiDefinition)
-            throws APIManagementException, XMLStreamException, APITemplateException, CertificateManagementException {
+            throws APIManagementException, XMLStreamException, APITemplateException {
 
             APIDefinition parser = OASParserUtil.getOASParser(apiDefinition);
             if (parser != null) {
