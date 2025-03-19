@@ -1510,11 +1510,14 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
             boolean updatePolicyMapping) throws APIManagementException {
 
         boolean policyUpdated = false;
-        for (OperationPolicy policy : api.getApiPolicies()) {
-            if (policy.getPolicyId() == null) {
-                if (clonedPoliciesMap.containsKey(policy.getPolicyName())) {
-                    policy.setPolicyId(clonedPoliciesMap.get(policy.getPolicyName()));
-                    policyUpdated = true;
+        List<OperationPolicy> apiPolicies = api.getApiPolicies();
+        if (apiPolicies != null && !apiPolicies.isEmpty()) {
+            for (OperationPolicy policy : api.getApiPolicies()) {
+                if (policy.getPolicyId() == null) {
+                    if (clonedPoliciesMap.containsKey(policy.getPolicyName())) {
+                        policy.setPolicyId(clonedPoliciesMap.get(policy.getPolicyName()));
+                        policyUpdated = true;
+                    }
                 }
             }
         }
