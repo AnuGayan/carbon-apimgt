@@ -240,6 +240,9 @@ public class ApplicationsApiServiceImpl implements ApplicationsApiService {
             if (applicationDTO.getGroups() != null && applicationDTO.getGroups().size() > 0) {
                 ImportUtils.validateOwner(username, applicationGroupId, apiConsumer);
             }
+            // This is to handle if the subscriber hasn't logged into the APIM Devportal
+            // and not available in the AM_SUBSCRIBER table
+            ImportUtils.validateSubscriber(ownerId, applicationGroupId, apiConsumer);
 
             String organization = RestApiUtil.getValidatedOrganization(messageContext);
 
