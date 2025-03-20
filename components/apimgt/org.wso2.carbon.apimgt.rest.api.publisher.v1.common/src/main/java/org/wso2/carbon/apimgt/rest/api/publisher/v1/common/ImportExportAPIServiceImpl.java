@@ -101,7 +101,7 @@ public class ImportExportAPIServiceImpl implements ImportExportAPI {
                     ExceptionCodes.from(ExceptionCodes.API_REVISION_NOT_FOUND, revisionNum));
         }
 
-        api = apiProvider.getAPIbyUUID(exportAPIUUID, organization);
+        api = apiProvider.getAPIbyUUID(apiId, organization);
         apiDtoToReturn = APIMappingUtil.fromAPItoDTO(api, preserveCredentials, apiProvider);
         String[] tokenScopes = {"apim:api_view", "apim:api_create"};
         try {
@@ -111,6 +111,7 @@ public class ImportExportAPIServiceImpl implements ImportExportAPI {
             throw new APIImportExportException(errorMessage, e);
         }
         api = apiProvider.getAPIbyUUID(exportAPIUUID, organization);
+        apiDtoToReturn = APIMappingUtil.fromAPItoDTO(api, preserveCredentials, apiProvider);
         apiIdentifier = api.getId();
         apiIdentifier.setUuid(exportAPIUUID);
         return ExportUtils.exportApi(apiProvider, apiIdentifier, apiDtoToReturn, api, userName, format, preserveStatus,
