@@ -39,6 +39,7 @@ public class ApiCategoriesApiServiceImpl implements ApiCategoriesApiService {
     private static final Log log = LogFactory.getLog(ApiCategoriesApiServiceImpl.class);
     
     public Response getAllAPICategories(MessageContext messageContext) {
+
           try {
               String tenantDomain = RestApiCommonUtil.getLoggedInUserTenantDomain();
               List<APICategory> categoryList = APIUtil.getAllAPICategoriesOfOrganization(tenantDomain);

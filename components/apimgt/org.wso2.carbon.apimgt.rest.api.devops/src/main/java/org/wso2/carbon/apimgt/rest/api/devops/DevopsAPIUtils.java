@@ -40,7 +40,6 @@ public class DevopsAPIUtils {
 
     public static final String[] CORRELATION_DEFAULT_COMPONENTS = { "http", "ldap", "jdbc", "synapse", "method-calls" };
 
-
     public static boolean validateLogLevel(String logLevel) {
 
         return (APIConstants.APILogHandler.OFF.equalsIgnoreCase(logLevel)
@@ -74,6 +73,7 @@ public class DevopsAPIUtils {
      */
     public static boolean validateCorrelationComponentList(CorrelationComponentsListDTO correlationComponentsListDTO)
             throws APIManagementException {
+
         for (CorrelationComponentDTO component : correlationComponentsListDTO.getComponents()) {
             String componentName = component.getName();
             String enabled = component.getEnabled();
@@ -92,41 +92,35 @@ public class DevopsAPIUtils {
         return true;
     }
 
-
     public static CorrelationComponentsListDTO getCorrelationComponentsList(
             List<CorrelationConfigDTO> correlationConfigDTOList) {
+
         CorrelationComponentsListDTO correlationComponentsListDTO = new CorrelationComponentsListDTO();
         List<CorrelationComponentDTO> correlationComponentDTOList = new ArrayList<>();
-
         for (CorrelationConfigDTO correlationConfigDTO: correlationConfigDTOList) {
             CorrelationComponentDTO correlationComponentDTO = new CorrelationComponentDTO();
-
             correlationComponentDTO.setName(correlationConfigDTO.getName());
             correlationComponentDTO.setEnabled(correlationConfigDTO.getEnabled());
-
             List<CorrelationConfigPropertyDTO> correlationConfigPropertyDTOList = correlationConfigDTO.getProperties();
             List<CorrelationComponentPropertyDTO> propertyDTOList = new ArrayList<>();
-
             for (CorrelationConfigPropertyDTO correlationConfigPropertyDTO: correlationConfigPropertyDTOList) {
                 CorrelationComponentPropertyDTO propertyDTO = new CorrelationComponentPropertyDTO();
                 propertyDTO.setName(correlationConfigPropertyDTO.getName());
                 propertyDTO.setValue(Arrays.asList(correlationConfigPropertyDTO.getValue()));
                 propertyDTOList.add(propertyDTO);
             }
-
             correlationComponentDTO.setProperties(propertyDTOList);
             correlationComponentDTOList.add(correlationComponentDTO);
         }
-
         correlationComponentsListDTO.setComponents(correlationComponentDTOList);
         return correlationComponentsListDTO;
     }
 
     public static List<CorrelationConfigDTO> getCorrelationConfigDTOList(
             CorrelationComponentsListDTO correlationComponentsListDTO) {
+
         List<CorrelationConfigDTO> correlationConfigDTOList = new ArrayList<>();
         List<CorrelationComponentDTO> correlationComponentDTOList = correlationComponentsListDTO.getComponents();
-
         for (CorrelationComponentDTO correlationComponentDTO: correlationComponentDTOList) {
             CorrelationConfigDTO correlationConfigDTO = new CorrelationConfigDTO();
             correlationConfigDTO.setName(correlationComponentDTO.getName());
