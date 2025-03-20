@@ -223,5 +223,4 @@ public class RegistrationProfile {
     public void setUserStoreDomainInSubject(boolean setUserStoreDomainInSubject) {
         this.userstoreDomainInSubject = setUserStoreDomainInSubject;
     }
-
 }

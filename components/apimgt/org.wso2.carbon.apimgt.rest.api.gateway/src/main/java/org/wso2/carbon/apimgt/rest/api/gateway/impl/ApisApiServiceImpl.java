@@ -36,7 +36,6 @@ public class ApisApiServiceImpl implements ApisApiService {
         } else {
             return Response.status(Response.Status.BAD_REQUEST).entity(new ErrorDTO().moreInfo("required parameters " +
                     "are missing")).build();
-
         }
         if (api == null) {
             return Response.status(Response.Status.NOT_FOUND).build();

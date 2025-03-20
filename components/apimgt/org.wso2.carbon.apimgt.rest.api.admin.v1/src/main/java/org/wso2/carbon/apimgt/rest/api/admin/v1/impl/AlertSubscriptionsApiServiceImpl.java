@@ -111,7 +111,6 @@ public class AlertSubscriptionsApiServiceImpl implements AlertSubscriptionsApiSe
 
         String fullyQualifiedUsername = getFullyQualifiedUsername(RestApiCommonUtil.getLoggedInUsername());
         try {
-
             AdminAlertConfigurator adminAlertConfigurator = (AdminAlertConfigurator) AlertConfigManager.getInstance()
                     .getAlertConfigurator(AlertMgtConstants.ADMIN_DASHBOARD_AGENT);
             //Retrieve the supported alert types

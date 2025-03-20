@@ -39,6 +39,7 @@ public class ApiCategoriesApiServiceImpl implements ApiCategoriesApiService {
     private static final Log log = LogFactory.getLog(ApiCategoriesApiServiceImpl.class);
 
     public Response apiCategoriesGet(String xWSO2Tenant, MessageContext messageContext) {
+
         try {
             String organization = RestApiUtil.getValidatedOrganization(messageContext);
             List<APICategory> categoryList = APIUtil.getAllAPICategoriesOfOrganization(organization);
