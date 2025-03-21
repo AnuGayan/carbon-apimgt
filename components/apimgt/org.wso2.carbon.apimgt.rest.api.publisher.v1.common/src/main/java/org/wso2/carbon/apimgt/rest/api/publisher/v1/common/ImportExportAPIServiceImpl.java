@@ -20,13 +20,11 @@
 package org.wso2.carbon.apimgt.rest.api.publisher.v1.common;
 
 import org.apache.commons.lang3.StringUtils;
-import org.json.simple.parser.ParseException;
 import org.osgi.service.component.annotations.Component;
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.APIMgtResourceNotFoundException;
 import org.wso2.carbon.apimgt.api.APIProvider;
 import org.wso2.carbon.apimgt.api.ExceptionCodes;
-import org.wso2.carbon.apimgt.api.FaultGatewaysException;
 import org.wso2.carbon.apimgt.api.dto.ImportedAPIDTO;
 import org.wso2.carbon.apimgt.api.model.API;
 import org.wso2.carbon.apimgt.api.model.APIIdentifier;
@@ -40,10 +38,8 @@ import org.wso2.carbon.apimgt.rest.api.common.RestApiCommonUtil;
 import org.wso2.carbon.apimgt.rest.api.publisher.v1.common.mappings.APIMappingUtil;
 import org.wso2.carbon.apimgt.rest.api.publisher.v1.common.mappings.ExportUtils;
 import org.wso2.carbon.apimgt.rest.api.publisher.v1.common.mappings.ImportUtils;
-import org.wso2.carbon.apimgt.rest.api.publisher.v1.common.mappings.PublisherCommonUtils;
 import org.wso2.carbon.apimgt.rest.api.publisher.v1.dto.APIDTO;
 import org.wso2.carbon.apimgt.rest.api.publisher.v1.dto.APIProductDTO;
-import org.wso2.carbon.core.util.CryptoException;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import java.io.File;
@@ -99,16 +95,6 @@ public class ImportExportAPIServiceImpl implements ImportExportAPI {
         if (StringUtils.isBlank(exportAPIUUID)) {
             throw new APIMgtResourceNotFoundException("Incorrect revision number provided: " + revisionNum,
                     ExceptionCodes.from(ExceptionCodes.API_REVISION_NOT_FOUND, revisionNum));
-        }
-
-        api = apiProvider.getAPIbyUUID(apiId, organization);
-        apiDtoToReturn = APIMappingUtil.fromAPItoDTO(api, preserveCredentials, apiProvider);
-        String[] tokenScopes = {"apim:api_view", "apim:api_create"};
-        try {
-            PublisherCommonUtils.updateApi(api, apiDtoToReturn, apiProvider, tokenScopes);
-        } catch (ParseException | CryptoException | FaultGatewaysException e) {
-            String errorMessage = "Error while updating API : " + exportAPIUUID;
-            throw new APIImportExportException(errorMessage, e);
         }
         api = apiProvider.getAPIbyUUID(exportAPIUUID, organization);
         apiDtoToReturn = APIMappingUtil.fromAPItoDTO(api, preserveCredentials, apiProvider);
