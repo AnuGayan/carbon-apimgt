@@ -3304,7 +3304,7 @@ public class ApisApiServiceImpl implements ApisApiService {
             preserveStatus = preserveStatus == null || preserveStatus;
 
             //If not specified preserveCredentials is set to false by default
-            preserveCredentials = preserveCredentials != null && preserveStatus;
+            preserveCredentials = preserveCredentials != null && preserveCredentials;
 
             // Default export format is YAML
             ExportFormat exportFormat = StringUtils.isNotEmpty(format) ?
