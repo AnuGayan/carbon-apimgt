@@ -96,7 +96,6 @@ public class ImportExportAPIServiceImpl implements ImportExportAPI {
             throw new APIMgtResourceNotFoundException("Incorrect revision number provided: " + revisionNum,
                     ExceptionCodes.from(ExceptionCodes.API_REVISION_NOT_FOUND, revisionNum));
         }
-
         api = apiProvider.getAPIbyUUID(exportAPIUUID, organization);
         apiDtoToReturn = APIMappingUtil.fromAPItoDTO(api, preserveCredentials, apiProvider);
         apiIdentifier = api.getId();

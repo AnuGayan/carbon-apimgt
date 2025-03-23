@@ -83,6 +83,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -168,6 +169,26 @@ public class ExportUtils {
 
         int tenantId;
         String currentApiUuid;
+        Mediation inSequenceMediation = new Mediation();
+        Mediation outSequenceMediation = new Mediation();
+        Mediation faultSequenceMediation = new Mediation();
+        tenantId = APIUtil.getTenantId(userName);
+        String tenantDomain = APIUtil.getTenantDomainFromTenantId(tenantId);
+
+        if (APIUtil.isSequenceDefined(api.getInSequence()) || APIUtil.isSequenceDefined(api.getOutSequence())
+                || APIUtil.isSequenceDefined(api.getFaultSequence())) {
+            apiProvider.loadMediationPoliciesToAPI(api, tenantDomain);
+            inSequenceMediation = api.getInSequenceMediation();
+            outSequenceMediation = api.getOutSequenceMediation();
+            faultSequenceMediation = api.getFaultSequenceMediation();
+            apiProvider.migrateMediationPoliciesOfAPI(api, tenantDomain, false);
+            apiDtoToReturn.setApiPolicies(
+                    OperationPolicyMappingUtil.fromOperationPolicyListToDTO(api.getApiPolicies()));
+        }
+
+        if (apiDtoToReturn.getMediationPolicies() != null && !apiDtoToReturn.getMediationPolicies().isEmpty()) {
+            apiDtoToReturn.setMediationPolicies(Collections.emptyList());
+        }
 
         // If explicitly advertise only property has been specified as true, make it true and update the API DTO.
         if (StringUtils.isNotBlank(originalDevPortalUrl)) {
@@ -187,7 +208,6 @@ public class ExportUtils {
         String exportAPIBasePath = exportFolder.toString();
         String archivePath = exportAPIBasePath
                 .concat(File.separator + apiIdentifier.getApiName() + "-" + apiIdentifier.getVersion());
-        tenantId = APIUtil.getTenantId(userName);
 
         CommonUtil.createDirectory(archivePath);
         if (preserveDocs) {
@@ -213,9 +233,8 @@ public class ExportUtils {
         if (!preserveStatus) {
             apiDtoToReturn.setLifeCycleStatus(APIConstants.CREATED);
         }
-        String tenantDomain = APIUtil.getTenantDomainFromTenantId(tenantId);
         addOperationPoliciesToArchive(archivePath, tenantDomain, exportFormat, apiProvider,
-                api, currentApiUuid);
+                api, currentApiUuid, inSequenceMediation, outSequenceMediation, faultSequenceMediation);
         addGatewayEnvironmentsToArchive(archivePath, apiDtoToReturn.getId(), exportFormat, apiProvider);
 
         if (migrationEnabled != null) {
@@ -638,7 +657,8 @@ public class ExportUtils {
      * @throws APIManagementException If an error occurs while exporting operation policies
      */
     public static void addOperationPoliciesToArchive(String archivePath, String tenantDomain, ExportFormat exportFormat,
-            APIProvider apiProvider, API api, String currentApiUuid) throws APIManagementException {
+            APIProvider apiProvider, API api, String currentApiUuid, Mediation in, Mediation out, Mediation fault)
+            throws APIManagementException {
         try {
             CommonUtil.createDirectory(archivePath + File.separator + ImportExportConstants.POLICIES_DIRECTORY);
             Set<URITemplate> uriTemplates = api.getUriTemplates();
@@ -699,6 +719,21 @@ public class ExportUtils {
                         OperationPolicyData policyData =
                                 apiProvider.getAPISpecificOperationPolicyByPolicyId(policy.getPolicyId(),
                                         currentApiUuid, tenantDomain, true);
+                        if (policyData == null && in != null && policy.getDirection().equalsIgnoreCase(
+                                APIConstants.OPERATION_SEQUENCE_TYPE_REQUEST)) {
+                            policyData = APIUtil.generateOperationPolicyDataObject(currentApiUuid, tenantDomain,
+                                        policy.getPolicyName(), in.getConfig());
+                        }
+                        if (policyData == null && out != null && policy.getDirection().equalsIgnoreCase(
+                                APIConstants.OPERATION_SEQUENCE_TYPE_RESPONSE)) {
+                            policyData = APIUtil.generateOperationPolicyDataObject(currentApiUuid, tenantDomain,
+                                    policy.getPolicyName(), out.getConfig());
+                        }
+                        if (policyData == null && fault != null && policy.getDirection().equalsIgnoreCase(
+                                APIConstants.OPERATION_SEQUENCE_TYPE_FAULT)) {
+                            policyData = APIUtil.generateOperationPolicyDataObject(currentApiUuid, tenantDomain,
+                                    policy.getPolicyName(), fault.getConfig());
+                        }
                         if (policyData != null) {
                             exportPolicyData(policyFileName, policyData, archivePath, exportFormat);
                             exportedPolicies.add(policy.getPolicyName() + "_" + policy.getPolicyVersion() + "_" +

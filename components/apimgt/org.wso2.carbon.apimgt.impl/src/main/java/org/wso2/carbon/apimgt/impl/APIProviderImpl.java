@@ -1346,7 +1346,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                     }
                 }
             } catch (MediationPolicyPersistenceException e) {
-                throw new APIManagementException("Error while loading medation policies", e);
+                throw new APIManagementException("Error while loading mediation policies", e);
             }
         }
     }
@@ -1429,7 +1429,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
      * @param updatePolicyMapping Whether to update the policy mapping
      * @throws APIManagementException
      */
-    protected void migrateMediationPoliciesOfAPI(API api, String organization, boolean updatePolicyMapping)
+    public void migrateMediationPoliciesOfAPI(API api, String organization, boolean updatePolicyMapping)
             throws APIManagementException {
 
         Map<String, String> clonedPoliciesMap = new HashMap<>();
@@ -1511,11 +1511,14 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
             boolean updatePolicyMapping) throws APIManagementException {
 
         boolean policyUpdated = false;
-        for (OperationPolicy policy : api.getApiPolicies()) {
-            if (policy.getPolicyId() == null) {
-                if (clonedPoliciesMap.containsKey(policy.getPolicyName())) {
-                    policy.setPolicyId(clonedPoliciesMap.get(policy.getPolicyName()));
-                    policyUpdated = true;
+        List<OperationPolicy> apiPolicies = api.getApiPolicies();
+        if (apiPolicies != null && !apiPolicies.isEmpty()) {
+            for (OperationPolicy policy : api.getApiPolicies()) {
+                if (policy.getPolicyId() == null) {
+                    if (clonedPoliciesMap.containsKey(policy.getPolicyName())) {
+                        policy.setPolicyId(clonedPoliciesMap.get(policy.getPolicyName()));
+                        policyUpdated = true;
+                    }
                 }
             }
         }
