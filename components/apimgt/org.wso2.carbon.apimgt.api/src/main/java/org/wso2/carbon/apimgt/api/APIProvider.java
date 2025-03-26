@@ -1675,6 +1675,18 @@ public interface APIProvider extends APIManager {
     void loadMediationPoliciesToAPI(API api, String organization) throws APIManagementException;
 
     /**
+     * This method is used to migrate mediation policies of already migrated APIs. If mediation policies are found for
+     * the three sequences, they will be imported as API specific policies and that policy ID will be used.
+     *
+     * @param api                 API
+     * @param organization        Organization Name
+     * @param updatePolicyMapping Whether to update the policy mapping
+     * @throws APIManagementException
+     */
+    void migrateMediationPoliciesOfAPI(API api, String organization, boolean updatePolicyMapping)
+            throws APIManagementException;
+
+    /**
      * Check whether the provided api uuid is a revisioned API's uuid or not.
      *
      * @param apiUUID    API UUID
@@ -1961,4 +1973,15 @@ public interface APIProvider extends APIManager {
      */
     void updateSoapToRestSequences(String organization, String apiId, List<SOAPToRestSequence> sequences)
             throws APIManagementException;
+
+    /**
+     * Updates the subscription tier of a given subscription.
+     *
+     * @param subscriptionUUID The UUID of the subscription to be updated
+     * @param subscriptionTier The new subscription tier to be assigned
+     * @return The updated subscription
+     * @throws APIManagementException If the subscription is not found, status is TIER_UPDATE_PENDING, the specified
+     *                                tier is not allowed for the API or an error occurs while updating the subscription
+     */
+    SubscribedAPI updateSubscriptionTier(String subscriptionUUID, String subscriptionTier) throws APIManagementException;
 }
