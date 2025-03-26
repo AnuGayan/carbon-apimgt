@@ -102,3 +102,4 @@ public class APIInfoMappingUtilTest {
         assert(apiResultDTO3tenant.getProvider().equals("admin@pizzashack.com"));
     }
 }
+
