@@ -3200,7 +3200,7 @@ public class ApisApiServiceImpl implements ApisApiService {
             } else if (isAuthorizationFailure(e)) {
                 RestApiUtil.handleAuthorizationFailure(
                         "Authorization failure while updating the lifecycle of API " + apiId, e, log);
-            } else if (e.getErrorHandler().getErrorCode() == ExceptionCodes.ERROR_WHILE_UPDATING_MANDATORY_PROPERTIES.getErrorCode()) {
+            } else if (e.getErrorHandler().getErrorCode() == ExceptionCodes.ERROR_WHILE_VALIDATING_MANDATORY_PROPERTIES.getErrorCode()) {
                 RestApiUtil.handleBadRequest(e.getErrorHandler().getErrorDescription() + " on API " + apiId, e, log);
             } else {
                 throw e;
