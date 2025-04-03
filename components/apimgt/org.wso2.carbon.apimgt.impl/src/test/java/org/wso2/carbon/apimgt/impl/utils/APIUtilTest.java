@@ -67,6 +67,7 @@ import org.wso2.carbon.governance.api.generic.GenericArtifactManager;
 import org.wso2.carbon.governance.api.generic.dataobjects.GenericArtifact;
 import org.wso2.carbon.governance.api.util.GovernanceArtifactConfiguration;
 import org.wso2.carbon.governance.api.util.GovernanceUtils;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.registry.core.Collection;
 import org.wso2.carbon.registry.core.Registry;
 import org.wso2.carbon.registry.core.RegistryConstants;
@@ -113,7 +114,7 @@ import static org.wso2.carbon.base.CarbonBaseConstants.CARBON_HOME;
 @PrepareForTest(
         {LogFactory.class, APIUtil.class, ServiceReferenceHolder.class, SSLSocketFactory.class, CarbonUtils.class,
                 GovernanceUtils.class, MultitenantUtils.class,
-                GenericArtifactManager.class, KeyManagerHolder.class, ApiMgtDAO.class, PrivilegedCarbonContext.class})
+                GenericArtifactManager.class, KeyManagerHolder.class, ApiMgtDAO.class, PrivilegedCarbonContext.class, IdentityUtil.class})
 @PowerMockIgnore("javax.net.ssl.*")
 public class APIUtilTest {
 
@@ -1756,6 +1757,9 @@ public class APIUtilTest {
         PowerMockito.mockStatic(LogFactory.class);
         Mockito.when(LogFactory.getLog(any(Class.class))).thenReturn(logMock);
 
+        PowerMockito.mockStatic(IdentityUtil.class);
+        PowerMockito.doReturn(true).when(IdentityUtil.class, "isUserStoreInUsernameCaseSensitive", userNameWithoutChange);
+
         boolean expectedResult = APIUtil.hasPermission(userNameWithoutChange, permission);
         Assert.assertEquals(true, expectedResult);
     }
@@ -1928,6 +1932,8 @@ public class APIUtilTest {
 
         String username = "Kelso";
         String[] roles = {"PUBLISHER", "ADMIN", "TEST-ROLE"};
+        PowerMockito.mockStatic(IdentityUtil.class);
+        PowerMockito.doReturn(true).when(IdentityUtil.class, "isUserStoreInUsernameCaseSensitive", username);
 
         PowerMockito.spy(APIUtil.class);
         PowerMockito.doReturn(roles)
@@ -1965,6 +1971,8 @@ public class APIUtilTest {
         Mockito.when(userRealm.getUserStoreManager()).thenReturn(userStoreManager);
         Mockito.when(MultitenantUtils.getTenantAwareUsername(username)).thenReturn(tenantAwareUsername);
         Mockito.when(userStoreManager.getRoleListOfUser(tenantAwareUsername)).thenReturn(roles);
+        PowerMockito.mockStatic(IdentityUtil.class);
+        PowerMockito.doReturn(true).when(IdentityUtil.class, "isUserStoreInUsernameCaseSensitive", username);
         PowerMockito.doNothing().when(APIUtil.class, "addToRolesCache", Mockito.any(), Mockito.any(), Mockito.any());
 
         Assert.assertEquals(roles, APIUtil.getListOfRoles(username));
@@ -1996,6 +2004,8 @@ public class APIUtilTest {
         Mockito.when(MultitenantUtils.getTenantDomain(username)).thenReturn(tenantDomain);
         Mockito.when(MultitenantUtils.getTenantAwareUsername(username)).thenReturn(tenantAwareUsername);
         Mockito.when(userStoreManager.getRoleListOfUser(MultitenantUtils.getTenantAwareUsername(username))).thenReturn(roles);
+        PowerMockito.mockStatic(IdentityUtil.class);
+        PowerMockito.doReturn(true).when(IdentityUtil.class, "isUserStoreInUsernameCaseSensitive", username);
         PowerMockito.doNothing().when(APIUtil.class, "addToRolesCache", Mockito.any(), Mockito.any(), Mockito.any());
 
         Assert.assertEquals(roles, APIUtil.getListOfRoles(username));
