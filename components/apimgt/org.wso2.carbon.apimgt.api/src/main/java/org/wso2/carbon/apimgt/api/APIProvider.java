@@ -1675,18 +1675,6 @@ public interface APIProvider extends APIManager {
     void loadMediationPoliciesToAPI(API api, String organization) throws APIManagementException;
 
     /**
-     * This method is used to migrate mediation policies of already migrated APIs. If mediation policies are found for
-     * the three sequences, they will be imported as API specific policies and that policy ID will be used.
-     *
-     * @param api                 API
-     * @param organization        Organization Name
-     * @param updatePolicyMapping Whether to update the policy mapping
-     * @throws APIManagementException
-     */
-    void migrateMediationPoliciesOfAPI(API api, String organization, boolean updatePolicyMapping)
-            throws APIManagementException;
-
-    /**
      * Check whether the provided api uuid is a revisioned API's uuid or not.
      *
      * @param apiUUID    API UUID
