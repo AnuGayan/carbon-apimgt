@@ -863,7 +863,7 @@ public class OAS3Parser extends APIDefinition {
                     // Generate random placeholder values to prevent null assignments and ensure downstream components receive valid response attributes.
                     title = "API-Title-" + UUID.randomUUID().toString();
                     context = title.toLowerCase();
-                    version = "v1-" + UUID.randomUUID().toString();
+                    version = "v1-" + UUID.randomUUID().toString().substring(0, 3);
                     description = "API-description-" + UUID.randomUUID().toString();
             }
             OASParserUtil.updateValidationResponseAsSuccess(
