@@ -1429,7 +1429,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
      * @param updatePolicyMapping Whether to update the policy mapping
      * @throws APIManagementException
      */
-    public void migrateMediationPoliciesOfAPI(API api, String organization, boolean updatePolicyMapping)
+    protected void migrateMediationPoliciesOfAPI(API api, String organization, boolean updatePolicyMapping)
             throws APIManagementException {
 
         Map<String, String> clonedPoliciesMap = new HashMap<>();
@@ -1511,14 +1511,11 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
             boolean updatePolicyMapping) throws APIManagementException {
 
         boolean policyUpdated = false;
-        List<OperationPolicy> apiPolicies = api.getApiPolicies();
-        if (apiPolicies != null && !apiPolicies.isEmpty()) {
-            for (OperationPolicy policy : api.getApiPolicies()) {
-                if (policy.getPolicyId() == null) {
-                    if (clonedPoliciesMap.containsKey(policy.getPolicyName())) {
-                        policy.setPolicyId(clonedPoliciesMap.get(policy.getPolicyName()));
-                        policyUpdated = true;
-                    }
+        for (OperationPolicy policy : api.getApiPolicies()) {
+            if (policy.getPolicyId() == null) {
+                if (clonedPoliciesMap.containsKey(policy.getPolicyName())) {
+                    policy.setPolicyId(clonedPoliciesMap.get(policy.getPolicyName()));
+                    policyUpdated = true;
                 }
             }
         }
