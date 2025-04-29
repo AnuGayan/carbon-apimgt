@@ -153,28 +153,6 @@ public abstract class AbstractKeyManager implements KeyManager {
                 if (params.get(APIConstants.JSON_CLIENT_SECRET) != null) {
                     oAuthApplicationInfo.setClientSecret((String) params.get(APIConstants.JSON_CLIENT_SECRET));
                 }
-                // Handle additionalProperties
-                if (params.get(APIConstants.JSON_ADDITIONAL_PROPERTIES) != null) {
-                    String additionalPropsStr = params.get(APIConstants.JSON_ADDITIONAL_PROPERTIES).toString();
-                    JsonElement jsonElement = new JsonParser().parse(additionalPropsStr);
-                    JsonObject json = jsonElement.getAsJsonObject();
-                    for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
-                        if (entry.getValue().isJsonPrimitive()) {
-                            String value = entry.getValue().getAsString();
-                            if (value.startsWith("[") && value.endsWith("]")) {
-                                try {
-                                    JsonElement arrayElement = new JsonParser().parse(value);
-                                    json.add(entry.getKey(), arrayElement);
-                                } catch (Exception e) {
-                                    log.debug("Failed to parse value as JSON array for field: " + entry.getKey());
-                                }
-                            }
-                        }
-                    }
-                    String cleanAdditionalProps = new Gson().toJson(json);
-                    oAuthApplicationInfo.addParameter(APIConstants.JSON_ADDITIONAL_PROPERTIES, cleanAdditionalProps);
-                    params.remove(APIConstants.JSON_ADDITIONAL_PROPERTIES);
-                }
                 //copy all params map in to OAuthApplicationInfo's Map object.
                 oAuthApplicationInfo.putAll(params);
                 validateOAuthAppCreationProperties(oAuthApplicationInfo);
