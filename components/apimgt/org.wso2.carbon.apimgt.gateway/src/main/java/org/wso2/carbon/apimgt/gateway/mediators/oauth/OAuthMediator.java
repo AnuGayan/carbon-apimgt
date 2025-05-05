@@ -22,7 +22,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.synapse.ManagedLifecycle;
+import org.apache.synapse.Mediator;
 import org.apache.synapse.MessageContext;
+import org.apache.synapse.SynapseConstants;
 import org.apache.synapse.core.SynapseEnvironment;
 import org.apache.synapse.core.axis2.Axis2MessageContext;
 import org.apache.synapse.mediators.AbstractMediator;
@@ -112,6 +114,17 @@ public class OAuthMediator extends AbstractMediator implements ManagedLifecycle 
                 latch.await();
             } catch (InterruptedException | APISecurityException e) {
                 log.error("Could not generate access token...", e);
+
+                String errorMsg = "Could not generate access token for oauth configured endpoint " + e.getMessage();
+                messageContext.setProperty(SynapseConstants.ERROR_CODE, SynapseConstants.ENDPOINT_AUTH_FAILURE);
+                messageContext.setProperty(SynapseConstants.ERROR_MESSAGE, errorMsg);
+                messageContext.setProperty(SynapseConstants.ERROR_DETAIL, errorMsg);
+                messageContext.setProperty(SynapseConstants.ERROR_EXCEPTION, errorMsg);
+
+                Mediator sequence = messageContext.getSequence(APIConstants.FAULT_SEQUENCE);
+                if (sequence != null && !sequence.mediate(messageContext)) {
+                    return false;
+                }
             }
         }
 
