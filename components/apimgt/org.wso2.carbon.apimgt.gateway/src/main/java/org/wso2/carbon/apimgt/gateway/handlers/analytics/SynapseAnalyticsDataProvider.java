@@ -552,7 +552,8 @@ public class SynapseAnalyticsDataProvider implements AnalyticsDataProvider {
     }
 
     public String getResponseContentType() {
-        Map headers = (Map) messageContext.getProperty(TRANSPORT_HEADERS);
+        Map headers = (Map) ((Axis2MessageContext) messageContext).getAxis2MessageContext()
+                .getProperty(TRANSPORT_HEADERS);
         if (headers != null && headers.get(HttpHeaders.CONTENT_TYPE) != null) {
             return headers.get(HttpHeaders.CONTENT_TYPE).toString();
         }
