@@ -734,7 +734,7 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
      * @return Sanitized expiry time value
      */
     private Long sanitizeExpiryTime(Long expTimeValue) {
-        if (expTimeValue != null && expTimeValue == -1) {
+        if (expTimeValue != null && expTimeValue == -1L) {
             return Integer.MAX_VALUE - 1L;
         }
         return expTimeValue;
