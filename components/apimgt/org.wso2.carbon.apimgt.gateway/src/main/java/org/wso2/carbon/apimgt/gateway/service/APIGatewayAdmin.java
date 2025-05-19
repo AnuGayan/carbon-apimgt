@@ -558,37 +558,7 @@ public class APIGatewayAdmin extends org.wso2.carbon.core.AbstractAdmin {
      * @throws AxisFault
      */
     public boolean deployPolicy(String content, String fileName) throws AxisFault {
-
-        File file = new File(APIConstants.POLICY_FILE_FOLDER);      //WSO2Carbon_Home/repository/deployment/server
-        // /throttle-config
-        //if directory doesn't exist, make onee
-        if (!file.exists()) {
-            file.mkdir();
-        }
-        File writeFile = new File(APIConstants.POLICY_FILE_LOCATION + fileName + APIConstants.XML_EXTENSION);  //file
-        // folder+/
-        FileOutputStream fos = null;
-        try {
-            fos = new FileOutputStream(writeFile);
-            //if file doesn't exit make one
-            if (!writeFile.exists()) {
-                writeFile.createNewFile();
-            }
-            byte[] contentInBytes = content.getBytes();
-            fos.write(contentInBytes);
-            fos.flush();
-            return true;
-        } catch (IOException e) {
-            log.error("Error occurred writing to " + fileName + ":", e);
-        } finally {
-            try {
-                if (fos != null) {
-                    fos.close();
-                }
-            } catch (IOException e) {
-                log.error("Error occurred closing file output stream", e);
-            }
-        }
+        // Do nothing
         return false;
     }
 
@@ -598,17 +568,8 @@ public class APIGatewayAdmin extends org.wso2.carbon.core.AbstractAdmin {
      * @param fileNames file names to be deleted
      */
     public boolean undeployPolicy(String[] fileNames) {
-
-        for (int i = 0; i < fileNames.length; i++) {
-            File file = new File(APIConstants.POLICY_FILE_LOCATION + fileNames[i] + APIConstants.XML_EXTENSION);
-            boolean deleted = file.delete();
-            if (deleted) {
-                log.info("File : " + fileNames[i] + " is deleted");
-            } else {
-                log.error("Error occurred in deleting file: " + fileNames[i]);
-            }
-        }
-        return true;
+        // Do nothing
+        return false;
     }
 
     /**
