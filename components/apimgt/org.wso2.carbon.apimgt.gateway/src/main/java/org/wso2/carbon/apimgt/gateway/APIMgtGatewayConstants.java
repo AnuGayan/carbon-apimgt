@@ -202,5 +202,7 @@ public class APIMgtGatewayConstants {
     public static final String SHOULD_ALLOW_ACCESS_VALIDATION = "shouldAllowValidation";
 
     public static final String INCLUDE_TOKEN_INFO_IN_MSG_CTX= "includeTokenInfoInMsgCtx";
+
+    public static final String GOOGLE_ANALYTICS_SECURE_HASHING = "googleAnalyticsSecureHashingEnabled";
 }
 
