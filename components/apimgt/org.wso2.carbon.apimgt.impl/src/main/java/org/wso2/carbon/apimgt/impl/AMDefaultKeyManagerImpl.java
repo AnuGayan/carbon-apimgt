@@ -259,6 +259,7 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
                 }
             } catch (NumberFormatException e) {
                 // No need to throw as it's due to invalid number format.
+                log.debug("Invalid application access token expiry time given for " + oauthClientName, e);
             }
         }
 
@@ -284,6 +285,7 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
                 }
             } catch (NumberFormatException e) {
                 // No need to throw as it's due to a non-numeric value.
+                log.debug("Invalid user access token expiry time given for " + oauthClientName, e);
             }
         }
 
@@ -301,6 +303,7 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
                 }
             } catch (NumberFormatException e) {
                 // No need to throw as it's due to a non-numeric value.
+                log.debug("Invalid refresh token expiry time given for " + oauthClientName, e);
             }
         }
 
@@ -318,6 +321,7 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
                 }
             } catch (NumberFormatException e) {
                 // No need to throw as it's due to a non-numeric value.
+                log.debug("Invalid ID token expiry time given for " + oauthClientName, e);
             }
         }
 
@@ -331,6 +335,7 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
                         clientInfo.setPkceMandatory(pkceMandatory);
                     } catch (NumberFormatException e) {
                         // No need to throw as its due to not a number sent.
+                        log.debug("Invalid PKCE mandatory value given for " + oauthClientName, e);
                     }
                 }
             }
@@ -346,6 +351,7 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
                         clientInfo.setPkceSupportPlain(pkceSupportPlain);
                     } catch (NumberFormatException e) {
                         // No need to throw as its due to not a number sent.
+                        log.debug("Invalid PKCE support plain value given for " + oauthClientName, e);
                     }
                 }
             }
@@ -361,6 +367,7 @@ public class AMDefaultKeyManagerImpl extends AbstractKeyManager {
                         clientInfo.setBypassClientCredentials(bypassClientCredentials);
                     } catch (NumberFormatException e) {
                         // No need to throw as its due to not a number sent.
+                        log.debug("Invalid bypass client credentials value given for " + oauthClientName, e);
                     }
                 }
             }

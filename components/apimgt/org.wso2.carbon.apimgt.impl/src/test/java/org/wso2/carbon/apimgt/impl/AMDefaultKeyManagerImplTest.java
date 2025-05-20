@@ -302,7 +302,7 @@ public class AMDefaultKeyManagerImplTest {
     }
 
     @Test
-    public void testAppWithWithNegTokenExpTimes() throws Exception {
+    public void testApplicationInfoBuildWithNegativeExpiryTimes() throws Exception {
         OAuthApplicationInfo oauthApplication = new OAuthApplicationInfo();
         oauthApplication.setClientId("test");
         oauthApplication.setTokenType(APIConstants.TOKEN_TYPE_OAUTH);
@@ -336,7 +336,7 @@ public class AMDefaultKeyManagerImplTest {
     }
 
     @Test
-    public void testAppWithPositiveTokenExpTimes() throws Exception {
+    public void testApplicationInfoBuildWithPositiveExpiryTimes() throws Exception {
         OAuthApplicationInfo oauthApplication = new OAuthApplicationInfo();
         oauthApplication.setClientId("test");
         oauthApplication.setTokenType(APIConstants.TOKEN_TYPE_OAUTH);
