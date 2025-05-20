@@ -76,10 +76,6 @@ public class SAMLGroupIDExtractorImpl implements NewPostLoginExecutor {
             }
             samlResponseStream = getByteArrayInputStream(loginResponse);
             DocumentBuilderFactory builderFactory = APIUtil.getSecuredDocumentBuilder();
-            builderFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            builderFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            builderFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-            builderFactory.setNamespaceAware(true);
             docBuilder = builderFactory.newDocumentBuilder();
             Document document = docBuilder.parse(samlResponseStream);
             Element element = document.getDocumentElement();
@@ -257,8 +253,6 @@ public class SAMLGroupIDExtractorImpl implements NewPostLoginExecutor {
             }
             samlResponseStream = getByteArrayInputStream(loginResponse);
             DocumentBuilderFactory builderFactory = APIUtil.getSecuredDocumentBuilder();
-            builderFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            builderFactory.setNamespaceAware(true);
             docBuilder = builderFactory.newDocumentBuilder();
             Document document = docBuilder.parse(samlResponseStream);
             Element element = document.getDocumentElement();
