@@ -10127,28 +10127,28 @@ public final class APIUtil {
      * @throws APIManagementException
      */
     public static OperationPolicyData getPolicyDataForMediationFlow(API api, String policyDirection,
-                                                                    String organization) {
+                                                                    String organization) throws APIManagementException {
 
         OperationPolicyData policyData = null;
         switch (policyDirection) {
             case APIConstants.OPERATION_SEQUENCE_TYPE_REQUEST:
                 if (isSequenceDefined(api.getInSequence()) && api.getInSequenceMediation() != null) {
                     Mediation inSequenceMediation = api.getInSequenceMediation();
-                    policyData = generateOperationPolicyDataObject(api.getUuid(), organization,
+                    policyData = generateOperationPolicyDataObject(api, organization,
                             inSequenceMediation.getName(), inSequenceMediation.getConfig());
                 }
                 break;
             case APIConstants.OPERATION_SEQUENCE_TYPE_RESPONSE:
                 if (isSequenceDefined(api.getOutSequence()) && api.getOutSequenceMediation() != null) {
                     Mediation outSequenceMediation = api.getOutSequenceMediation();
-                    policyData = generateOperationPolicyDataObject(api.getUuid(), organization,
+                    policyData = generateOperationPolicyDataObject(api, organization,
                             outSequenceMediation.getName(), outSequenceMediation.getConfig());
                 }
                 break;
             case APIConstants.OPERATION_SEQUENCE_TYPE_FAULT:
                 if (isSequenceDefined(api.getFaultSequence()) && api.getFaultSequenceMediation() != null) {
                     Mediation faultSequenceMediation = api.getFaultSequenceMediation();
-                    policyData = generateOperationPolicyDataObject(api.getUuid(), organization,
+                    policyData = generateOperationPolicyDataObject(api, organization,
                             faultSequenceMediation.getName(), faultSequenceMediation.getConfig());
                 }
                 break;
@@ -10156,10 +10156,10 @@ public final class APIUtil {
         return policyData;
     }
 
-    public static OperationPolicyData generateOperationPolicyDataObject(String apiUuid, String organization,
+    public static OperationPolicyData generateOperationPolicyDataObject(API api, String organization,
                                                                         String policyName,
-                                                                        String policyDefinitionString) {
-
+                                                                        String policyDefinitionString) throws APIManagementException {
+        String apiUuid = api.getUuid();
         OperationPolicySpecification policySpecification = new OperationPolicySpecification();
         policySpecification.setCategory(OperationPolicySpecification.PolicyCategory.Mediation);
         policySpecification.setName(policyName);
@@ -10171,10 +10171,11 @@ public final class APIUtil {
         policySpecification.setSupportedGateways(gatewayList);
 
         ArrayList<String> supportedAPIList = new ArrayList<>();
-        supportedAPIList.add(APIConstants.OPERATION_POLICY_SUPPORTED_API_TYPE_HTTP);
-        supportedAPIList.add(APIConstants.OPERATION_POLICY_SUPPORTED_API_TYPE_SOAP);
-        supportedAPIList.add(APIConstants.OPERATION_POLICY_SUPPORTED_API_TYPE_SOAPTOREST);
-        supportedAPIList.add(APIConstants.OPERATION_POLICY_SUPPORTED_API_TYPE_GRAPHQL);
+        if (api.isRevision()){
+            supportedAPIList.add(ApiMgtDAO.getInstance().getAPITypeFromUUID(api.getRevisionedApiId()));
+        }else{
+            supportedAPIList.add(ApiMgtDAO.getInstance().getAPITypeFromUUID(apiUuid));
+        }
         policySpecification.setSupportedApiTypes(supportedAPIList);
 
         ArrayList<String> applicableFlows = new ArrayList<>();
