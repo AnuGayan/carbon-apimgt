@@ -10159,7 +10159,7 @@ public final class APIUtil {
     @Deprecated
     public static OperationPolicyData generateOperationPolicyDataObject(String apiUuid, String organization,
                                                                         String policyName,
-                                                                        String policyDefinitionString) throws APIManagementException {
+                                                                        String policyDefinitionString) {
         OperationPolicySpecification policySpecification = new OperationPolicySpecification();
         policySpecification.setCategory(OperationPolicySpecification.PolicyCategory.Mediation);
         policySpecification.setName(policyName);
@@ -10171,12 +10171,18 @@ public final class APIUtil {
         policySpecification.setSupportedGateways(gatewayList);
 
         ArrayList<String> supportedAPIList = new ArrayList<>();
-        APIRevision apiRevision = ApiMgtDAO.getInstance().checkAPIUUIDIsARevisionUUID(apiUuid);
-        if (apiRevision != null && apiRevision.getApiUUID() != null) {
-            // If the API is a revision, fetch the API type using the revisioned API ID
-            supportedAPIList.add(ApiMgtDAO.getInstance().getAPITypeFromUUID(apiRevision.getApiUUID()));
-        } else {
-            supportedAPIList.add(ApiMgtDAO.getInstance().getAPITypeFromUUID(apiUuid));
+        try {
+            APIRevision apiRevision = ApiMgtDAO.getInstance().checkAPIUUIDIsARevisionUUID(apiUuid);
+            if (apiRevision != null && apiRevision.getApiUUID() != null) {
+                // If the API is a revision, fetch the API type using the revisioned API ID
+                supportedAPIList.add(ApiMgtDAO.getInstance().getAPITypeFromUUID(apiRevision.getApiUUID()));
+            } else {
+                supportedAPIList.add(ApiMgtDAO.getInstance().getAPITypeFromUUID(apiUuid));
+            }
+        } catch (APIManagementException e) {
+            // catching the exception here to avoid any changes to existing method signature
+            log.warn("Failed to determine API type for UUID: " + apiUuid, e);
+            supportedAPIList.add(APIConstants.API_TYPE_HTTP);
         }
         policySpecification.setSupportedApiTypes(supportedAPIList);
 
