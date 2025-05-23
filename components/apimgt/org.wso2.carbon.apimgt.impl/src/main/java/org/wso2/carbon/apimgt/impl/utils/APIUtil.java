@@ -10127,7 +10127,7 @@ public final class APIUtil {
      * @throws APIManagementException
      */
     public static OperationPolicyData getPolicyDataForMediationFlow(API api, String policyDirection,
-                                                                    String organization) throws APIManagementException {
+                                                                    String organization) {
 
         OperationPolicyData policyData = null;
         switch (policyDirection) {
@@ -10156,9 +10156,57 @@ public final class APIUtil {
         return policyData;
     }
 
-    public static OperationPolicyData generateOperationPolicyDataObject(API api, String organization,
+    @Deprecated
+    public static OperationPolicyData generateOperationPolicyDataObject(String apiUuid, String organization,
                                                                         String policyName,
                                                                         String policyDefinitionString) throws APIManagementException {
+        OperationPolicySpecification policySpecification = new OperationPolicySpecification();
+        policySpecification.setCategory(OperationPolicySpecification.PolicyCategory.Mediation);
+        policySpecification.setName(policyName);
+        policySpecification.setDisplayName(policyName);
+        policySpecification.setDescription("This is a mediation policy migrated to an operation policy.");
+
+        ArrayList<String> gatewayList = new ArrayList<>();
+        gatewayList.add(APIConstants.OPERATION_POLICY_SUPPORTED_GATEWAY_SYNAPSE);
+        policySpecification.setSupportedGateways(gatewayList);
+
+        ArrayList<String> supportedAPIList = new ArrayList<>();
+        APIRevision apiRevision = ApiMgtDAO.getInstance().checkAPIUUIDIsARevisionUUID(apiUuid);
+        if (apiRevision != null && apiRevision.getApiUUID() != null) {
+            // If the API is a revision, fetch the API type using the revisioned API ID
+            supportedAPIList.add(ApiMgtDAO.getInstance().getAPITypeFromUUID(apiRevision.getApiUUID()));
+        } else {
+            supportedAPIList.add(ApiMgtDAO.getInstance().getAPITypeFromUUID(apiUuid));
+        }
+        policySpecification.setSupportedApiTypes(supportedAPIList);
+
+        ArrayList<String> applicableFlows = new ArrayList<>();
+        applicableFlows.add(APIConstants.OPERATION_SEQUENCE_TYPE_REQUEST);
+        applicableFlows.add(APIConstants.OPERATION_SEQUENCE_TYPE_RESPONSE);
+        applicableFlows.add(APIConstants.OPERATION_SEQUENCE_TYPE_FAULT);
+        policySpecification.setApplicableFlows(applicableFlows);
+
+        OperationPolicyData policyData = new OperationPolicyData();
+        policyData.setOrganization(organization);
+        policyData.setSpecification(policySpecification);
+        policyData.setApiUUID(apiUuid);
+
+        if (policyDefinitionString != null) {
+            OperationPolicyDefinition policyDefinition = new OperationPolicyDefinition();
+            policyDefinition.setContent(policyDefinitionString);
+            policyDefinition.setGatewayType(OperationPolicyDefinition.GatewayType.Synapse);
+            policyDefinition.setMd5Hash(APIUtil.getMd5OfOperationPolicyDefinition(policyDefinition));
+            policyData.setSynapsePolicyDefinition(policyDefinition);
+        }
+
+        policyData.setMd5Hash(APIUtil.getMd5OfOperationPolicy(policyData));
+
+        return policyData;
+    }
+
+    public static OperationPolicyData generateOperationPolicyDataObject(API api, String organization,
+                                                                        String policyName,
+                                                                        String policyDefinitionString) {
         String apiUuid = api.getUuid();
         OperationPolicySpecification policySpecification = new OperationPolicySpecification();
         policySpecification.setCategory(OperationPolicySpecification.PolicyCategory.Mediation);
@@ -10171,11 +10219,7 @@ public final class APIUtil {
         policySpecification.setSupportedGateways(gatewayList);
 
         ArrayList<String> supportedAPIList = new ArrayList<>();
-        if (api.isRevision()){
-            supportedAPIList.add(ApiMgtDAO.getInstance().getAPITypeFromUUID(api.getRevisionedApiId()));
-        }else{
-            supportedAPIList.add(ApiMgtDAO.getInstance().getAPITypeFromUUID(apiUuid));
-        }
+        supportedAPIList.add(api.getType());
         policySpecification.setSupportedApiTypes(supportedAPIList);
 
         ArrayList<String> applicableFlows = new ArrayList<>();
