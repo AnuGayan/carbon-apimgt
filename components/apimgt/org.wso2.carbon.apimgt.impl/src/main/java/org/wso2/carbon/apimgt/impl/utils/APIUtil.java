@@ -10160,15 +10160,6 @@ public final class APIUtil {
     public static OperationPolicyData generateOperationPolicyDataObject(String apiUuid, String organization,
                                                                         String policyName,
                                                                         String policyDefinitionString) {
-        OperationPolicySpecification policySpecification = new OperationPolicySpecification();
-        policySpecification.setCategory(OperationPolicySpecification.PolicyCategory.Mediation);
-        policySpecification.setName(policyName);
-        policySpecification.setDisplayName(policyName);
-        policySpecification.setDescription("This is a mediation policy migrated to an operation policy.");
-
-        ArrayList<String> gatewayList = new ArrayList<>();
-        gatewayList.add(APIConstants.OPERATION_POLICY_SUPPORTED_GATEWAY_SYNAPSE);
-        policySpecification.setSupportedGateways(gatewayList);
 
         ArrayList<String> supportedAPIList = new ArrayList<>();
         try {
@@ -10184,36 +10175,23 @@ public final class APIUtil {
             log.warn("Failed to determine API type for UUID: " + apiUuid, e);
             supportedAPIList.add(APIConstants.API_TYPE_HTTP);
         }
-        policySpecification.setSupportedApiTypes(supportedAPIList);
-
-        ArrayList<String> applicableFlows = new ArrayList<>();
-        applicableFlows.add(APIConstants.OPERATION_SEQUENCE_TYPE_REQUEST);
-        applicableFlows.add(APIConstants.OPERATION_SEQUENCE_TYPE_RESPONSE);
-        applicableFlows.add(APIConstants.OPERATION_SEQUENCE_TYPE_FAULT);
-        policySpecification.setApplicableFlows(applicableFlows);
-
-        OperationPolicyData policyData = new OperationPolicyData();
-        policyData.setOrganization(organization);
-        policyData.setSpecification(policySpecification);
-        policyData.setApiUUID(apiUuid);
-
-        if (policyDefinitionString != null) {
-            OperationPolicyDefinition policyDefinition = new OperationPolicyDefinition();
-            policyDefinition.setContent(policyDefinitionString);
-            policyDefinition.setGatewayType(OperationPolicyDefinition.GatewayType.Synapse);
-            policyDefinition.setMd5Hash(APIUtil.getMd5OfOperationPolicyDefinition(policyDefinition));
-            policyData.setSynapsePolicyDefinition(policyDefinition);
-        }
-
-        policyData.setMd5Hash(APIUtil.getMd5OfOperationPolicy(policyData));
-
-        return policyData;
+        return buildOperationPolicyData(apiUuid, supportedAPIList, organization, policyName, policyDefinitionString);
     }
 
     public static OperationPolicyData generateOperationPolicyDataObject(API api, String organization,
                                                                         String policyName,
                                                                         String policyDefinitionString) {
         String apiUuid = api.getUuid();
+        ArrayList<String> supportedAPIList = new ArrayList<>();
+        supportedAPIList.add(api.getType());
+        return buildOperationPolicyData(apiUuid, supportedAPIList, organization, policyName, policyDefinitionString);
+
+    }
+
+    private static OperationPolicyData buildOperationPolicyData(String apiUuid, List<String> supportedAPIList,
+                                                                String organization, String policyName,
+                                                                String policyDefinitionString) {
+
         OperationPolicySpecification policySpecification = new OperationPolicySpecification();
         policySpecification.setCategory(OperationPolicySpecification.PolicyCategory.Mediation);
         policySpecification.setName(policyName);
@@ -10224,8 +10202,6 @@ public final class APIUtil {
         gatewayList.add(APIConstants.OPERATION_POLICY_SUPPORTED_GATEWAY_SYNAPSE);
         policySpecification.setSupportedGateways(gatewayList);
 
-        ArrayList<String> supportedAPIList = new ArrayList<>();
-        supportedAPIList.add(api.getType());
         policySpecification.setSupportedApiTypes(supportedAPIList);
 
         ArrayList<String> applicableFlows = new ArrayList<>();
