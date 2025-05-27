@@ -27,7 +27,11 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.wso2.carbon.apimgt.api.model.Application;
+import org.wso2.carbon.apimgt.impl.APIConstants;
+import org.wso2.carbon.apimgt.impl.APIManagerConfiguration;
+import org.wso2.carbon.apimgt.impl.APIManagerConfigurationService;
 import org.wso2.carbon.apimgt.impl.dao.ApiMgtDAO;
+import org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.impl.publishers.RevocationRequestPublisher;
 import org.wso2.carbon.apimgt.notification.event.TokenRevocationEvent;
 
@@ -39,7 +43,8 @@ import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({ AbstractKeyManagerEventHandler.class, ApiMgtDAO.class, RevocationRequestPublisher.class })
+@PrepareForTest({ AbstractKeyManagerEventHandler.class, ApiMgtDAO.class, RevocationRequestPublisher.class,
+        ServiceReferenceHolder.class })
 public class AbstractKeyManagerEventHandlerTest {
 
     @Test
@@ -64,6 +69,19 @@ public class AbstractKeyManagerEventHandlerTest {
         ApiMgtDAO apiMgtDAO = Mockito.mock(ApiMgtDAO.class);
         PowerMockito.mockStatic(ApiMgtDAO.class);
         PowerMockito.when(ApiMgtDAO.getInstance()).thenReturn(apiMgtDAO);
+
+        ServiceReferenceHolder serviceReferenceHolder = Mockito.mock(ServiceReferenceHolder.class);
+        PowerMockito.mockStatic(ServiceReferenceHolder.class);
+        APIManagerConfigurationService apiManagerConfigurationService = Mockito.mock(
+                APIManagerConfigurationService.class);
+        APIManagerConfiguration apiManagerConfiguration = Mockito.mock(APIManagerConfiguration.class);
+        Mockito.when(ServiceReferenceHolder.getInstance()).thenReturn(serviceReferenceHolder);
+        Mockito.when(serviceReferenceHolder.getAPIManagerConfigurationService())
+                .thenReturn(apiManagerConfigurationService);
+        Mockito.when(apiManagerConfigurationService.getAPIManagerConfiguration()).thenReturn(apiManagerConfiguration);
+        Mockito.when(apiManagerConfiguration.getFirstProperty(APIConstants.ENABLE_REVOKE_TOKEN_CLEANUP))
+                .thenReturn("true");
+
         when(apiMgtDAO.getApplicationByClientId(tokenRevocationEvent.getConsumerKey())).thenReturn(application);
 
         DefaultKeyManagerEventHandlerImpl defaultKeyManagerEventHandler = new DefaultKeyManagerEventHandlerImpl();
