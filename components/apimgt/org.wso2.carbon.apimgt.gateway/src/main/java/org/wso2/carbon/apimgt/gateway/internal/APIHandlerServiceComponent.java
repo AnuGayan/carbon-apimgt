@@ -39,6 +39,7 @@ import org.wso2.carbon.apimgt.gateway.APIMgtGatewayConstants;
 import org.wso2.carbon.apimgt.gateway.HybridThrottleProcessor;
 import org.wso2.carbon.apimgt.gateway.RedisBaseDistributedCountManager;
 import org.wso2.carbon.apimgt.gateway.handlers.security.keys.APIKeyValidatorClientPool;
+import org.wso2.carbon.apimgt.gateway.inbound.websocket.WebSocketProcessor;
 import org.wso2.carbon.apimgt.gateway.jwt.RevokedJWTMapCleaner;
 import org.wso2.carbon.apimgt.gateway.listeners.GatewayStartupListener;
 import org.wso2.carbon.apimgt.gateway.listeners.ServerStartupListener;
@@ -524,6 +525,28 @@ public class APIHandlerServiceComponent {
             log.debug("Un-setting SynapseConfigurationService");
         }
         ServiceReferenceHolder.getInstance().setSynapseConfigurationService(null);
+    }
+
+    @Reference(
+            name = "api.manager.websocket.processor",
+            service = org.wso2.carbon.apimgt.gateway.inbound.websocket.WebSocketProcessor.class,
+            cardinality = ReferenceCardinality.OPTIONAL,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetWebSocketProcessor")
+    protected void setWebSocketProcessor(WebSocketProcessor websocketprocessor) {
+
+        if (log.isDebugEnabled()) {
+            log.debug("Inbound websocket processor bound to the API handlers");
+        }
+        ServiceReferenceHolder.getInstance().setWebsocketProcessor(websocketprocessor);
+    }
+
+    protected void unsetWebSocketProcessor(WebSocketProcessor websocketprocessor) {
+
+        if (log.isDebugEnabled()) {
+            log.debug("Inbound websocket processor unbound to the API handlers");
+        }
+        ServiceReferenceHolder.getInstance().setWebsocketProcessor(null);
     }
 }
 
