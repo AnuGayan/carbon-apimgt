@@ -10134,21 +10134,21 @@ public final class APIUtil {
             case APIConstants.OPERATION_SEQUENCE_TYPE_REQUEST:
                 if (isSequenceDefined(api.getInSequence()) && api.getInSequenceMediation() != null) {
                     Mediation inSequenceMediation = api.getInSequenceMediation();
-                    policyData = generateOperationPolicyDataObject(api.getUuid(), organization,
+                    policyData = generateOperationPolicyDataObject(api, organization,
                             inSequenceMediation.getName(), inSequenceMediation.getConfig());
                 }
                 break;
             case APIConstants.OPERATION_SEQUENCE_TYPE_RESPONSE:
                 if (isSequenceDefined(api.getOutSequence()) && api.getOutSequenceMediation() != null) {
                     Mediation outSequenceMediation = api.getOutSequenceMediation();
-                    policyData = generateOperationPolicyDataObject(api.getUuid(), organization,
+                    policyData = generateOperationPolicyDataObject(api, organization,
                             outSequenceMediation.getName(), outSequenceMediation.getConfig());
                 }
                 break;
             case APIConstants.OPERATION_SEQUENCE_TYPE_FAULT:
                 if (isSequenceDefined(api.getFaultSequence()) && api.getFaultSequenceMediation() != null) {
                     Mediation faultSequenceMediation = api.getFaultSequenceMediation();
-                    policyData = generateOperationPolicyDataObject(api.getUuid(), organization,
+                    policyData = generateOperationPolicyDataObject(api, organization,
                             faultSequenceMediation.getName(), faultSequenceMediation.getConfig());
                 }
                 break;
@@ -10156,9 +10156,41 @@ public final class APIUtil {
         return policyData;
     }
 
+    @Deprecated
     public static OperationPolicyData generateOperationPolicyDataObject(String apiUuid, String organization,
                                                                         String policyName,
                                                                         String policyDefinitionString) {
+
+        ArrayList<String> supportedAPIList = new ArrayList<>();
+        try {
+            APIRevision apiRevision = ApiMgtDAO.getInstance().checkAPIUUIDIsARevisionUUID(apiUuid);
+            if (apiRevision != null && apiRevision.getApiUUID() != null) {
+                // If the API is a revision, fetch the API type using the revisioned API ID
+                supportedAPIList.add(ApiMgtDAO.getInstance().getAPITypeFromUUID(apiRevision.getApiUUID()));
+            } else {
+                supportedAPIList.add(ApiMgtDAO.getInstance().getAPITypeFromUUID(apiUuid));
+            }
+        } catch (APIManagementException e) {
+            // catching the exception here to avoid any changes to existing method signature
+            log.warn("Failed to determine API type for UUID: " + apiUuid, e);
+            supportedAPIList.add(APIConstants.API_TYPE_HTTP);
+        }
+        return buildOperationPolicyData(apiUuid, supportedAPIList, organization, policyName, policyDefinitionString);
+    }
+
+    public static OperationPolicyData generateOperationPolicyDataObject(API api, String organization,
+                                                                        String policyName,
+                                                                        String policyDefinitionString) {
+        String apiUuid = api.getUuid();
+        ArrayList<String> supportedAPIList = new ArrayList<>();
+        supportedAPIList.add(api.getType());
+        return buildOperationPolicyData(apiUuid, supportedAPIList, organization, policyName, policyDefinitionString);
+
+    }
+
+    private static OperationPolicyData buildOperationPolicyData(String apiUuid, List<String> supportedAPIList,
+                                                                String organization, String policyName,
+                                                                String policyDefinitionString) {
 
         OperationPolicySpecification policySpecification = new OperationPolicySpecification();
         policySpecification.setCategory(OperationPolicySpecification.PolicyCategory.Mediation);
@@ -10170,11 +10202,6 @@ public final class APIUtil {
         gatewayList.add(APIConstants.OPERATION_POLICY_SUPPORTED_GATEWAY_SYNAPSE);
         policySpecification.setSupportedGateways(gatewayList);
 
-        ArrayList<String> supportedAPIList = new ArrayList<>();
-        supportedAPIList.add(APIConstants.OPERATION_POLICY_SUPPORTED_API_TYPE_HTTP);
-        supportedAPIList.add(APIConstants.OPERATION_POLICY_SUPPORTED_API_TYPE_SOAP);
-        supportedAPIList.add(APIConstants.OPERATION_POLICY_SUPPORTED_API_TYPE_SOAPTOREST);
-        supportedAPIList.add(APIConstants.OPERATION_POLICY_SUPPORTED_API_TYPE_GRAPHQL);
         policySpecification.setSupportedApiTypes(supportedAPIList);
 
         ArrayList<String> applicableFlows = new ArrayList<>();
