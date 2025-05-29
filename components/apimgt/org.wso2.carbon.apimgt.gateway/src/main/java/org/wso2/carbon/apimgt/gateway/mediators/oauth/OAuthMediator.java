@@ -33,9 +33,11 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.wso2.carbon.apimgt.gateway.APIMgtGatewayConstants;
 import org.wso2.carbon.apimgt.gateway.handlers.security.APISecurityException;
+import org.wso2.carbon.apimgt.gateway.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.gateway.mediators.oauth.client.TokenResponse;
 import org.wso2.carbon.apimgt.gateway.mediators.oauth.conf.OAuthEndpoint;
 import org.wso2.carbon.apimgt.gateway.utils.GatewayUtils;
+import org.wso2.carbon.apimgt.gateway.utils.redis.RedisCacheUtils;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 
 import java.util.Map;
@@ -88,7 +90,18 @@ public class OAuthMediator extends AbstractMediator implements ManagedLifecycle 
 
     @Override
     public void destroy() {
-
+        if (ServiceReferenceHolder.getInstance().isRedisEnabled()) {
+            RedisCacheUtils redisCacheUtils =
+                    new RedisCacheUtils(ServiceReferenceHolder.getInstance().getRedisPool());
+            if (redisCacheUtils.exists(oAuthEndpoint.getId())) {
+                redisCacheUtils.deleteKey(oAuthEndpoint.getId());
+            }
+        } else {
+            TokenResponse tokenResponse = TokenCache.getInstance().getTokenMap().get(oAuthEndpoint.getId());
+            if (tokenResponse != null) {
+                TokenCache.getInstance().getTokenMap().remove(oAuthEndpoint.getId(), tokenResponse);
+            }
+        }
     }
 
     @Override
