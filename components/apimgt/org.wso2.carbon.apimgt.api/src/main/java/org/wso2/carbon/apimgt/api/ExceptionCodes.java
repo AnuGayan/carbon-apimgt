@@ -583,7 +583,9 @@ public enum ExceptionCodes implements ErrorHandler {
             "subscription is in '%s' state.", false),
     NOT_ALLOWED_TIER_FOR_SUBSCRIBER(902023, "Cannot change the business plan of the subscription.",
             403, "Cannot change the business plan of the subscription with ID '%s' as the " +
-            "subscriber does not have permission to access the specified business plan.", false);
+            "subscriber does not have permission to access the specified business plan.", false),
+    INVALID_MEDIA_TYPE_VALIDATION(902050, "Invalid or mismatched media type detected.", 415,
+            "File extension '%s' does not match detected MIME type '%s'");
 
     private final long errorCode;
     private final String errorMessage;
