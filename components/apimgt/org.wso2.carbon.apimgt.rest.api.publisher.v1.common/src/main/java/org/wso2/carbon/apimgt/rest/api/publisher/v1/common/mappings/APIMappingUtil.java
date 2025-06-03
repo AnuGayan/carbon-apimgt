@@ -465,6 +465,10 @@ public class APIMappingUtil {
             model.setAsyncTransportProtocols(asyncTransports);
         }
 
+        if (dto.getWsdlUrl() != null) {
+            model.setWsdlUrl(dto.getWsdlUrl());
+        }
+
         return model;
     }
 
