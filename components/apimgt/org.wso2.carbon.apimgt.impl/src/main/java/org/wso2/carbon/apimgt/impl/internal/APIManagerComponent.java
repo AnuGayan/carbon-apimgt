@@ -60,6 +60,9 @@ import org.wso2.carbon.apimgt.impl.config.APIMConfigService;
 import org.wso2.carbon.apimgt.impl.dao.ApiMgtDAO;
 import org.wso2.carbon.apimgt.impl.ExternalEnvironment;
 import org.wso2.carbon.apimgt.impl.deployer.ExternalGatewayDeployer;
+import org.wso2.carbon.apimgt.impl.discovery.FederatedAPIDiscovery;
+import org.wso2.carbon.apimgt.impl.discovery.DiscoveryAgentSchedulerService;
+import org.wso2.carbon.apimgt.impl.discovery.IDiscoveryAgentSchedulerService;
 import org.wso2.carbon.apimgt.impl.dto.EventHubConfigurationDto;
 import org.wso2.carbon.apimgt.impl.dto.ThrottleProperties;
 import org.wso2.carbon.apimgt.impl.factory.SQLConstantManagerFactory;
@@ -256,6 +259,13 @@ public class APIManagerComponent {
             }
             registration = componentContext.getBundleContext()
                     .registerService(APIManagerConfigurationService.class.getName(), configurationService, null);
+
+        // Register DiscoveryAgentSchedulerService as an OSGi service
+        DiscoveryAgentSchedulerService discoveryScheduler = new DiscoveryAgentSchedulerService();
+        componentContext.getBundleContext().registerService(IDiscoveryAgentSchedulerService.class.getName(), discoveryScheduler, null);
+        ServiceReferenceHolder.getInstance().setDiscoveryAgentSchedulerService(discoveryScheduler);
+        log.info("DiscoveryAgentSchedulerService registered successfully as an OSGi service.");
+
             log.debug("Reading Analytics Configuration from file...");
             // This method is called in two places. Mostly by the time activate hits,
             // ServiceDataPublisherAdmin is not activated. Therefore, this same method is run,
@@ -355,8 +365,31 @@ public class APIManagerComponent {
             log.debug("Deactivating API manager component");
         }
 
-        registration.unregister();
+        // Shutdown DiscoveryAgentSchedulerService
+        IDiscoveryAgentSchedulerService discoveryScheduler = ServiceReferenceHolder.getInstance().getDiscoveryAgentSchedulerService();
+        if (discoveryScheduler != null) {
+            discoveryScheduler.shutdown();
+            log.info("DiscoveryAgentSchedulerService shutdown initiated.");
+        }
+
+        if (registration != null) { // Ensure registration object is not null before unregistering
+            registration.unregister();
+        }
         APIManagerFactory.getInstance().clearAll();
+    }
+
+    @Reference(
+            name = "federatedApiDiscovery.component",
+            service = FederatedAPIDiscovery.class,
+            cardinality = ReferenceCardinality.MULTIPLE,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "removeFederatedApiDiscoverers")
+    protected void addFederatedApiDiscoverer(FederatedAPIDiscovery discoverer) {
+        ServiceReferenceHolder.getInstance().addFederatedApiDiscoverer(discoverer.getType(), discoverer);
+    }
+
+    protected void removeFederatedApiDiscoverers(FederatedAPIDiscovery discoverer) {
+        ServiceReferenceHolder.getInstance().removeFederatedApiDiscoverer(discoverer.getType());
     }
 
     @Reference(

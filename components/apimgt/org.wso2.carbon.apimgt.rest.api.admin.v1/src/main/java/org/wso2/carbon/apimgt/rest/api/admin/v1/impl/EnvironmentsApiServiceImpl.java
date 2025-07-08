@@ -16,6 +16,7 @@ import org.wso2.carbon.apimgt.rest.api.admin.v1.dto.EnvironmentDTO;
 import org.wso2.carbon.apimgt.rest.api.admin.v1.dto.EnvironmentListDTO;
 import org.wso2.carbon.apimgt.rest.api.admin.v1.dto.VHostDTO;
 import org.wso2.carbon.apimgt.rest.api.admin.v1.utils.mappings.EnvironmentMappingUtil;
+import org.wso2.carbon.apimgt.impl.discovery.FederatedDiscoveryTaskScheduler;
 import org.wso2.carbon.apimgt.rest.api.common.RestApiConstants;
 import org.wso2.carbon.apimgt.rest.api.common.RestApiCommonUtil;
 import org.wso2.carbon.apimgt.rest.api.util.utils.RestApiUtil;
@@ -31,7 +32,15 @@ import javax.ws.rs.core.Response;
 public class EnvironmentsApiServiceImpl implements EnvironmentsApiService {
 
     private static final Log log = LogFactory.getLog(EnvironmentsApiServiceImpl.class);
+    private final FederatedDiscoveryTrigger federatedDiscoveryTrigger;
 
+    public EnvironmentsApiServiceImpl() {
+        // In a full OSGi environment, this would be injected or retrieved from a service registry.
+        // For now, direct instantiation for simplicity.
+        // If FederatedDiscoveryTrigger becomes an OSGi service, its lifecycle (including shutdown of APIMgtAsyncExecutorService)
+        // would be managed by the OSGi framework.
+        this.federatedDiscoveryTrigger = new FederatedDiscoveryTrigger();
+    }
     /**
      * Delete gateway envirionment
      *
@@ -42,13 +51,20 @@ public class EnvironmentsApiServiceImpl implements EnvironmentsApiService {
      */
     public Response environmentsEnvironmentIdDelete(String environmentId, MessageContext messageContext) throws APIManagementException {
         APIAdmin apiAdmin = new APIAdminImpl();
-        //String tenantDomain = RestApiCommonUtil.getLoggedInUserTenantDomain();
         String organization = RestApiUtil.getValidatedOrganization(messageContext);
+        Environment environmentToDelete = apiAdmin.getEnvironment(organization, environmentId);
+
         if (apiAdmin.hasExistingDeployments(organization, environmentId)) {
             RestApiUtil.handleConflict("Cannot delete the environment with id: " + environmentId
                     + " as active gateway policy deployment exist", log);
         }
         apiAdmin.deleteEnvironment(organization, environmentId);
+
+        // Stop federated discovery if it was enabled for this environment
+        if (environmentToDelete != null && environmentToDelete.isFederatedDiscoveryEnabled()) {
+            federatedDiscoveryTrigger.stopDiscovery(environmentToDelete);
+        }
+
         String info = "{'id':'" + environmentId + "'}";
         APIUtil.logAuditMessage(APIConstants.AuditLogConstants.GATEWAY_ENVIRONMENTS, info,
                 APIConstants.AuditLogConstants.DELETED, RestApiCommonUtil.getLoggedInUsername());
@@ -68,8 +84,24 @@ public class EnvironmentsApiServiceImpl implements EnvironmentsApiService {
         APIAdmin apiAdmin = new APIAdminImpl();
         body.setId(environmentId);
         String organization = RestApiUtil.getValidatedOrganization(messageContext);
-        Environment env = EnvironmentMappingUtil.fromEnvDtoToEnv(body);
-        apiAdmin.updateEnvironment(organization, env);
+
+        // Get old environment state for comparison
+        Environment oldEnv = null;
+        try {
+            oldEnv = apiAdmin.getEnvironment(organization, environmentId);
+        } catch (APIManagementException e) {
+            log.warn("Could not retrieve old state of environment " + environmentId + " during update. " +
+                     "Proceeding with update but may not correctly stop old discovery agent if type changed.", e);
+            // If we can't get the old state, we might not be able to stop an old agent if the type changed.
+            // However, if discovery is simply disabled, newEnv.isFederatedDiscoveryEnabled() will be false,
+            // and updateDiscovery will call stopDiscovery on newEnv (which is fine).
+        }
+
+        Environment newEnv = EnvironmentMappingUtil.fromEnvDtoToEnv(body);
+        apiAdmin.updateEnvironment(organization, newEnv);
+
+        federatedDiscoveryTrigger.updateDiscovery(oldEnv, newEnv);
+
         URI location = null;
         try {
             location = new URI(RestApiConstants.RESOURCE_PATH_ENVIRONMENT + "/" + environmentId);
@@ -117,8 +149,15 @@ public class EnvironmentsApiServiceImpl implements EnvironmentsApiService {
             if (APIConstants.API_GATEWAY_TYPE_APK.equals(gatewayType) && hasUnsupportedVhostConfiguration(body.getVhosts())) {
                 throw new APIManagementException("Unsupported Vhost Configuration for gateway type: " + gatewayType);
             }
-            Environment env = EnvironmentMappingUtil.fromEnvDtoToEnv(body);
-            EnvironmentDTO envDTO = EnvironmentMappingUtil.fromEnvToEnvDTO(apiAdmin.addEnvironment(organization, env));
+            Environment envModel = EnvironmentMappingUtil.fromEnvDtoToEnv(body);
+            Environment createdEnv = apiAdmin.addEnvironment(organization, envModel);
+            EnvironmentDTO envDTO = EnvironmentMappingUtil.fromEnvToEnvDTO(createdEnv);
+
+            // Trigger federated discovery if enabled
+            if (createdEnv.isFederatedDiscoveryEnabled()) {
+                federatedDiscoveryTrigger.triggerDiscovery(createdEnv);
+            }
+
             URI location = new URI(RestApiConstants.RESOURCE_PATH_ENVIRONMENT + "/" + envDTO.getId());
             APIUtil.logAuditMessage(APIConstants.AuditLogConstants.GATEWAY_ENVIRONMENTS, new Gson().toJson(envDTO),
                     APIConstants.AuditLogConstants.CREATED, RestApiCommonUtil.getLoggedInUsername());

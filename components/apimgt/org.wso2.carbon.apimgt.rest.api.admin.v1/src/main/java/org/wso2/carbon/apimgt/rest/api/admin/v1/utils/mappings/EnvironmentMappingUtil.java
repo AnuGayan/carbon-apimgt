@@ -68,6 +68,13 @@ public class EnvironmentMappingUtil {
                 .collect(Collectors.toList()));
         envDTO.setAdditionalProperties(fromAdditionalPropertiesToAdditionalPropertiesDTO
                 (env.getAdditionalProperties()));
+
+        // Federated API Discovery properties
+        envDTO.setFederatedDiscoveryEnabled(env.isFederatedDiscoveryEnabled());
+        envDTO.setDiscoveryAgentType(env.getDiscoveryAgentType());
+        envDTO.setDiscoveryInterval(env.getDiscoveryInterval());
+        envDTO.setDiscoveryAgentProperties(fromAdditionalPropertiesToAdditionalPropertiesDTO
+                (env.getDiscoveryAgentProperties()));
         return envDTO;
     }
 
@@ -139,6 +146,17 @@ public class EnvironmentMappingUtil {
                 .collect(Collectors.toList()));
         env.setAdditionalProperties(fromAdditionalPropertiesDTOToAdditionalProperties
                 (envDTO.getAdditionalProperties()));
+
+        // Federated API Discovery properties
+        if (envDTO.isFederatedDiscoveryEnabled() != null) {
+            env.setFederatedDiscoveryEnabled(envDTO.isFederatedDiscoveryEnabled());
+        }
+        env.setDiscoveryAgentType(envDTO.getDiscoveryAgentType());
+        if (envDTO.getDiscoveryInterval() != null) {
+            env.setDiscoveryInterval(envDTO.getDiscoveryInterval());
+        }
+        env.setDiscoveryAgentProperties(fromAdditionalPropertiesDTOToAdditionalProperties
+                (envDTO.getDiscoveryAgentProperties()));
         return env;
     }
 

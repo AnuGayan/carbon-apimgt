@@ -29,6 +29,7 @@ import org.wso2.carbon.apimgt.impl.ExternalEnvironment;
 import org.wso2.carbon.apimgt.impl.config.APIMConfigService;
 import org.wso2.carbon.apimgt.impl.config.APIMConfigServiceImpl;
 import org.wso2.carbon.apimgt.impl.deployer.ExternalGatewayDeployer;
+import org.wso2.carbon.apimgt.impl.discovery.FederatedAPIDiscovery;
 import org.wso2.carbon.apimgt.impl.gatewayartifactsynchronizer.ArtifactSaver;
 import org.wso2.carbon.apimgt.impl.gatewayartifactsynchronizer.GatewayArtifactGenerator;
 import org.wso2.carbon.apimgt.impl.importexport.ImportExportAPI;
@@ -79,6 +80,8 @@ public class ServiceReferenceHolder {
     private Map<String, ExternalEnvironment> externalEnvironmentsMap = new HashMap<>();
     private Map<String, APIDefinition> apiDefinitionMap = new HashMap<>();
     private WorkflowTaskService workflowTaskService;
+    private Map<String, FederatedAPIDiscovery> federatedApiDiscoverers = new HashMap<>();
+    private IDiscoveryAgentSchedulerService discoveryAgentSchedulerService;
 
     private Map<String, LLMProviderService> llmProviderServiceMap = new HashMap();
 
@@ -337,6 +340,26 @@ public class ServiceReferenceHolder {
     public ExternalGatewayDeployer getExternalGatewayDeployer(String type) {
 
         return externalGatewayDeployers.get(type);
+    }
+
+    public void addFederatedApiDiscoverer(String type, FederatedAPIDiscovery discoverer) {
+        federatedApiDiscoverers.put(type, discoverer);
+    }
+
+    public void removeFederatedApiDiscoverer(String type) {
+        federatedApiDiscoverers.remove(type);
+    }
+
+    public FederatedAPIDiscovery getFederatedApiDiscoverer(String type) {
+        return federatedApiDiscoverers.get(type);
+    }
+
+    public IDiscoveryAgentSchedulerService getDiscoveryAgentSchedulerService() {
+        return discoveryAgentSchedulerService;
+    }
+
+    public void setDiscoveryAgentSchedulerService(IDiscoveryAgentSchedulerService discoveryAgentSchedulerService) {
+        this.discoveryAgentSchedulerService = discoveryAgentSchedulerService;
     }
 
     public void addExternalEnvironment(String type, ExternalEnvironment externalEnvironment) {

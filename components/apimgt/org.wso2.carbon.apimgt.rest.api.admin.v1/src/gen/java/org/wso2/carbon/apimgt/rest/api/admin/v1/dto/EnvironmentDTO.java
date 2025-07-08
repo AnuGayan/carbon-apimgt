@@ -37,6 +37,12 @@ public class EnvironmentDTO   {
     private List<GatewayEnvironmentProtocolURIDTO> endpointURIs = new ArrayList<GatewayEnvironmentProtocolURIDTO>();
     private List<AdditionalPropertyDTO> additionalProperties = new ArrayList<AdditionalPropertyDTO>();
 
+    // Federated API Discovery properties
+    private Boolean federatedDiscoveryEnabled = false;
+    private String discoveryAgentType = null;
+    private Long discoveryInterval = null;
+    private List<AdditionalPropertyDTO> discoveryAgentProperties = new ArrayList<AdditionalPropertyDTO>();
+
   /**
    **/
   public EnvironmentDTO id(String id) {
@@ -229,6 +235,71 @@ public class EnvironmentDTO   {
     this.additionalProperties = additionalProperties;
   }
 
+  /**
+  **/
+  public EnvironmentDTO federatedDiscoveryEnabled(Boolean federatedDiscoveryEnabled) {
+    this.federatedDiscoveryEnabled = federatedDiscoveryEnabled;
+    return this;
+  }
+
+  @ApiModelProperty(example = "false", value = "Enable or disable federated API discovery for this environment")
+  @JsonProperty("federatedDiscoveryEnabled")
+  public Boolean isFederatedDiscoveryEnabled() {
+    return federatedDiscoveryEnabled;
+  }
+  public void setFederatedDiscoveryEnabled(Boolean federatedDiscoveryEnabled) {
+    this.federatedDiscoveryEnabled = federatedDiscoveryEnabled;
+  }
+
+  /**
+   **/
+  public EnvironmentDTO discoveryAgentType(String discoveryAgentType) {
+    this.discoveryAgentType = discoveryAgentType;
+    return this;
+  }
+
+  @ApiModelProperty(example = "AWS", value = "Type of the discovery agent (e.g., AWS, Azure)")
+  @JsonProperty("discoveryAgentType")
+  public String getDiscoveryAgentType() {
+    return discoveryAgentType;
+  }
+  public void setDiscoveryAgentType(String discoveryAgentType) {
+    this.discoveryAgentType = discoveryAgentType;
+  }
+
+  /**
+   **/
+  public EnvironmentDTO discoveryInterval(Long discoveryInterval) {
+    this.discoveryInterval = discoveryInterval;
+    return this;
+  }
+
+  @ApiModelProperty(example = "3600", value = "Discovery interval in seconds")
+  @JsonProperty("discoveryInterval")
+  public Long getDiscoveryInterval() {
+    return discoveryInterval;
+  }
+  public void setDiscoveryInterval(Long discoveryInterval) {
+    this.discoveryInterval = discoveryInterval;
+  }
+
+  /**
+   **/
+  public EnvironmentDTO discoveryAgentProperties(List<AdditionalPropertyDTO> discoveryAgentProperties) {
+    this.discoveryAgentProperties = discoveryAgentProperties;
+    return this;
+  }
+
+  @ApiModelProperty(value = "Additional properties for the discovery agent")
+      @Valid
+  @JsonProperty("discoveryAgentProperties")
+  public List<AdditionalPropertyDTO> getDiscoveryAgentProperties() {
+    return discoveryAgentProperties;
+  }
+  public void setDiscoveryAgentProperties(List<AdditionalPropertyDTO> discoveryAgentProperties) {
+    this.discoveryAgentProperties = discoveryAgentProperties;
+  }
+
 
   @Override
   public boolean equals(java.lang.Object o) {
@@ -249,12 +320,16 @@ public class EnvironmentDTO   {
         Objects.equals(isReadOnly, environment.isReadOnly) &&
         Objects.equals(vhosts, environment.vhosts) &&
         Objects.equals(endpointURIs, environment.endpointURIs) &&
-        Objects.equals(additionalProperties, environment.additionalProperties);
+        Objects.equals(additionalProperties, environment.additionalProperties) &&
+        Objects.equals(federatedDiscoveryEnabled, environment.federatedDiscoveryEnabled) &&
+        Objects.equals(discoveryAgentType, environment.discoveryAgentType) &&
+        Objects.equals(discoveryInterval, environment.discoveryInterval) &&
+        Objects.equals(discoveryAgentProperties, environment.discoveryAgentProperties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, name, displayName, provider, type, gatewayType, description, isReadOnly, vhosts, endpointURIs, additionalProperties);
+    return Objects.hash(id, name, displayName, provider, type, gatewayType, description, isReadOnly, vhosts, endpointURIs, additionalProperties, federatedDiscoveryEnabled, discoveryAgentType, discoveryInterval, discoveryAgentProperties);
   }
 
   @Override
@@ -273,6 +348,10 @@ public class EnvironmentDTO   {
     sb.append("    vhosts: ").append(toIndentedString(vhosts)).append("\n");
     sb.append("    endpointURIs: ").append(toIndentedString(endpointURIs)).append("\n");
     sb.append("    additionalProperties: ").append(toIndentedString(additionalProperties)).append("\n");
+    sb.append("    federatedDiscoveryEnabled: ").append(toIndentedString(federatedDiscoveryEnabled)).append("\n");
+    sb.append("    discoveryAgentType: ").append(toIndentedString(discoveryAgentType)).append("\n");
+    sb.append("    discoveryInterval: ").append(toIndentedString(discoveryInterval)).append("\n");
+    sb.append("    discoveryAgentProperties: ").append(toIndentedString(discoveryAgentProperties)).append("\n");
     sb.append("}");
     return sb.toString();
   }

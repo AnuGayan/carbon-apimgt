@@ -55,6 +55,13 @@ public class Environment implements Serializable {
     private String gatewayType;
     private Map<String, String> additionalProperties = new HashMap<>();
 
+    // Federated API Discovery properties
+    private boolean federatedDiscoveryEnabled;
+    private String discoveryAgentType;
+    private long discoveryInterval; // in seconds
+    private Map<String, String> discoveryAgentProperties = new HashMap<>();
+
+
     public boolean isDefault() {
         return isDefault;
     }
@@ -259,5 +266,37 @@ public class Environment implements Serializable {
     public int hashCode() {
         int result = type.hashCode();
         return  31 * result + getName().hashCode();
+    }
+
+    public boolean isFederatedDiscoveryEnabled() {
+        return federatedDiscoveryEnabled;
+    }
+
+    public void setFederatedDiscoveryEnabled(boolean federatedDiscoveryEnabled) {
+        this.federatedDiscoveryEnabled = federatedDiscoveryEnabled;
+    }
+
+    public String getDiscoveryAgentType() {
+        return discoveryAgentType;
+    }
+
+    public void setDiscoveryAgentType(String discoveryAgentType) {
+        this.discoveryAgentType = discoveryAgentType;
+    }
+
+    public long getDiscoveryInterval() {
+        return discoveryInterval;
+    }
+
+    public void setDiscoveryInterval(long discoveryInterval) {
+        this.discoveryInterval = discoveryInterval;
+    }
+
+    public Map<String, String> getDiscoveryAgentProperties() {
+        return discoveryAgentProperties;
+    }
+
+    public void setDiscoveryAgentProperties(Map<String, String> discoveryAgentProperties) {
+        this.discoveryAgentProperties = discoveryAgentProperties;
     }
 }
