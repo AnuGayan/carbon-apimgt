@@ -3187,4 +3187,8 @@ public final class APIConstants {
         public static final String TOKEN_VALIDATION_CONFIG = "TokenValidation";
         public static final String ENFORCE_JWT_TYPE_HEADER_VALIDATION = "EnforceTypeHeaderValidation";
     }
+
+    public static final String SYNAPSE_API_NAME_PREFIX = "prod";
+
+    public static final String ENABLE_SYNAPSE_API_PREFIX = "enableSynapseAPIPrefix";
 }

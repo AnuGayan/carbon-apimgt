@@ -184,4 +184,9 @@ public class GatewayUtils {
         }
         return ttl;
     }
+
+    public static boolean isSynapseAPIPrefixEnabled() {
+
+        return Boolean.parseBoolean(System.getProperty(APIConstants.ENABLE_SYNAPSE_API_PREFIX));
+    }
 }

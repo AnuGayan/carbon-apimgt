@@ -548,12 +548,20 @@ public class GatewayUtils {
 
     public static String getQualifiedApiName(String apiName, String version) {
 
-        return apiName + ":v" + version;
+        if (org.wso2.carbon.apimgt.impl.utils.GatewayUtils.isSynapseAPIPrefixEnabled()) {
+            return APIConstants.SYNAPSE_API_NAME_PREFIX + "--" + apiName + ":v" + version;
+        } else {
+            return apiName + ":v" + version;
+        }
     }
 
     public static String getQualifiedDefaultApiName(String apiName) {
 
-        return apiName;
+        if (org.wso2.carbon.apimgt.impl.utils.GatewayUtils.isSynapseAPIPrefixEnabled()) {
+            return APIConstants.SYNAPSE_API_NAME_PREFIX + "--" + apiName;
+        } else {
+            return apiName;
+        }
     }
 
     /**
