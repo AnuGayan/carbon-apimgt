@@ -31,6 +31,7 @@ import org.apache.synapse.core.axis2.Axis2MessageContext;
 import org.apache.synapse.rest.RESTConstants;
 import org.wso2.carbon.apimgt.gateway.APIMgtGatewayConstants;
 import org.wso2.carbon.apimgt.gateway.handlers.security.utils.SchemaValidationUtils;
+import org.wso2.carbon.apimgt.gateway.utils.GatewayUtils;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -91,11 +92,17 @@ public class OpenAPIRequest implements Request {
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> Collections.singleton(entry.getValue())));
         //Set transport headers
         String contentTypeHeader = "content-type";
+        String acceptHeader = "accept";
         for (Map.Entry<String, Collection<String>> header : headerMap.entrySet()) {
             String headerKey = header.getKey();
             String value =  header.getValue().iterator().next();
-            headerKey = headerKey.equalsIgnoreCase(contentTypeHeader) ?
-                    "Content-Type" : headerKey.toLowerCase(Locale.ROOT);
+            if (headerKey.equalsIgnoreCase(contentTypeHeader)) {
+                headerKey = "Content-Type";
+            } else if (GatewayUtils.isAcceptHeaderValidationEnabled() && headerKey.equalsIgnoreCase(acceptHeader)) {
+                headerKey = "Accept";
+            } else {
+                headerKey = headerKey.toLowerCase(Locale.ROOT);
+            }
             headers.put(headerKey, value);
         }
         String apiResource = "/";

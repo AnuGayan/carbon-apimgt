@@ -35,6 +35,7 @@ import org.apache.synapse.rest.AbstractHandler;
 import org.jetbrains.annotations.NotNull;
 import org.wso2.carbon.apimgt.gateway.APIMgtGatewayConstants;
 import org.wso2.carbon.apimgt.gateway.internal.ServiceReferenceHolder;
+import org.wso2.carbon.apimgt.gateway.utils.GatewayUtils;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.tracing.TracingSpan;
 import org.wso2.carbon.apimgt.tracing.TracingTracer;
@@ -184,6 +185,8 @@ public class APIMgtLatencyStatsHandler extends AbstractHandler {
         List<Parameter> headerParameters = parameters.stream()
                 .filter(param -> param.getIn().equalsIgnoreCase("header"))
                 .filter(param -> !param.getName().equalsIgnoreCase(Headers.CONTENT_TYPE)) // Ignore content-type header
+                // Ignore Accept header from validation if Accept header validation is enabled
+                .filter(param -> !(GatewayUtils.isAcceptHeaderValidationEnabled() && param.getName().equalsIgnoreCase(Headers.ACCEPT)))
                 .collect(Collectors.toList());
         List<Parameter> modifiedHeaderParameters = headerParameters.stream()
                 .map(APIMgtLatencyStatsHandler::replaceLowerCaseHeaderName).collect(Collectors.toList());
