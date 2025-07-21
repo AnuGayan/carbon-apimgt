@@ -22,10 +22,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.apimgt.api.gateway.GatewayAPIDTO;
 import org.wso2.carbon.apimgt.api.gateway.GraphQLSchemaDTO;
-import org.wso2.carbon.apimgt.gateway.webhooks.SubscriptionDataStore;
 import org.wso2.carbon.apimgt.impl.notifier.events.APIEvent;
 import org.wso2.carbon.apimgt.impl.notifier.events.DeployAPIInGatewayEvent;
-import org.wso2.carbon.apimgt.keymgt.SubscriptionDataHolder;
 import org.wso2.carbon.apimgt.keymgt.model.SubscriptionDataLoader;
 import org.wso2.carbon.apimgt.keymgt.model.entity.API;
 import org.wso2.carbon.apimgt.keymgt.model.exception.DataLoadingException;
@@ -36,7 +34,7 @@ import java.util.*;
 public class DataHolder {
     private static final Log log  = LogFactory.getLog(DataHolder.class);
     private static final DataHolder Instance = new DataHolder();
-    private Map<String, List<String>> apiToCertificatesMap = new HashMap();
+    private Map<String, List<String>> apiToCertificatesMap = new HashMap<>();
     private Map<String, String> googleAnalyticsConfigMap = new HashMap<>();
     private Map<String, GraphQLSchemaDTO> apiToGraphQLSchemaDTOMap = new HashMap<>();
     private Map<String, List<String>> apiToKeyManagersMap = new HashMap<>();
@@ -225,6 +223,25 @@ public class DataHolder {
         if (tenantAPIMap.containsKey(tenantDomain)) {
             Map<String, API> apiMap = tenantAPIMap.get(tenantDomain);
             apiMap.values().forEach(api -> api.setDeployed(false));
+        }
+    }
+
+    /**
+     * Update API properties, revision ID, and deployment status in subscription data store
+     *
+     * @param gatewayAPIDTO Gateway API DTO containing additional properties and other info
+     */
+    public void updateAPIPropertiesFromGatewayDTO(GatewayAPIDTO gatewayAPIDTO) {
+        Map<String, API> apiMap = tenantAPIMap.get(gatewayAPIDTO.getTenantDomain());
+        if (apiMap != null) {
+            API api = apiMap.get(gatewayAPIDTO.getApiContext());
+            if (api != null) {
+                api.setApiProperties(gatewayAPIDTO.getAdditionalProperties());
+                if (log.isDebugEnabled()) {
+                    log.debug("Updated API properties for API: " + api.getName() + " (Context: " + api.getContext() +
+                            ")");
+                }
+            }
         }
     }
 }

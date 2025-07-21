@@ -109,6 +109,7 @@ public class InMemoryAPIDeployer {
                 DataHolder.getInstance().addKeyManagerToAPIMapping(apiId, gatewayAPIDTO.getKeyManagers());
                 DataHolder.getInstance().addAPIMetaData(gatewayEvent);
                 DataHolder.getInstance().markAPIAsDeployed(gatewayAPIDTO);
+                syncAPIPropertiesAcrossComponents(gatewayAPIDTO);
                 if (log.isDebugEnabled()) {
                     log.debug("API with " + apiId + " is deployed in gateway with the labels " + String.join(",",
                             gatewayLabels));
@@ -145,6 +146,7 @@ public class InMemoryAPIDeployer {
                 addDeployedGraphqlQLToAPI(gatewayAPIDTO);
                 DataHolder.getInstance().addKeyManagerToAPIMapping(apiId, gatewayAPIDTO.getKeyManagers());
                 DataHolder.getInstance().markAPIAsDeployed(gatewayAPIDTO);
+                syncAPIPropertiesAcrossComponents(gatewayAPIDTO);
                 if (log.isDebugEnabled()) {
                     log.debug("API with " + apiId + " is deployed in gateway with the labels " + String.join(",",
                             gatewayLabels));
@@ -264,6 +266,7 @@ public class InMemoryAPIDeployer {
                                                         api.getApiProvider(), api.getApiType(), api.getContext());
                                         unDeployAPI(deployAPIInGatewayEvent);
                                         deployAPIFromDTO(gatewayAPIDTO, apiGatewayAdmin);
+                                        syncAPIPropertiesAcrossComponents(gatewayAPIDTO);
                                     } else {
                                         if (log.isDebugEnabled()) {
                                             log.debug("API " + gatewayAPIDTO.getName() + " is already deployed");
@@ -271,6 +274,7 @@ public class InMemoryAPIDeployer {
                                     }
                                 } else {
                                     deployAPIFromDTO(gatewayAPIDTO, apiGatewayAdmin);
+                                    syncAPIPropertiesAcrossComponents(gatewayAPIDTO);
                                 }
                             }
                         } catch (AxisFault axisFault) {
@@ -574,6 +578,23 @@ public class InMemoryAPIDeployer {
             } finally {
                 MessageContext.destroyCurrentMessageContext();
                 PrivilegedCarbonContext.endTenantFlow();
+            }
+        }
+    }
+
+    /**
+     * Synchronize API properties in both DataHolder and SubscriptionDataStore from GatewayAPIDTO.
+     */
+    private void syncAPIPropertiesAcrossComponents(GatewayAPIDTO gatewayAPIDTO) {
+        DataHolder.getInstance().updateAPIPropertiesFromGatewayDTO(gatewayAPIDTO);
+        String tenantDomainForAPI = gatewayAPIDTO.getTenantDomain();
+        SubscriptionDataStore tenantSubscriptionStore =
+                SubscriptionDataHolder.getInstance().getTenantSubscriptionStore(tenantDomainForAPI);
+        if (tenantSubscriptionStore != null) {
+            tenantSubscriptionStore.updateAPIPropertiesFromGatewayDTO(gatewayAPIDTO);
+            if (log.isDebugEnabled()) {
+                log.debug("Synchronized API properties for API: " + gatewayAPIDTO.getName() + " (Context: " +
+                        gatewayAPIDTO.getApiContext() + ", Tenant: " + tenantDomainForAPI + ")");
             }
         }
     }
