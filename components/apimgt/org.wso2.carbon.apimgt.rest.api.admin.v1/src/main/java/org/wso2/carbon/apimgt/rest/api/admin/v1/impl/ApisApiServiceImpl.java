@@ -92,8 +92,7 @@ public class ApisApiServiceImpl implements ApisApiService {
                         ExceptionCodes.USER_NOT_FOUND);
             }
             APIAdmin apiAdmin = new APIAdminImpl();
-            String encodedProvider = APIUtil.replaceEmailDomain(provider);
-            apiAdmin.updateApiProvider(apiId, encodedProvider, organisation);
+            apiAdmin.updateApiProvider(apiId, provider, organisation);
         } catch (APIManagementException e) {
             throw new APIManagementException("Error while changing the API provider", e,
                     ExceptionCodes.CHANGE_API_PROVIDER_FAILED);
