@@ -54,20 +54,7 @@ public class PersistenceUtil {
     public static void handleException(String msg) throws APIManagementException {
         throw new APIManagementException(msg);
     }
-    /**
-     * When an input is having '@',replace it with '-AT-' [This is required to persist API data in registry,as registry
-     * paths don't allow '@' sign.]
-     *
-     * @param input inputString
-     * @return String modifiedString
-     */
-    public static String replaceEmailDomain(String input) {
 
-        if (input != null && input.contains(APIConstants.EMAIL_DOMAIN_SEPARATOR)) {
-             input = input.replace(APIConstants.EMAIL_DOMAIN_SEPARATOR, APIConstants.EMAIL_DOMAIN_SEPARATOR_REPLACEMENT);
-        }
-        return input;
-    }
     /**
      * When an input is having '-AT-',replace it with @ [This is required to persist API data between registry and database]
      *
