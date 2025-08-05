@@ -22,4 +22,4 @@ public enum TokenEndpointConnectionConfigType {
  GLOBAL,
  ENDPOINT_SPECIFIC,
  NONE
-} 
+}

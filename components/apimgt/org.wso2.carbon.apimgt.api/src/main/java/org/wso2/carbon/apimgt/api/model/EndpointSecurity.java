@@ -250,6 +250,7 @@ public class EndpointSecurity {
         private String proxyProtocol;
         private String proxyUsername;
         private String proxyPassword;
+        private String proxyPasswordAlias;
 
         public boolean isProxyEnabled() {
             return proxyEnabled;
@@ -297,6 +298,14 @@ public class EndpointSecurity {
 
         public void setProxyPassword(String proxyPassword) {
             this.proxyPassword = proxyPassword;
+        }
+        
+        public String getProxyPasswordAlias() {
+            return proxyPasswordAlias;
+        }
+
+        public void setProxyPasswordAlias(String proxyPasswordAlias) {
+            this.proxyPasswordAlias = proxyPasswordAlias;
         }
     }
 
