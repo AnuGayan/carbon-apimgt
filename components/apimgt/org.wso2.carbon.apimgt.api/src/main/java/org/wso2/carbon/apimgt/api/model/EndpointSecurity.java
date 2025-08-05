@@ -17,9 +17,12 @@
  */
 package org.wso2.carbon.apimgt.api.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.util.HashMap;
 import java.util.Map;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class EndpointSecurity {
 
     private String uniqueIdentifier = null;
@@ -52,6 +55,10 @@ public class EndpointSecurity {
 
     private int socketTimeoutDuration = -1;
 
+    private TokenEndpointConnectionConfigType connectionTimeoutConfigType;
+
+    private TokenEndpointConnectionConfigType proxyConfigType;
+
     public EndpointSecurity(EndpointSecurity endpointSecurity) {
 
         this.uniqueIdentifier = endpointSecurity.uniqueIdentifier;
@@ -69,6 +76,8 @@ public class EndpointSecurity {
         this.connectionTimeoutDuration = endpointSecurity.connectionTimeoutDuration;
         this.connectionRequestTimeoutDuration = endpointSecurity.connectionRequestTimeoutDuration;
         this.socketTimeoutDuration = endpointSecurity.socketTimeoutDuration;
+        this.connectionTimeoutConfigType = endpointSecurity.connectionTimeoutConfigType;
+        this.proxyConfigType = endpointSecurity.proxyConfigType;
     }
 
     public ProxyConfigs getProxyConfigs() {
@@ -217,6 +226,23 @@ public class EndpointSecurity {
         this.socketTimeoutDuration = socketTimeoutDuration;
     }
 
+    public TokenEndpointConnectionConfigType getConnectionTimeoutConfigType() {
+        return connectionTimeoutConfigType;
+    }
+
+    public void setConnectionTimeoutConfigType(TokenEndpointConnectionConfigType connectionTimeoutConfigType) {
+        this.connectionTimeoutConfigType = connectionTimeoutConfigType;
+    }
+
+    public TokenEndpointConnectionConfigType getProxyConfigType() {
+        return proxyConfigType;
+    }
+
+    public void setProxyConfigType(TokenEndpointConnectionConfigType proxyConfigType) {
+        this.proxyConfigType = proxyConfigType;
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ProxyConfigs {
         private boolean proxyEnabled;
         private String proxyHost;
@@ -281,17 +307,19 @@ public class EndpointSecurity {
                 "uniqueIdentifier='" + uniqueIdentifier + '\'' +
                 ", password='" + password + '\'' +
                 ", type='" + type + '\'' +
-                ", enabled=" + enabled +
+                ", enabled=" + enabled + '\'' +
                 ", username='" + username + '\'' +
                 ", grantType='" + grantType + '\'' +
                 ", tokenUrl='" + tokenUrl + '\'' +
                 ", clientId='" + clientId + '\'' +
                 ", clientSecret='" + clientSecret + '\'' +
                 ", customParameters='" + customParameters + '\'' +
-                ", additionalProperties=" + additionalProperties +
-                ", connectionTimeoutDuration=" + connectionTimeoutDuration +
-                ", connectionRequestTimeoutDuration=" + connectionRequestTimeoutDuration +
-                ", socketTimeoutDuration=" + socketTimeoutDuration +
+                ", additionalProperties=" + additionalProperties + '\'' +
+                ", connectionTimeoutDuration=" + connectionTimeoutDuration + '\'' +
+                ", connectionRequestTimeoutDuration=" + connectionRequestTimeoutDuration + '\'' +
+                ", socketTimeoutDuration=" + socketTimeoutDuration + '\'' +
+                ", connectionTimeoutConfigType=" + connectionTimeoutConfigType + '\'' +
+                ", proxyConfigType=" + proxyConfigType + '\'' +
                 '}';
     }
 }
