@@ -2814,7 +2814,13 @@ public class PublisherCommonUtils {
         if (!apiVersions.isEmpty()) {
             for (String version : apiVersions) {
                 if (version.equalsIgnoreCase(apiDtoTypeWrapper.getVersion())) {
-                    if (apiProvider.isDuplicateContextTemplateMatchingOrganization(context, organization)) {
+                    if (apiDtoTypeWrapper.getInitiatedFromGateway()) {
+                        throw new APIManagementException("API with name " + apiDtoTypeWrapper.getName() +
+                                        " and version " + apiDtoTypeWrapper.getVersion() +
+                                        " already exists in organization " + organization,
+                                ExceptionCodes.from(ExceptionCodes.API_ALREADY_EXISTS, apiDtoTypeWrapper.getName(),
+                                        apiDtoTypeWrapper.getVersion(), organization));
+                    } else if (apiProvider.isDuplicateContextTemplateMatchingOrganization(context, organization)) {
                         throw new APIManagementException("Duplicate API context in organization",
                                 ExceptionCodes.API_ALREADY_EXISTS);
                     } else {
@@ -2823,7 +2829,8 @@ public class PublisherCommonUtils {
                     }
                 }
             }
-        } else if (apiProvider.isDuplicateContextTemplateMatchingOrganization(context, organization)) {
+        } else if (!apiDtoTypeWrapper.getInitiatedFromGateway() &&
+                apiProvider.isDuplicateContextTemplateMatchingOrganization(context, organization)) {
             throw new APIManagementException("Duplicate API context already exists",
                     ExceptionCodes.from(ExceptionCodes.API_CONTEXT_ALREADY_EXISTS, context));
         }
