@@ -17,7 +17,6 @@
  */
 package org.wso2.carbon.apimgt.impl.dao;
 
-import com.google.gson.Gson;
 import edu.emory.mathcs.backport.java.util.Arrays;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -26,6 +25,9 @@ import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.SubscriptionAlreadyExistingException;
 import org.wso2.carbon.apimgt.api.dto.ConditionDTO;
 import org.wso2.carbon.apimgt.api.dto.ConditionGroupDTO;
+import org.wso2.carbon.apimgt.api.model.APIOperationMapping;
+import org.wso2.carbon.apimgt.api.model.BackendOperation;
+import org.wso2.carbon.apimgt.api.model.BackendOperationMapping;
 import org.wso2.carbon.apimgt.api.model.OperationPolicy;
 import org.wso2.carbon.apimgt.api.model.policy.AIAPIQuotaLimit;
 import org.wso2.carbon.apimgt.api.model.policy.BandwidthLimit;
@@ -57,7 +59,6 @@ import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -1318,6 +1319,23 @@ public class SubscriptionValidationDAO {
                     String urlPattern = resultSet.getString("URL_PATTERN");
                     String throttlingTier = resultSet.getString("THROTTLING_TIER");
                     String scopeName = resultSet.getString("SCOPE_NAME");
+                    String description = null;
+                    try (InputStream descriptionDefStream = resultSet.getBinaryStream("DESCRIPTION")) {
+                        if (descriptionDefStream != null) {
+                            description = APIMgtDBUtil.getStringFromInputStream(descriptionDefStream);
+                        }
+                    } catch (IOException e) {
+                        log.error("Error while reading description of the URI template", e);
+                    }
+                    String schemaDefinition = null;
+                    try (InputStream schemaDefStream = resultSet.getBinaryStream("SCHEMA_DEFINITION")) {
+                        if (schemaDefStream != null) {
+                            schemaDefinition = APIMgtDBUtil.getStringFromInputStream(schemaDefStream);
+                        }
+                    } catch (IOException e) {
+                        log.error("Error while reading schema definition of the URI template", e);
+                    }
+                    int urlMappingId = resultSet.getInt("URL_MAPPING_ID");
                     URLMapping urlMapping = api.getResource(urlPattern, httpMethod);
                     if (urlMapping == null) {
                         urlMapping = new URLMapping();
@@ -1325,6 +1343,12 @@ public class SubscriptionValidationDAO {
                         urlMapping.setHttpMethod(httpMethod);
                         urlMapping.setThrottlingPolicy(throttlingTier);
                         urlMapping.setUrlPattern(urlPattern);
+                        urlMapping.setDescription(description);
+                        urlMapping.setSchemaDefinition(schemaDefinition);
+
+                        if (APIConstants.API_TYPE_MCP.equals(api.getApiType())) {
+                            populateMcpOperationMappings(connection, urlMappingId, urlMapping, api);
+                        }
                     }
                     if (StringUtils.isNotEmpty(scopeName)) {
                         urlMapping.addScope(scopeName);
@@ -1338,6 +1362,52 @@ public class SubscriptionValidationDAO {
             boolean isPolicyEnabled = Boolean.parseBoolean(configs.get(POLICY_ENABLED_FOR_ANALYTICS));
             if (isPolicyEnabled) {
                 attachPolicies(connection, revisionId, api);
+            }
+        }
+    }
+
+    private void populateMcpOperationMappings(Connection connection, int urlMappingId, URLMapping urlMapping, API api)
+            throws SQLException {
+        String sql;
+        if (APIConstants.API_SUBTYPE_DIRECT_BACKEND.equals(api.getSubtype())) {
+            sql = SubscriptionValidationSQLConstants.GET_MCP_BACKEND_OPERATION_MAPPING_BY_REF_URL_MAPPING_ID;
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                ps.setInt(1, urlMappingId);
+                try (ResultSet resultSet = ps.executeQuery()) {
+                    if (resultSet.next()) {
+                        BackendOperationMapping backendOperationMapping = new BackendOperationMapping();
+
+                        BackendOperation backendOperation = new BackendOperation();
+                        backendOperation.setVerb(org.wso2.carbon.apimgt.api.APIConstants.SupportedHTTPVerbs.
+                                fromValue(resultSet.getString("VERB")));
+                        backendOperation.setTarget(resultSet.getString("TARGET"));
+                        backendOperationMapping.setBackendOperation(backendOperation);
+
+                        urlMapping.setBackendOperationMapping(backendOperationMapping);
+                    }
+                }
+            }
+        } else if (APIConstants.API_SUBTYPE_EXISTING_API.equals(api.getSubtype())) {
+            sql = SubscriptionValidationSQLConstants.GET_MCP_API_OPERATION_MAPPING_BY_REF_URL_MAPPING_ID;
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                ps.setInt(1, urlMappingId);
+                try (ResultSet resultSet = ps.executeQuery()) {
+                    if (resultSet.next()) {
+
+                        APIOperationMapping apiOperationMapping = new APIOperationMapping();
+                        apiOperationMapping.setApiName(resultSet.getString("API_NAME"));
+                        apiOperationMapping.setApiVersion(resultSet.getString("API_VERSION"));
+                        apiOperationMapping.setApiContext(resultSet.getString("CONTEXT"));
+
+                        BackendOperation backendOperation = new BackendOperation();
+                        backendOperation.setVerb(org.wso2.carbon.apimgt.api.APIConstants.SupportedHTTPVerbs.
+                                fromValue(resultSet.getString("HTTP_METHOD")));
+                        backendOperation.setTarget(resultSet.getString("URL_PATTERN"));
+                        apiOperationMapping.setBackendOperation(backendOperation);
+
+                        urlMapping.setApiOperationMapping(apiOperationMapping);
+                    }
+                }
             }
         }
     }

@@ -70,6 +70,8 @@ import org.wso2.carbon.apimgt.api.model.APISearchResult;
 import org.wso2.carbon.apimgt.api.model.APIStateChangeResponse;
 import org.wso2.carbon.apimgt.api.model.APIStore;
 import org.wso2.carbon.apimgt.api.model.ApiTypeWrapper;
+import org.wso2.carbon.apimgt.api.model.Backend;
+import org.wso2.carbon.apimgt.api.model.BackendOperationMapping;
 import org.wso2.carbon.apimgt.api.model.BlockConditionsDTO;
 import org.wso2.carbon.apimgt.api.model.Comment;
 import org.wso2.carbon.apimgt.api.model.CommentList;
@@ -621,6 +623,12 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         addLocalScopes(api.getId().getApiName(), api.getUriTemplates(), api.getOrganization());
         String tenantDomain = MultitenantUtils
                 .getTenantDomain(APIUtil.replaceEmailDomainBack(api.getId().getProviderName()));
+        if (api.getBackends() != null && !api.getBackends().isEmpty()) {
+            addBackend(api.getUuid(), api.getBackends(), api.getOrganization());
+        }
+        if (api.getMetadata() != null && !api.getMetadata().isEmpty()) {
+            apiMgtDAO.addAPIMetadata(api.getUuid(), api.getMetadata());
+        }
         addURITemplates(apiId, api, tenantId);
         addAPIPolicies(api, tenantDomain);
         addSubtypeConfiguration(api);
@@ -651,6 +659,19 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                 apiId, api.getUuid(), api.getId().getVersion(), api.getType(), api.getContext(),
                 APIUtil.replaceEmailDomainBack(api.getId().getProviderName()), api.getStatus(), api.getApiSecurity());
         APIUtil.sendNotification(apiEvent, APIConstants.NotifierType.API.name());
+    }
+
+    /**
+     * Adds backend APIs to the API.
+     *
+     * @param apiUuid      UUID of the API
+     * @param backends     List of Backend objects to be added
+     * @param organization Organization identifier
+     * @throws APIManagementException if an error occurs while adding the backend APIs
+     */
+    private void addBackend(String apiUuid, List<Backend> backends, String organization) throws APIManagementException {
+
+        apiMgtDAO.addBackends(apiUuid, backends, organization);
     }
 
     /**
@@ -1026,9 +1047,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                 || APIUtil.isSequenceDefined(api.getFaultSequence())) {
             migrateMediationPoliciesOfAPI(api, tenantDomain, false);
         }
-
-        //get product resource mappings on API before updating the API. Update uri templates on api will remove all
-        //product mappings as well.
         List<APIProductResource> productResources = apiMgtDAO.getProductMappingsForAPI(api);
         updateAPI(api, tenantId, userNameWithoutChange);
         updateProductResourceMappings(api, organization, productResources);
@@ -1172,8 +1190,16 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         if (log.isDebugEnabled()) {
             log.debug("Successfully updated the API: " + api.getId() + " metadata in the database");
         }
+        updateAPIMetadata(api);
         updateAPIResources(api, tenantId);
         updateAPIPrimaryEndpointsMapping(api);
+    }
+
+    private void updateAPIMetadata(API api) throws APIManagementException {
+        apiMgtDAO.deleteCurrentAPIMetadata(api.getUuid());
+        if (api.getMetadata() != null && !api.getMetadata().isEmpty()) {
+            apiMgtDAO.addAPIMetadata(api.getUuid(), api.getMetadata());
+        }
     }
 
     /**
@@ -1250,6 +1276,13 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                     && !newLocalScopeKeys.contains(oldLocalScopeKey)) {
                 //remove from old local scope key set which will be send to KM
                 oldLocalScopesItr.remove();
+            }
+        }
+        if (APIConstants.API_TYPE_MCP.equals(api.getType())) {
+            if (APIConstants.API_SUBTYPE_DIRECT_BACKEND.equals(api.getSubtype())) {
+                apiMgtDAO.removeBackendOperationMapping(oldURITemplates);
+            } else if (APIConstants.API_SUBTYPE_EXISTING_API.equals(api.getSubtype())) {
+                apiMgtDAO.removeApiOperationMapping(oldURITemplates);
             }
         }
         validateAndUpdateURITemplates(api, tenantId);
@@ -2254,6 +2287,8 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         Map<String, List<OperationPolicy>> operationPoliciesMap = extractAndDropOperationPoliciesFromURITemplate(
                 existingAPI.getUriTemplates());
         List<OperationPolicy> apiLevelPolicies = extractAndDropAPILevelPoliciesFromAPI(existingAPI);
+        updateMCPServerBackends(existingAPI, existingApiId, organization);
+
         API newAPI = addAPI(existingAPI);
         String newAPIId = newAPI.getUuid();
         cloneAPIPoliciesForNewAPIVersion(existingApiId, newAPI, operationPoliciesMap, apiLevelPolicies);
@@ -2838,6 +2873,14 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         deleteScopes(localScopeKeysToDelete, tenantId);
         if (API_SUBTYPE_AI_API.equals(api.getSubtype())) {
             apiMgtDAO.deleteAIConfiguration(api.getUuid());
+        }
+        apiMgtDAO.deleteAllAPIMetadata(api.getUuid());
+        if (APIConstants.API_TYPE_MCP.equals(api.getType())) {
+            if (APIConstants.API_SUBTYPE_EXISTING_API.equals(api.getSubtype())) {
+                apiMgtDAO.removeApiOperationMapping(uriTemplates);
+            } else {
+                apiMgtDAO.removeBackendOperationMapping(uriTemplates);
+            }
         }
         apiMgtDAO.deleteAPI(api.getUuid());
         if (log.isDebugEnabled()) {
@@ -5611,6 +5654,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                     }
                 }
                 populateApiInfo(api);
+                populateApiMetadata(api);
                 populateSubtypeConfiguration(api);
                 populateDefaultVersion(api);
                 populatePolicyTypeInAPI(api);
@@ -5634,6 +5678,30 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
             throw new APIManagementException("Error while retrieving the Async API definition", e,
                     ExceptionCodes.from(ExceptionCodes.ASYNCAPI_RETRIEVAL_ERROR, uuid));
         }
+    }
+
+    /**
+     * Populates the API metadata for the given API object.
+     *
+     * @param api The API object to populate metadata for.
+     * @throws APIManagementException If an error occurs while retrieving metadata.
+     */
+    private void populateApiMetadata(API api) throws APIManagementException {
+
+        String apiUuid = api.getUuid();
+        String revisionUuid = null;
+        APIRevision apiRevision = checkAPIUUIDIsARevisionUUID(apiUuid);
+        if (apiRevision != null && apiRevision.getApiUUID() != null) {
+            apiUuid = apiRevision.getApiUUID();
+            revisionUuid = apiRevision.getRevisionUUID();
+        }
+        Map<String, String> metadataMap = new HashMap<>();
+        if (revisionUuid == null) {
+            metadataMap = apiMgtDAO.getCurrentAPIMetadata(apiUuid);
+        } else {
+            metadataMap = apiMgtDAO.getAPIMetadataRevision(apiUuid, revisionUuid);
+        }
+        api.setMetadata(metadataMap);
     }
 
     /**
@@ -6404,11 +6472,19 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                 File artifact = importExportAPI
                         .exportAPI(apiRevision.getApiUUID(), revisionUUID, true, ExportFormat.JSON, false, true,
                                 organization);
-                // Keeping the organization as tenant domain since MG does not support organization-wise deployment
-                // Artifacts will be deployed in ST for all organizations
-                gatewayArtifactsMgtDAO.addGatewayAPIArtifactAndMetaData(apiRevision.getApiUUID(), apiId.getApiName(),
-                        apiId.getVersion(), apiRevision.getRevisionUUID(), organization, APIConstants.HTTP_PROTOCOL,
-                        artifact);
+
+                String apiType = apiMgtDAO.getAPITypeFromUUID(apiId.getUUID());
+                if (StringUtils.equals(apiType, APIConstants.API_TYPE_MCP)) {
+                    gatewayArtifactsMgtDAO.addGatewayAPIArtifactAndMetaData(apiRevision.getApiUUID(), apiId.getApiName(),
+                            apiId.getVersion(), apiRevision.getRevisionUUID(), organization, apiType,
+                            artifact);
+                } else {
+                    // Keeping the organization as tenant domain since MG does not support organization-wise deployment
+                    // Artifacts will be deployed in ST for all organizations
+                    gatewayArtifactsMgtDAO.addGatewayAPIArtifactAndMetaData(apiRevision.getApiUUID(), apiId.getApiName(),
+                            apiId.getVersion(), apiRevision.getRevisionUUID(), organization, APIConstants.HTTP_PROTOCOL,
+                            artifact);
+                }
                 if (artifactSaver != null) {
                     // Keeping the organization as tenant domain since MG does not support organization-wise deployment
                     // Artifacts will be deployed in ST for all organizations
@@ -7163,6 +7239,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                     ERROR_DELETING_API_REVISION, apiRevision.getApiUUID()));
         }
         apiMgtDAO.deleteAPIRevision(apiRevision);
+        apiMgtDAO.deleteAllAPIMetadataRevision(apiId, apiRevisionId);
         apiMgtDAO.deleteAIConfigurationRevision(apiRevision.getRevisionUUID());
         gatewayArtifactsMgtDAO.deleteGatewayArtifact(apiRevision.getApiUUID(), apiRevision.getRevisionUUID());
         if (artifactSaver != null) {
@@ -8504,6 +8581,56 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         return apiMgtDAO.getIsAPIInitiatedFromGateway(apiUUID);
     }
 
+
+    @Override
+    public Backend getMCPServerBackend(String uuid, String backendId, String organization)
+            throws APIManagementException {
+
+        String currentApiUuid;
+        APIRevision apiRevision = checkAPIUUIDIsARevisionUUID(uuid);
+        if (apiRevision != null && apiRevision.getApiUUID() != null) {
+            currentApiUuid = apiRevision.getApiUUID();
+        } else {
+            currentApiUuid = uuid;
+        }
+        if (apiRevision != null) {
+            return apiMgtDAO.getBackendRevision(currentApiUuid, apiRevision.getRevisionUUID(), backendId, organization);
+        } else {
+            return apiMgtDAO.getBackend(currentApiUuid, backendId, organization);
+        }
+    }
+
+    @Override
+    public List<Backend> getMCPServerBackends(String uuid, String organization) throws APIManagementException {
+
+        String currentApiUuid;
+        APIRevision apiRevision = checkAPIUUIDIsARevisionUUID(uuid);
+        if (apiRevision != null && apiRevision.getApiUUID() != null) {
+            currentApiUuid = apiRevision.getApiUUID();
+        } else {
+            currentApiUuid = uuid;
+        }
+        if (apiRevision != null) {
+            return apiMgtDAO.getBackendRevisions(currentApiUuid, apiRevision.getRevisionUUID(), organization);
+        } else {
+            return apiMgtDAO.getBackends(currentApiUuid, organization);
+        }
+    }
+
+    @Override
+    public void updateMCPServerBackend(String apiUuid, Backend backend, String organization)
+            throws APIManagementException {
+
+        apiMgtDAO.updateBackend(apiUuid, backend, organization);
+    }
+
+    @Override
+    public List<API> getMCPServersUsedByAPI(String apiUuid, String organization) throws APIManagementException{
+
+        int apiId = apiMgtDAO.getAPIID(apiUuid);
+        return apiMgtDAO.getMCPServersUsedByAPI(apiId, organization);
+    }
+
     @Override
     public String addAPIEndpoint(String apiUUID, APIEndpointInfo apiEndpoint, String organization)
             throws APIManagementException {
@@ -8604,6 +8731,53 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
             String sandboxEndpointId = apiMgtDAO.getPrimaryEndpointUUIDByApiIdAndEnv(currentApiUuid,
                     APIConstants.APIEndpoint.SANDBOX, revisionUuid, organization);
             api.setPrimarySandboxEndpointId(sandboxEndpointId);
+        }
+    }
+
+    /**
+     * This method updates the MCP server backends for the API if it is of type MCP and subtype DIRECT_BACKEND.
+     * It sets the first available backend as the selected backend and updates the backend ID in the URITemplates.
+     *
+     * @param api           The API object to be updated.
+     * @param existingApiId The existing API ID.
+     * @param organization  The organization name.
+     * @throws APIManagementException If an error occurs while updating the MCP server backends.
+     */
+    private void updateMCPServerBackends(API api, String existingApiId, String organization)
+            throws APIManagementException {
+
+        if (api == null || api.getType() == null) {
+            return;
+        }
+
+        if (!APIConstants.API_TYPE_MCP.equals(api.getType())
+                || APIConstants.API_SUBTYPE_EXISTING_API.equals(api.getSubtype())) {
+            return;
+        }
+
+        List<Backend> existingBackends = getMCPServerBackends(existingApiId, organization);
+        if (existingBackends == null || existingBackends.isEmpty()) {
+            throw new APIManagementException("No MCP backends available for DIRECT_BACKEND configuration");
+        }
+
+        Backend selectedBackend = existingBackends.get(0);
+        String newBackendId = UUID.randomUUID().toString();
+        selectedBackend.setId(newBackendId);
+
+        List<Backend> updatedBackends = new ArrayList<>();
+        updatedBackends.add(selectedBackend);
+        api.setBackends(updatedBackends);
+
+        if (api.getUriTemplates() != null) {
+            for (URITemplate uriTemplate : api.getUriTemplates()) {
+                if (uriTemplate == null) {
+                    continue;
+                }
+                BackendOperationMapping backendOperationMapping = uriTemplate.getBackendOperationMapping();
+                if (backendOperationMapping != null) {
+                    backendOperationMapping.setBackendId(newBackendId);
+                }
+            }
         }
     }
 
