@@ -31,6 +31,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.wso2.carbon.apimgt.api.APIComplianceException;
 import org.wso2.carbon.apimgt.api.APIDefinition;
@@ -55,6 +57,7 @@ import org.wso2.carbon.apimgt.api.model.APIRevision;
 import org.wso2.carbon.apimgt.api.model.APIRevisionDeployment;
 import org.wso2.carbon.apimgt.api.model.APIStatus;
 import org.wso2.carbon.apimgt.api.model.ApiTypeWrapper;
+import org.wso2.carbon.apimgt.api.model.Backend;
 import org.wso2.carbon.apimgt.api.model.Documentation;
 import org.wso2.carbon.apimgt.api.model.Environment;
 import org.wso2.carbon.apimgt.api.model.Identifier;
@@ -78,6 +81,7 @@ import org.wso2.carbon.apimgt.impl.importexport.ImportExportConstants;
 import org.wso2.carbon.apimgt.impl.importexport.utils.CommonUtil;
 import org.wso2.carbon.apimgt.impl.lifecycle.LCManager;
 import org.wso2.carbon.apimgt.impl.lifecycle.LCManagerFactory;
+import org.wso2.carbon.apimgt.impl.restapi.publisher.ApisApiServiceImplUtils;
 import org.wso2.carbon.apimgt.impl.utils.APIMWSDLReader;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.impl.utils.VHostUtils;
@@ -93,12 +97,15 @@ import org.wso2.carbon.apimgt.rest.api.publisher.v1.dto.APIProductDTO;
 import org.wso2.carbon.apimgt.rest.api.publisher.v1.dto.DocumentDTO;
 import org.wso2.carbon.apimgt.rest.api.publisher.v1.dto.GraphQLQueryComplexityInfoDTO;
 import org.wso2.carbon.apimgt.rest.api.publisher.v1.dto.GraphQLValidationResponseDTO;
+import org.wso2.carbon.apimgt.rest.api.publisher.v1.dto.MCPServerDTO;
 import org.wso2.carbon.apimgt.rest.api.publisher.v1.dto.OperationPolicyDataDTO;
 import org.wso2.carbon.apimgt.rest.api.publisher.v1.dto.ProductAPIDTO;
 import org.wso2.carbon.apimgt.rest.api.publisher.v1.dto.WSDLInfoDTO;
 import org.wso2.carbon.apimgt.spec.parser.definitions.AsyncApiParserUtil;
+import org.wso2.carbon.apimgt.spec.parser.definitions.OAS3Parser;
 import org.wso2.carbon.apimgt.spec.parser.definitions.OASParserUtil;
 import org.wso2.carbon.core.util.CryptoException;
+import org.wso2.carbon.core.util.CryptoUtil;
 import org.wso2.carbon.registry.core.Registry;
 import org.wso2.carbon.registry.core.RegistryConstants;
 import org.wso2.carbon.registry.core.Resource;
@@ -152,6 +159,35 @@ public class ImportUtils {
                 JsonElement jsonObject = retrieveValidatedDTOObject(extractedFolderPath, preserveProvider,
                         userName, ImportExportConstants.TYPE_API);
                 importedApiDTO = new Gson().fromJson(jsonObject, APIDTO.class);
+            }
+        } catch (IOException e) {
+            throw new APIManagementException(
+                    "Error while reading API meta information from path: " + extractedFolderPath, e,
+                    ExceptionCodes.ERROR_READING_META_DATA);
+        }
+        return importedApiDTO;
+    }
+
+    /**
+     * This method retrieves the MCPServerDTO from the extracted folder path.
+     *
+     * @param extractedFolderPath Location of the extracted folder of the API
+     * @param importedApiDTO      MCPServerDTO of the importing API (This will not be null when importing dependent APIs
+     *                            with API Products)
+     * @param preserveProvider    Decision to keep or replace the provider
+     * @param userName            Username of the logged in user
+     * @return MCPServerDTO object
+     * @throws APIManagementException If there is an error in retrieving the MCPServerDTO
+     */
+    public static MCPServerDTO getImportMCPServerDTO(String extractedFolderPath, MCPServerDTO importedApiDTO,
+                                                     Boolean preserveProvider, String userName)
+            throws APIManagementException {
+
+        try {
+            if (importedApiDTO == null) {
+                JsonElement jsonObject = retrieveValidatedDTOObject(extractedFolderPath, preserveProvider,
+                        userName, ImportExportConstants.TYPE_MCP_SERVER);
+                importedApiDTO = new Gson().fromJson(jsonObject, MCPServerDTO.class);
             }
         } catch (IOException e) {
             throw new APIManagementException(
@@ -301,13 +337,12 @@ public class ImportUtils {
             if (isAdvertiseOnlyAPI(importedApiDTO)) {
                 processAdvertiseOnlyPropertiesInDTO(importedApiDTO, tokenScopes);
             }
-            String targetAPIUuid = (targetApi != null) ? targetApi.getUuid() : null;
             Map<String, List<OperationPolicy>> extractedPoliciesMap =
                     extractValidateAndDropOperationPoliciesFromURITemplate(importedApiDTO.getOperations(),
-                            extractedFolderPath, targetAPIUuid, organization, importedApiDTO.getType().toString(),
+                            extractedFolderPath, targetApi, organization, importedApiDTO.getType().toString(),
                             apiProvider);
             List<OperationPolicy> extractedAPIPolicies = extractValidateAndDropAPIPoliciesFromAPI(importedApiDTO,
-                    extractedFolderPath, targetAPIUuid, organization, importedApiDTO.getType().toString(),
+                    extractedFolderPath, targetApi, organization, importedApiDTO.getType().toString(),
                     apiProvider);
 
             // If the overwrite is set to true (which means an update), retrieve the existing API
@@ -396,8 +431,9 @@ public class ImportUtils {
                 }
                 if (!PublisherCommonUtils.isThirdPartyAsyncAPI(importedApiDTO)) {
                     importedApi = PublisherCommonUtils
-                            .addAPIWithGeneratedSwaggerDefinition(importedApiDTO, ImportExportConstants.OAS_VERSION_3,
-                                    importedApiDTO.getProvider(), organization, null);
+                            .addAPIWithGeneratedSwaggerDefinition(new APIDTOTypeWrapper(importedApiDTO),
+                                    ImportExportConstants.OAS_VERSION_3, importedApiDTO.getProvider(), organization,
+                                    null);
                     // Add/update swagger content except for streaming APIs and GraphQL APIs
                     if (!PublisherCommonUtils.isStreamingAPI(importedApiDTO)
                             && !APIConstants.APITransportType.GRAPHQL.toString().equalsIgnoreCase(apiType)) {
@@ -422,7 +458,7 @@ public class ImportUtils {
                     extractedAPIPolicies, currentTenantDomain);
 
             // Handle API Endpoints if endpoints file is defined
-            populateAPIWithEndpoints(importedApi.getUuid(), apiProvider, extractedFolderPath, organization);
+            populateAPIWithEndpoints(importedApi, apiProvider, extractedFolderPath, organization);
 
             // Update Custom Backend Data if endpoint type is selected to "custom_backend"
             Map endpointConf = (Map) importedApiDTO.getEndpointConfig();
@@ -629,6 +665,310 @@ public class ImportUtils {
     }
 
     /**
+     * This method imports a MCP Server.
+     *
+     * @param extractedFolderPath            Location of the extracted folder of the MCP Server
+     * @param importedApiDTO                 MCP Server DTO of the importing MCP Server
+     * @param preserveProvider               Decision to keep or replace the provider
+     * @param rotateRevision                 Whether to rotate revision or not
+     * @param overwrite                      Whether to update the MCP Server or not
+     * @param preservePortalConfigurations   Whether to preserve portal configurations or not
+     * @param dependentAPIFromProduct        Whether this is a dependent API from an API Product
+     * @param tokenScopes                    Scopes of the token
+     * @param dependentAPIParamsConfigObject Params configuration of an API
+     * @param organization                   Identifier of an Organization
+     * @return ImportedAPIDTO object containing imported MCP Server details
+     * @throws APIManagementException If there is an error in importing a MCP Server
+     */
+    public static ImportedAPIDTO importMCPServer(String extractedFolderPath, MCPServerDTO importedApiDTO,
+                                                 Boolean preserveProvider, Boolean rotateRevision, Boolean overwrite,
+                                                 Boolean preservePortalConfigurations, Boolean dependentAPIFromProduct,
+                                                 String[] tokenScopes, JsonObject dependentAPIParamsConfigObject,
+                                                 String organization) throws APIManagementException {
+
+        final String userName = RestApiCommonUtil.getLoggedInUsername();
+        final String tenantDomain = RestApiCommonUtil.getLoggedInUserTenantDomain();
+
+        APIDefinitionValidationResponse validationResponse = null;
+        API importedApi = null;
+        String currentStatus;
+        String targetStatus;
+        String revisionId = null;
+        Map<String, String> lifecycleActions = new LinkedHashMap<>();
+        JsonArray deploymentInfoArray = null;
+
+        importedApiDTO = ImportUtils.getImportMCPServerDTO(extractedFolderPath, importedApiDTO, preserveProvider,
+                userName);
+
+        APIProvider apiProvider = RestApiCommonUtil.getLoggedInUserProvider();
+
+        final String previousApiProvider =
+                apiProvider.getAPIProviderByNameAndOrganization(importedApiDTO.getName(), tenantDomain);
+        if (!StringUtils.isEmpty(previousApiProvider) && !Boolean.TRUE.equals(overwrite)) {
+            if (!previousApiProvider.equalsIgnoreCase(importedApiDTO.getProvider())) {
+                throw new APIManagementException(
+                        "Cannot create a new version of a MCP Server from a different provider. ",
+                        ExceptionCodes.CANNOT_CREATE_API_VERSION);
+            }
+        }
+
+        try {
+            final JsonObject paramsConfigObject = (dependentAPIParamsConfigObject != null)
+                    ? dependentAPIParamsConfigObject
+                    : APIControllerUtil.resolveAPIControllerEnvParams(extractedFolderPath);
+
+            if (paramsConfigObject != null) {
+                importedApiDTO = APIControllerUtil.injectEnvParamsToMCPServer(importedApiDTO, paramsConfigObject);
+                final JsonElement deploymentsParam =
+                        paramsConfigObject.get(ImportExportConstants.DEPLOYMENT_ENVIRONMENTS);
+                if (deploymentsParam != null && !deploymentsParam.isJsonNull()) {
+                    deploymentInfoArray = deploymentsParam.getAsJsonArray();
+                }
+            }
+
+            deploymentInfoArray = retrieveDeploymentLabelsFromArchive(extractedFolderPath, dependentAPIFromProduct);
+            final List<APIRevisionDeployment> apiRevisionDeployments =
+                    getValidatedDeploymentsList(deploymentInfoArray, tenantDomain, apiProvider, organization);
+
+            if (importedApiDTO.isInitiatedFromGateway() && !Boolean.TRUE.equals(overwrite)
+                    && apiProvider.isApiNameExist(importedApiDTO.getName(), organization)) {
+                if (!apiRevisionDeployments.isEmpty()) {
+                    importedApiDTO.name(importedApiDTO.getName()
+                            + API_NAME_DELIMITER + apiRevisionDeployments.get(0).getDeployment());
+                } else {
+                    importedApiDTO.name(importedApiDTO.getName() + API_NAME_DELIMITER
+                            + UUID.randomUUID().toString().replace(API_NAME_DELIMITER, "").substring(0, 4));
+                }
+            }
+
+            final String currentTenantDomain =
+                    MultitenantUtils.getTenantDomain(APIUtil.replaceEmailDomainBack(userName));
+
+            targetStatus = importedApiDTO.getLifeCycleStatus();
+            APIUtil.validateAPIContext(importedApiDTO.getContext(), importedApiDTO.getName());
+
+            final API targetApi = retrieveApiToOverwrite(importedApiDTO.getName(), importedApiDTO.getVersion(),
+                    currentTenantDomain, apiProvider, Boolean.TRUE, organization);
+
+            if (Boolean.TRUE.equals(overwrite) && targetApi != null) {
+                if (log.isInfoEnabled()) {
+                    log.info("Existing API found, attempting to update it...");
+                }
+                currentStatus = targetApi.getStatus();
+                if (Boolean.TRUE.equals(preservePortalConfigurations)) {
+                    targetStatus = currentStatus;
+                }
+                importedApiDTO.setLifeCycleStatus(currentStatus);
+
+                targetApi.setOrganization(organization);
+
+                if (Boolean.TRUE.equals(preservePortalConfigurations)) {
+                    final MCPServerDTO oldDTO = APIMappingUtil.fromAPItoMCPServerDTO(targetApi);
+                    importedApiDTO.setBusinessInformation(oldDTO.getBusinessInformation());
+                    importedApiDTO.setAccessControl(oldDTO.getAccessControl());
+                    importedApiDTO.setDescription(oldDTO.getDescription());
+                    importedApiDTO.setCategories(oldDTO.getCategories());
+                    importedApiDTO.setAccessControl(oldDTO.getAccessControl()); // kept (duplicate in original)
+                    importedApiDTO.setAccessControlRoles(oldDTO.getAccessControlRoles());
+                    importedApiDTO.setHasThumbnail(oldDTO.isHasThumbnail());
+                    importedApiDTO.setMonetization(oldDTO.getMonetization());
+                    importedApiDTO.setVisibility(oldDTO.getVisibility());
+                    importedApiDTO.setVisibleRoles(oldDTO.getVisibleRoles());
+                    importedApiDTO.setVisibleTenants(oldDTO.getVisibleTenants());
+                    importedApiDTO.setVisibleOrganizations(Collections.EMPTY_LIST); // keep org visibility ignored
+                    importedApiDTO.setSubscriptionAvailability(oldDTO.getSubscriptionAvailability());
+                    importedApiDTO.setSubscriptionAvailableTenants(oldDTO.getSubscriptionAvailableTenants());
+                    importedApiDTO.monetization(oldDTO.getMonetization());
+                    importedApiDTO.setTags(oldDTO.getTags());
+                }
+
+                final API apiToUpdate = PublisherCommonUtils
+                        .prepareForUpdateApi(targetApi, importedApiDTO, apiProvider, tokenScopes);
+
+                final List<Backend> backendList = getMCPServerBackends(extractedFolderPath);
+                for (Backend backend : backendList) {
+                    apiProvider.updateMCPServerBackend(targetApi.getUuid(), backend, organization);
+                }
+
+                apiProvider.updateAPI(apiToUpdate, targetApi);
+                importedApi = apiProvider.getAPIbyUUID(targetApi.getUuid(), organization);
+
+            } else {
+                if (targetApi == null && Boolean.TRUE.equals(overwrite)) {
+                    if (log.isInfoEnabled()) {
+                        log.info("Cannot find : " + importedApiDTO.getName() + "-" + importedApiDTO.getVersion()
+                                + ". Creating it.");
+                    }
+                }
+
+                importedApiDTO.setVisibleOrganizations(Collections.EMPTY_LIST); // ignore org visibility
+                currentStatus = APIStatus.CREATED.toString();
+                importedApiDTO.setLifeCycleStatus(currentStatus);
+
+                // Auto policy for published+oauth2 if subscription validation disabling allowed
+                if (APIStatus.PUBLISHED.toString().equalsIgnoreCase(targetStatus)
+                        && importedApiDTO.getPolicies() != null && importedApiDTO.getPolicies().isEmpty()
+                        && importedApiDTO.getSecurityScheme() != null && importedApiDTO.getSecurityScheme()
+                        .contains(APIConstants.DEFAULT_API_SECURITY_OAUTH2)
+                        && APIUtil.isSubscriptionValidationDisablingAllowed(organization)) {
+                    importedApiDTO.setPolicies(
+                            Arrays.asList(APIConstants.DEFAULT_SUB_POLICY_SUBSCRIPTIONLESS));
+                }
+
+                final String subtype = importedApiDTO.getSubtypeConfiguration().getSubtype();
+                if (APIConstants.API_SUBTYPE_SERVER_PROXY.equals(subtype)
+                        || APIConstants.API_SUBTYPE_DIRECT_BACKEND.equals(subtype)) {
+
+                    final List<Backend> backendList = getMCPServerBackends(extractedFolderPath);
+                    final Backend backend = backendList.get(0);
+
+                    final JSONObject endpointObject =
+                            (JSONObject) new JSONParser().parse(backend.getEndpointConfig());
+                    final Map<String, Object> endpointConfigMap =
+                            (Map<String, Object>) endpointObject;
+
+                    final APIDTOTypeWrapper apiDtoTypeWrapper = new APIDTOTypeWrapper(importedApiDTO);
+
+                    PublisherCommonUtils.encryptEndpointSecurityOAuthCredentials(endpointConfigMap,
+                            CryptoUtil.getDefaultCryptoUtil(), StringUtils.EMPTY, StringUtils.EMPTY, StringUtils.EMPTY,
+                            StringUtils.EMPTY, apiDtoTypeWrapper);
+
+                    PublisherCommonUtils.encryptEndpointSecurityApiKeyCredentials(endpointConfigMap,
+                            CryptoUtil.getDefaultCryptoUtil(), StringUtils.EMPTY, StringUtils.EMPTY, apiDtoTypeWrapper);
+
+                    final String backendDefinition = backend.getDefinition();
+
+                    if (APIConstants.API_SUBTYPE_DIRECT_BACKEND.equals(subtype)) {
+                        validationResponse = retrieveValidatedSwaggerDefinition(backendDefinition);
+                        validationResponse.getJsonContent();
+
+                        final API apiToAdd = PublisherCommonUtils
+                                .prepareToCreateAPIByDTO(apiDtoTypeWrapper, apiProvider, userName, organization);
+                        final boolean syncOperations = !apiDtoTypeWrapper.isOperationsEmpty();
+
+                        importedApi = ApisApiServiceImplUtils.importAPIDefinition(
+                                apiToAdd, apiProvider, organization, null, validationResponse, false, syncOperations);
+
+                    } else {
+                        validationResponse = new APIDefinitionValidationResponse();
+                        validationResponse.setParser(new OAS3Parser());
+                        validationResponse.setJsonContent(backendDefinition);
+                        validationResponse.setContent(backendDefinition);
+
+                        final API apiToAdd = PublisherCommonUtils
+                                .prepareToCreateAPIByDTO(apiDtoTypeWrapper, apiProvider, userName, organization);
+                        final boolean syncOperations = !apiDtoTypeWrapper.isOperationsEmpty();
+
+                        importedApi = ApisApiServiceImplUtils.importAPIDefinition(
+                                apiToAdd, apiProvider, organization, null, validationResponse, false, syncOperations);
+                    }
+                } else {
+                    importedApi = PublisherCommonUtils.addAPIWithGeneratedSwaggerDefinition(
+                            new APIDTOTypeWrapper(importedApiDTO), ImportExportConstants.OAS_VERSION_3,
+                            importedApiDTO.getProvider(), organization, null);
+                }
+            }
+
+            apiProvider = RestApiCommonUtil.getLoggedInUserProvider();
+
+            lifecycleActions = getLifeCycleActions(currentStatus, targetStatus);
+            final int tenantId = APIUtil.getTenantId(userName);
+
+            final ApiTypeWrapper wrappedApi = new ApiTypeWrapper(importedApi);
+            if (!Boolean.TRUE.equals(preservePortalConfigurations)) {
+                addDocumentation(extractedFolderPath, wrappedApi, apiProvider, organization);
+            }
+
+            addClientCertificates(extractedFolderPath, apiProvider, new ApiTypeWrapper(importedApi),
+                    APIConstants.API_KEY_TYPE_PRODUCTION, organization, overwrite, tenantId);
+            addClientCertificates(extractedFolderPath, apiProvider, new ApiTypeWrapper(importedApi),
+                    APIConstants.API_KEY_TYPE_SANDBOX, organization, overwrite, tenantId);
+
+            if (!lifecycleActions.isEmpty()) {
+                changeLifeCycleStatus(lifecycleActions, currentStatus, new ApiTypeWrapper(importedApi));
+            }
+            importedApi.setStatus(targetStatus);
+
+            if (!Boolean.TRUE.equals(preservePortalConfigurations)) {
+                addThumbnailImage(extractedFolderPath, wrappedApi, apiProvider);
+            }
+
+            if (!apiRevisionDeployments.isEmpty() && !StringUtils.equals(currentStatus, APIStatus.RETIRED.toString())) {
+
+                final String importedAPIUuid = importedApi.getUuid();
+                final APIRevision apiRevision = new APIRevision();
+                apiRevision.setApiUUID(importedAPIUuid);
+                apiRevision.setDescription("Revision created after importing the API");
+
+                try {
+                    revisionId = apiProvider.addAPIRevision(apiRevision, tenantDomain);
+                    if (log.isDebugEnabled()) {
+                        log.debug("A new revision has been created for API " + importedApi.getId().getApiName() + "_"
+                                + importedApi.getId().getVersion());
+                    }
+                } catch (APIManagementException e) {
+                    final long maxReached =
+                            ExceptionCodes.from(ExceptionCodes.MAXIMUM_REVISIONS_REACHED).getErrorCode();
+                    if (e.getErrorHandler().getErrorCode() == maxReached && Boolean.TRUE.equals(rotateRevision)) {
+                        final String earliestRevisionUuid = apiProvider.getEarliestRevisionUUID(importedAPIUuid);
+                        final List<APIRevisionDeployment> deploymentsList =
+                                apiProvider.getAPIRevisionDeploymentList(earliestRevisionUuid);
+
+                        apiProvider.undeployAPIRevisionDeployment(
+                                importedAPIUuid, earliestRevisionUuid, deploymentsList, organization);
+                        apiProvider.deleteAPIRevision(importedAPIUuid, earliestRevisionUuid, tenantDomain);
+                        revisionId = apiProvider.addAPIRevision(apiRevision, tenantDomain);
+
+                        if (log.isDebugEnabled()) {
+                            log.debug("Revision ID: " + earliestRevisionUuid + " has been undeployed from "
+                                    + deploymentsList.size() + " gateway environments and created a new revision ID: "
+                                    + revisionId + " for API " + importedApi.getId().getApiName() + "_"
+                                    + importedApi.getId().getVersion());
+                        }
+                    } else {
+                        throw new APIManagementException(
+                                "Error occurred while creating a new revision for the API: "
+                                        + importedApi.getId().getApiName(), e);
+                    }
+                }
+                apiProvider.deployAPIRevision(importedAPIUuid, revisionId, apiRevisionDeployments, organization,
+                        importedApi.isInitiatedFromGateway());
+                if (log.isDebugEnabled()) {
+                    log.debug("API: " + importedApi.getId().getApiName() + "_" + importedApi.getId().getVersion()
+                            + " was deployed in " + apiRevisionDeployments.size() + " gateway environments.");
+                }
+            } else {
+                if (log.isInfoEnabled()) {
+                    log.info("Valid deployment environments were not found for the imported artifact. "
+                            + "Only working copy was updated and not deployed in any of the gateway environments.");
+                }
+            }
+            return new ImportedAPIDTO(importedApi, revisionId);
+        } catch (CryptoException | IOException e) {
+            throw new APIManagementException("Error while reading meta information from path: " + extractedFolderPath,
+                    e, ExceptionCodes.ERROR_READING_META_DATA);
+        } catch (FaultGatewaysException e) {
+            throw new APIManagementException("Error while updating MCP Server: " + importedApi.getId().getApiName(), e);
+        } catch (APIMgtAuthorizationFailedException e) {
+            throw new APIManagementException("Please enable preserveProvider property for cross tenant import.", e,
+                    ExceptionCodes.TENANT_MISMATCH);
+        } catch (ParseException e) {
+            throw new APIManagementException("Error while parsing the swagger definition",
+                    ExceptionCodes.JSON_PARSE_ERROR);
+        } catch (APIManagementException e) {
+            String errorMessage = "Error while importing API: ";
+            if (importedApi != null) {
+                errorMessage += importedApi.getId().getApiName() + StringUtils.SPACE + APIConstants.API_DATA_VERSION
+                        + ": " + importedApi.getId().getVersion();
+            } else if (e.getMessage().contains(ExceptionCodes.API_CONTEXT_MALFORMED_EXCEPTION.getErrorMessage())) {
+                throw new APIManagementException("Error while importing API: " + e.getMessage(),
+                        ExceptionCodes.from(ExceptionCodes.API_CONTEXT_MALFORMED_EXCEPTION, e.getMessage()));
+            }
+            throw new APIManagementException(errorMessage + StringUtils.SPACE + e.getMessage(), e);
+        }
+    }
+
+    /**
      * This method will extract out the API policies from the URL template.
      *
      * @param operationsDTO       The policy enforcement information
@@ -637,8 +977,13 @@ public class ImportUtils {
      * @param tenantDomain        Tenant domain
      * @param apiType             Type of the API
      * @param provider            Api provider object
+     * @return Map of extracted operation policies
      * @throws APIManagementException If there is an error in extracting process
+     * @deprecated Use
+     *         {@link #extractValidateAndDropOperationPoliciesFromURITemplate(List, String, API, String, String,
+     *         APIProvider)} instead
      */
+    @Deprecated
     public static Map<String, List<OperationPolicy>> extractValidateAndDropOperationPoliciesFromURITemplate
     (List<APIOperationsDTO> operationsDTO, String extractedFolderPath, String apiUUID, String tenantDomain,
      String apiType, APIProvider provider) throws APIManagementException {
@@ -650,8 +995,8 @@ public class ImportUtils {
                     OperationPolicyMappingUtil.fromDTOToAPIOperationPoliciesList(dto.getOperationPolicies());
             Map<String, OperationPolicySpecification> visitedPoliciesMap = new HashMap<>();
             for (OperationPolicy policy : operationPolicies) {
-                validateAppliedPolicy(policy, visitedPoliciesMap, extractedFolderPath, apiUUID, provider, tenantDomain,
-                        apiType);
+                validateAndProcessAppliedPolicy(policy, visitedPoliciesMap, extractedFolderPath, apiUUID, provider,
+                        tenantDomain, apiType, null);
             }
             if (!operationPolicies.isEmpty()) {
                 operationPoliciesMap.put(key, operationPolicies);
@@ -660,6 +1005,55 @@ public class ImportUtils {
         }
         return operationPoliciesMap;
     }
+
+    /**
+     * This method will extract out the API policies from the URL template.
+     *
+     * @param operationsDTO       The policy enforcement information
+     * @param extractedFolderPath Extracted folder path of the API project
+     * @param targetApi           Existing API object if the API is already existing, otherwise null
+     * @param tenantDomain        Tenant domain
+     * @param apiType             Type of the API
+     * @param provider            Api provider object
+     * @return Map of extracted operation policies
+     * @throws APIManagementException If there is an error in extracting process
+     */
+    public static Map<String, List<OperationPolicy>> extractValidateAndDropOperationPoliciesFromURITemplate
+    (List<APIOperationsDTO> operationsDTO, String extractedFolderPath, API targetApi, String tenantDomain,
+            String apiType, APIProvider provider) throws APIManagementException {
+        String targetAPIUuid = (targetApi != null) ? targetApi.getUuid() : null;
+        Map<String, List<OperationPolicy>> operationPoliciesMap = new HashMap<>();
+        for (APIOperationsDTO dto : operationsDTO) {
+            String key = dto.getVerb() + ":" + dto.getTarget();
+            List<OperationPolicy> operationPolicies =
+                    OperationPolicyMappingUtil.fromDTOToAPIOperationPoliciesList(dto.getOperationPolicies());
+
+            // Get the existing list of policies to preserve existing values in secret parameter scenarios
+            List<OperationPolicy> existingPoliciesList = null;
+            if (targetApi != null && targetApi.getUriTemplates() != null) {
+                for (URITemplate existingUriTemplate : targetApi.getUriTemplates()) {
+                    if (existingUriTemplate.getHTTPVerb().equals(dto.getVerb()) &&
+                            existingUriTemplate.getUriTemplate().equals(dto.getTarget())) {
+                        existingPoliciesList = existingUriTemplate.getOperationPolicies();
+                        break;
+                    }
+                }
+            }
+
+            // Validate and process the policies. Secret parameter values will be encrypted during this
+            Map<String, OperationPolicySpecification> visitedPoliciesMap = new HashMap<>();
+            for (OperationPolicy policy : operationPolicies) {
+                validateAndProcessAppliedPolicy(policy, visitedPoliciesMap, extractedFolderPath, targetAPIUuid,
+                        provider, tenantDomain, apiType, existingPoliciesList);
+            }
+            if (!operationPolicies.isEmpty()) {
+                operationPoliciesMap.put(key, operationPolicies);
+            }
+            dto.setOperationPolicies(null);
+        }
+        return operationPoliciesMap;
+    }
+
 
     /**
      * This method is used to extract, validate and drop the policies from the API object as to record policy mapping,
@@ -673,11 +1067,15 @@ public class ImportUtils {
      * @param provider            API Provider
      * @return List of policies
      * @throws APIManagementException If an error occurs while extracting, validating or dropping the policies
+     * @deprecated Use
+     *         {@link #extractValidateAndDropAPIPoliciesFromAPI(APIDTO, String, API, String, String, APIProvider)}
+     *         instead.
      */
+    @Deprecated
     public static List<OperationPolicy> extractValidateAndDropAPIPoliciesFromAPI(APIDTO importedApiDTO,
                                                                                  String extractedFolderPath,
-                                                                                 String apiUUID, String tenantDomain
-            , String apiType,
+                                                                                 String apiUUID, String tenantDomain,
+                                                                                 String apiType,
                                                                                  APIProvider provider)
             throws APIManagementException {
 
@@ -687,8 +1085,45 @@ public class ImportUtils {
                     .fromDTOToAPIOperationPoliciesList(importedApiDTO.getApiPolicies());
             Map<String, OperationPolicySpecification> visitedPoliciesMap = new HashMap<>();
             for (OperationPolicy policy : apiPoliciesList) {
-                validateAppliedPolicy(policy, visitedPoliciesMap, extractedFolderPath, apiUUID, provider,
-                        tenantDomain, apiType);
+                validateAndProcessAppliedPolicy(policy, visitedPoliciesMap, extractedFolderPath, apiUUID, provider,
+                        tenantDomain, apiType, null);
+            }
+
+        }
+        importedApiDTO.setApiPolicies(null);
+        return apiPoliciesList;
+    }
+
+    /**
+     * This method is used to extract, validate and drop the policies from the API object as to record policy mapping,
+     * we need API UUID. API will be created without policies and after that API will be updated.
+     *
+     * @param importedApiDTO      API DTO of the importing API
+     * @param extractedFolderPath Location of the extracted folder of the API
+     * @param targetApi           Existing API object if the API is already existing, otherwise null
+     * @param tenantDomain        Tenant domain
+     * @param apiType             Type of the API
+     * @param provider            API Provider
+     * @return List of policies
+     * @throws APIManagementException If an error occurs while extracting, validating or dropping the policies
+     */
+    public static List<OperationPolicy> extractValidateAndDropAPIPoliciesFromAPI(APIDTO importedApiDTO,
+            String extractedFolderPath, API targetApi, String tenantDomain, String apiType, APIProvider provider)
+            throws APIManagementException {
+
+        String targetApiUuid = (targetApi != null) ? targetApi.getUuid() : null;
+        List<OperationPolicy> apiPoliciesList = new ArrayList<>();
+        if (importedApiDTO.getApiPolicies() != null) {
+            apiPoliciesList = OperationPolicyMappingUtil
+                    .fromDTOToAPIOperationPoliciesList(importedApiDTO.getApiPolicies());
+            Map<String, OperationPolicySpecification> visitedPoliciesMap = new HashMap<>();
+
+            // Get the existing list of policies to preserve existing values in secret parameter scenarios
+            List<OperationPolicy> existingPoliciesList = targetApi != null ? targetApi.getApiPolicies() : null;
+
+            for (OperationPolicy policy : apiPoliciesList) {
+                validateAndProcessAppliedPolicy(policy, visitedPoliciesMap, extractedFolderPath, targetApiUuid,
+                        provider, tenantDomain, apiType, existingPoliciesList);
             }
 
         }
@@ -708,11 +1143,40 @@ public class ImportUtils {
      * @param tenantDomain        Tenant domain
      * @param apiType             Type of the API.
      * @throws APIManagementException If there is an error in validating applied policy
+     * @deprecated Use
+     *         {@link #validateAndProcessAppliedPolicy (OperationPolicy, Map, String, String, APIProvider, String,
+     *         String, List)} instead.
      */
+    @Deprecated
     public static void validateAppliedPolicy(OperationPolicy appliedPolicy,
                                              Map<String, OperationPolicySpecification> visitedPoliciesMap,
                                              String extractedFolderPath, String apiUUID, APIProvider provider,
                                              String tenantDomain, String apiType)
+            throws APIManagementException {
+        validateAndProcessAppliedPolicy(appliedPolicy, visitedPoliciesMap, extractedFolderPath, apiUUID, provider,
+                tenantDomain, apiType, null);
+    }
+
+    /**
+     * This method is used to validate an applied API policy for an API. It will validate the Applied policy's
+     * enforcement information with policy specification. First policy specifications exists in the project will be
+     * considered and if it is not found, existing policies will be considered.
+     *
+     * @param appliedPolicy       The policy enforcement information
+     * @param extractedFolderPath Extracted folder path of the API project
+     * @param apiUUID             If this is an already existing API, the uuid of that API. If not, this will be null
+     * @param provider            Api provider object
+     * @param tenantDomain        Tenant domain
+     * @param apiType             Type of the API.
+     * @param existingPoliciesList The list of existing policies for the API. This is used to preserve the values in
+     *                             secret parameter scenarios.
+     * @throws APIManagementException If there is an error in validating applied policy
+     */
+    public static void validateAndProcessAppliedPolicy(OperationPolicy appliedPolicy,
+                                             Map<String, OperationPolicySpecification> visitedPoliciesMap,
+                                             String extractedFolderPath, String apiUUID, APIProvider provider,
+                                             String tenantDomain, String apiType,
+                                             List<OperationPolicy> existingPoliciesList)
             throws APIManagementException {
 
         String policyDirectory = extractedFolderPath + File.separator + ImportExportConstants.POLICIES_DIRECTORY;
@@ -769,6 +1233,8 @@ public class ImportUtils {
         if (policySpec != null) {
             // if a policy specification is found, we need to validate the policy applied parameters.
             provider.validateAppliedPolicyWithSpecification(policySpec, appliedPolicy, apiType);
+            // Process the secret type policy parameters
+            provider.processSecretPolicyParameters(policySpec, appliedPolicy, existingPoliciesList);
             if (log.isDebugEnabled()) {
                 log.debug("The applied policy " + appliedPolicy.getPolicyName()
                         + " has been validated properly with the policy parameters.");
@@ -795,28 +1261,36 @@ public class ImportUtils {
     /**
      * This method is used to populate the API with endpoints.
      *
-     * @param apiUUID             API UUID
+     * @param api                 API object
      * @param provider            API Provider
      * @param extractedFolderPath Extracted folder path of the API project
      * @param organization        Organization
      * @throws APIManagementException If an error occurs while populating the API with endpoints
      */
-    public static void populateAPIWithEndpoints(String apiUUID, APIProvider provider, String extractedFolderPath,
-            String organization) throws APIManagementException {
+    public static void populateAPIWithEndpoints(API api, APIProvider provider, String extractedFolderPath,
+                                                String organization) throws APIManagementException {
 
+        String apiUUID = api.getUuid();
         try {
             // Retrieve endpoints from artifact
             String jsonContent = getFileContentAsJson(
                     extractedFolderPath + ImportExportConstants.API_ENDPOINTS_FILE_LOCATION);
-            if (jsonContent != null) {
-                // Retrieving the field "data"
+            if (jsonContent == null) {
+                return;
+            } else {
                 JsonElement endpointsJson = new JsonParser().parse(jsonContent).getAsJsonObject()
                         .get(APIConstants.DATA);
-                if (endpointsJson != null) {
+                if (endpointsJson == null || endpointsJson.isJsonNull()) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("No API endpoints found in the API endpoints file");
+                    }
+                } else {
+                    // Retrieving the field "data"
                     JsonArray endpoints = endpointsJson.getAsJsonArray();
                     for (JsonElement endpointElement : endpoints) {
                         JsonObject endpointObj = endpointElement.getAsJsonObject();
-                        APIEndpointInfo apiEndpointInfo = new Gson().fromJson(endpointObj, APIEndpointInfo.class);
+                        APIEndpointInfo apiEndpointInfo =
+                                new Gson().fromJson(endpointObj, APIEndpointInfo.class);
                         String endpointUUID = apiEndpointInfo.getId();
                         try {
                             String createdEndpointUUID = provider.addAPIEndpoint(apiUUID, apiEndpointInfo,
@@ -826,15 +1300,14 @@ public class ImportUtils {
                                         " has been added to the API");
                             }
                         } catch (APIManagementException e) {
-                            throw new APIManagementException("Error while adding API Endpoint with ID: " + endpointUUID,
-                                    e, ExceptionCodes.from(ExceptionCodes.ERROR_ADDING_API_ENDPOINT, endpointUUID));
+                            throw new APIManagementException(
+                                    "Error while adding API Endpoint with ID: " + endpointUUID,
+                                    e, ExceptionCodes.from(ExceptionCodes.ERROR_ADDING_API_ENDPOINT,
+                                    endpointUUID));
                         }
                     }
-                } else {
-                    if (log.isDebugEnabled()) {
-                        log.debug("No API endpoints found in the API endpoints file");
-                    }
                 }
+
             }
         } catch (IOException e) {
             throw new APIManagementException("Error while reading API endpoints from path: " + extractedFolderPath, e,
@@ -843,6 +1316,42 @@ public class ImportUtils {
             throw new APIManagementException("Error while adding API endpoints to API: " + apiUUID, e,
                     ExceptionCodes.ERROR_ADDING_API_ENDPOINTS);
         }
+    }
+
+    /**
+     * This method retrieves the MCP Server backends from the extracted folder path.
+     *
+     * @param extractedFolderPath The path where the API project is extracted
+     * @return List of Backend objects representing the MCP Server backends
+     * @throws APIManagementException If an error occurs while reading the API endpoints file
+     */
+    private static List<Backend> getMCPServerBackends(String extractedFolderPath) throws APIManagementException {
+
+        List<Backend> backendList = new ArrayList<>();
+        try {
+            String jsonContent = getFileContentAsJson(
+                    extractedFolderPath + ImportExportConstants.BACKENDS_FILE_LOCATION);
+            if (jsonContent != null) {
+                JsonElement backendJson = new JsonParser().parse(jsonContent).getAsJsonObject().get(APIConstants.DATA);
+                if (backendJson == null || backendJson.isJsonNull()) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("No API endpoints found in the API endpoints file");
+                    }
+                    return backendList;
+                } else {
+                    JsonArray backends = backendJson.getAsJsonArray();
+                    for (JsonElement endpointElement : backends) {
+                        JsonObject backendObj = endpointElement.getAsJsonObject();
+                        Backend backend = new Gson().fromJson(backendObj, Backend.class);
+                        backendList.add(backend);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            throw new APIManagementException("Error while reading API endpoints from path: " + extractedFolderPath, e,
+                    ExceptionCodes.ERROR_READING_API_ENDPOINTS_FILE);
+        }
+        return backendList;
     }
 
     /**
@@ -1102,6 +1611,19 @@ public class ImportUtils {
      * @param importedApiDTO API DTO to import
      */
     public static boolean isAdvertiseOnlyAPI(APIDTO importedApiDTO) {
+
+        if (importedApiDTO.getAdvertiseInfo() != null && importedApiDTO.getAdvertiseInfo().isAdvertised() == null) {
+            importedApiDTO.getAdvertiseInfo().setAdvertised(Boolean.FALSE);
+        }
+        return importedApiDTO.getAdvertiseInfo() != null && importedApiDTO.getAdvertiseInfo().isAdvertised();
+    }
+
+    /**
+     * Check whether an advertise only API
+     *
+     * @param importedApiDTO API DTO to import
+     */
+    public static boolean isAdvertiseOnlyAPI(APIDTOTypeWrapper importedApiDTO) {
 
         if (importedApiDTO.getAdvertiseInfo() != null && importedApiDTO.getAdvertiseInfo().isAdvertised() == null) {
             importedApiDTO.getAdvertiseInfo().setAdvertised(Boolean.FALSE);
@@ -1379,20 +1901,30 @@ public class ImportUtils {
     }
 
     /**
-     * Validate API/API Product configuration (api/api_product.yaml or api/api_product.json) and return it.
+     * Retrieve the validated API DTO object from the archive.
      *
      * @param pathToArchive            Path to the extracted folder
-     * @param isDefaultProviderAllowed Preserve provider flag value
-     * @param currentUser              Username of the current user
-     * @throws APIManagementException If an error occurs while authorizing the provider or retrieving the definition
+     * @param isDefaultProviderAllowed Whether the default provider is allowed
+     * @param currentUser              Current user
+     * @param type                     Type of the API (API, MCP Server, or API Product)
+     * @return Validated JSON element of the API DTO
+     * @throws IOException            If an error occurs while reading the file content
+     * @throws APIManagementException If an error occurs while processing the API definition
      */
     private static JsonElement retrieveValidatedDTOObject(String pathToArchive, Boolean isDefaultProviderAllowed,
                                                           String currentUser, String type)
             throws IOException, APIManagementException {
 
-        JsonObject configObject = (StringUtils.equals(type, ImportExportConstants.TYPE_API)) ?
-                retrievedAPIDtoJson(pathToArchive) :
-                retrievedAPIProductDtoJson(pathToArchive);
+        JsonObject configObject;
+
+        if (StringUtils.equals(type, ImportExportConstants.TYPE_API)) {
+            configObject = retrievedAPIDtoJson(pathToArchive);
+        } else if (StringUtils.equals(type, ImportExportConstants.TYPE_MCP_SERVER)) {
+            configObject = retrievedMCPDtoJson(pathToArchive);
+        } else {
+            configObject = retrievedAPIProductDtoJson(pathToArchive);
+        }
+
         configObject = validatePreserveProvider(configObject, isDefaultProviderAllowed, currentUser);
         return configObject;
     }
@@ -1489,6 +2021,31 @@ public class ImportUtils {
     }
 
     @NotNull
+    private static JsonObject retrievedMCPDtoJson(String pathToArchive) throws IOException, APIManagementException {
+        // Get MCP Server Definition as JSON
+        String jsonContent =
+                getFileContentAsJson(pathToArchive + ImportExportConstants.MCP_SERVER_FILE_LOCATION);
+        if (jsonContent == null) {
+            throw new APIManagementException("Cannot find API definition. api.yaml or api.json should present",
+                    ExceptionCodes.ERROR_FETCHING_DEFINITION_FILE);
+        }
+        return processRetrievedDefinition(jsonContent);
+    }
+
+    @NotNull
+    private static JsonObject retrievedBackendAPIDtoJson(String pathToArchive) throws IOException,
+            APIManagementException {
+        // Get MCP Backend API Definition as JSON
+        String jsonContent =
+                getFileContentAsJson(pathToArchive + ImportExportConstants.BACKENDS_FILE_LOCATION);
+        if (jsonContent == null) {
+            throw new APIManagementException("Cannot find API definition. api.yaml or api.json should present",
+                    ExceptionCodes.ERROR_FETCHING_DEFINITION_FILE);
+        }
+        return processRetrievedDefinition(jsonContent);
+    }
+
+    @NotNull
     private static JsonObject retrievedAPIProductDtoJson(String pathToArchive)
             throws IOException, APIManagementException {
         // Get API Product Definition as JSON
@@ -1514,7 +2071,16 @@ public class ImportUtils {
         // Retrieving the field "data" in api.yaml/json or api_product.yaml/json and
         // convert it to a JSON object for further processing
         JsonElement configElement = new JsonParser().parse(jsonContent).getAsJsonObject().get(APIConstants.DATA);
-        JsonObject configObject = configElement.getAsJsonObject();
+
+        JsonObject configObject = new JsonObject();
+        if (configElement.isJsonObject()) {
+            configObject = configElement.getAsJsonObject();
+        } else if (configElement.isJsonArray()) {
+            //data object can be an array for MCP once we support creating MCPs with multiple backend endpoints. For now
+            //we only consider the 1st element of the array
+            configObject = configElement.getAsJsonArray().get(0).getAsJsonObject();
+        }
+
 
         configObject = preProcessEndpointConfig(configObject);
 
@@ -1545,6 +2111,22 @@ public class ImportUtils {
         return new Gson().fromJson(jsonObject, APIDTO.class);
     }
 
+    public static MCPServerDTO retrievedMCPDto(String pathToArchive) throws IOException, APIManagementException,
+            ParseException {
+
+        JsonObject mcpServer = retrievedMCPDtoJson(pathToArchive);
+        MCPServerDTO mcpServerDTO = new Gson().fromJson(mcpServer, MCPServerDTO.class);
+        if (StringUtils.equals(mcpServerDTO.getSubtypeConfiguration().getSubtype(),
+                APIConstants.API_SUBTYPE_DIRECT_BACKEND)) {
+            JsonObject backendAPI = retrievedBackendAPIDtoJson(pathToArchive);
+            JSONParser parser = new JSONParser();
+            JSONObject endpointConfig = (JSONObject) parser.parse(backendAPI.get("endpointConfig").getAsString());
+            mcpServerDTO.endpointConfig(endpointConfig);
+        }
+
+        return mcpServerDTO;
+    }
+
     public static APIProductDTO retrieveAPIProductDto(String pathToArchive) throws IOException, APIManagementException {
 
         JsonObject jsonObject = retrievedAPIProductDtoJson(pathToArchive);
@@ -1560,7 +2142,9 @@ public class ImportUtils {
      */
     private static JsonObject preProcessEndpointConfig(JsonObject configObject) {
 
-        if (configObject.has(ImportExportConstants.ENDPOINT_CONFIG)) {
+        //todo: added to skip endpoint config processing for Direct_EP MCP Apis
+        if (configObject.has(ImportExportConstants.ENDPOINT_CONFIG) &&
+                configObject.get(ImportExportConstants.ENDPOINT_CONFIG).isJsonObject()) {
             JsonObject endpointConfig = configObject.get(ImportExportConstants.ENDPOINT_CONFIG).getAsJsonObject();
             if (endpointConfig.has(APIConstants.ENDPOINT_SECURITY)) {
                 JsonObject endpointSecurity = endpointConfig.get(APIConstants.ENDPOINT_SECURITY).getAsJsonObject();
@@ -2003,34 +2587,47 @@ public class ImportUtils {
 
         try {
             String swaggerContent = loadSwaggerFile(pathToArchive);
-            APIDefinitionValidationResponse validationResponse = OASParserUtil
-                    .validateAPIDefinition(swaggerContent, Boolean.TRUE);
-            if (!validationResponse.isValid()) {
-                String errorDescription = "";
-                if (validationResponse.getErrorItems().size() > 0) {
-                    for (ErrorHandler errorHandler : validationResponse.getErrorItems()) {
-                        if (StringUtils.isNotBlank(errorDescription)) {
-                            errorDescription = errorDescription.concat(". ");
-                        }
-                        errorDescription = errorDescription.concat(errorHandler.getErrorDescription());
-                    }
-                }
-                throw new APIManagementException(
-                        ExceptionCodes.from(ExceptionCodes.APICTL_OPENAPI_PARSE_EXCEPTION, errorDescription));
-            }
-            JsonObject swaggerContentJson = new JsonParser().parse(swaggerContent).getAsJsonObject();
-            if (swaggerContentJson.has(APIConstants.SWAGGER_INFO)
-                    && swaggerContentJson.getAsJsonObject(APIConstants.SWAGGER_INFO)
-                    .has(ImportExportConstants.SWAGGER_X_WSO2_APICTL_INIT)
-                    && swaggerContentJson.getAsJsonObject(APIConstants.SWAGGER_INFO)
-                    .get(ImportExportConstants.SWAGGER_X_WSO2_APICTL_INIT).getAsBoolean()) {
-                validationResponse.setInit(true);
-            }
-            return validationResponse;
+            return retrieveValidatedSwaggerDefinition(swaggerContent);
         } catch (IOException e) {
             throw new APIManagementException("Error while reading API meta information from path: " + pathToArchive, e,
                     ExceptionCodes.ERROR_READING_META_DATA);
         }
+    }
+
+    /**
+     * Validate swagger definition from the content and return it.
+     *
+     * @param swaggerContent Swagger content as a String
+     * @return APIDefinitionValidationResponse of the swagger content
+     * @throws APIManagementException If an error occurs while reading the file
+     */
+    public static APIDefinitionValidationResponse retrieveValidatedSwaggerDefinition(String swaggerContent)
+            throws APIManagementException {
+
+        APIDefinitionValidationResponse validationResponse = OASParserUtil
+                .validateAPIDefinition(swaggerContent, Boolean.TRUE);
+        if (!validationResponse.isValid()) {
+            String errorDescription = "";
+            if (validationResponse.getErrorItems().size() > 0) {
+                for (ErrorHandler errorHandler : validationResponse.getErrorItems()) {
+                    if (StringUtils.isNotBlank(errorDescription)) {
+                        errorDescription = errorDescription.concat(". ");
+                    }
+                    errorDescription = errorDescription.concat(errorHandler.getErrorDescription());
+                }
+            }
+            throw new APIManagementException(
+                    ExceptionCodes.from(ExceptionCodes.APICTL_OPENAPI_PARSE_EXCEPTION, errorDescription));
+        }
+        JsonObject swaggerContentJson = new JsonParser().parse(swaggerContent).getAsJsonObject();
+        if (swaggerContentJson.has(APIConstants.SWAGGER_INFO)
+                && swaggerContentJson.getAsJsonObject(APIConstants.SWAGGER_INFO)
+                .has(ImportExportConstants.SWAGGER_X_WSO2_APICTL_INIT)
+                && swaggerContentJson.getAsJsonObject(APIConstants.SWAGGER_INFO)
+                .get(ImportExportConstants.SWAGGER_X_WSO2_APICTL_INIT).getAsBoolean()) {
+            validationResponse.setInit(true);
+        }
+        return validationResponse;
     }
 
     /**

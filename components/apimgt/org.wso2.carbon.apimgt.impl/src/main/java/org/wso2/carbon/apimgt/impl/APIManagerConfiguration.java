@@ -42,6 +42,7 @@ import org.apache.commons.logging.LogFactory;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.wso2.carbon.apimgt.api.APIManagementException;
+import org.wso2.carbon.apimgt.api.UsedByMigrationClient;
 import org.wso2.carbon.apimgt.api.dto.GatewayVisibilityPermissionConfigurationDTO;
 import org.wso2.carbon.apimgt.api.model.APIPublisher;
 import org.wso2.carbon.apimgt.api.model.APIStore;
@@ -70,12 +71,14 @@ import org.wso2.carbon.apimgt.common.gateway.dto.ClaimMappingDto;
 import org.wso2.carbon.apimgt.common.gateway.dto.JWKSConfigurationDTO;
 import org.wso2.carbon.apimgt.common.gateway.dto.TokenIssuerDto;
 import org.wso2.carbon.apimgt.common.gateway.extensionlistener.ExtensionListener;
+import org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.impl.monetization.MonetizationConfigurationDto;
 import org.wso2.carbon.apimgt.impl.recommendationmgt.RecommendationEnvironment;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.securevault.SecretResolver;
 import org.wso2.securevault.SecretResolverFactory;
 import org.wso2.securevault.commons.MiscellaneousUtil;
+import org.wso2.carbon.apimgt.impl.dto.GatewayNotificationConfiguration;
 
 import java.io.File;
 import java.io.IOException;
@@ -167,6 +170,8 @@ public class APIManagerConfiguration {
     private boolean enableAiConfiguration;
     private String hashingAlgorithm = SHA_256;
     private boolean isTransactionCounterEnabled;
+    private static boolean isMCPSupportEnabled = true;
+    private static String devportalMode = APIConstants.DEVPORTAL_MODE_HYBRID;
 
     public Map<String, List<String>> getRestApiJWTAuthAudiences() {
         return restApiJWTAuthAudiences;
@@ -231,6 +236,7 @@ public class APIManagerConfiguration {
     private final GatewayArtifactSynchronizerProperties gatewayArtifactSynchronizerProperties = new GatewayArtifactSynchronizerProperties();;
 
     private JSONArray customProperties = new JSONArray();
+    private GatewayNotificationConfiguration gatewayNotificationConfiguration = new GatewayNotificationConfiguration();
 
     /**
      * Returns the configuration of the Identity Provider.
@@ -325,6 +331,7 @@ public class APIManagerConfiguration {
         return null;
     }
 
+    @UsedByMigrationClient
     public String getFirstProperty(String key) {
 
         List<String> value = configuration.get(key);
@@ -698,12 +705,16 @@ public class APIManagerConfiguration {
                 setApiChatConfiguration(element);
             } else if (APIConstants.AI.DESIGN_ASSISTANT.equals(localName)) {
                 setDesignAssistantConfiguration(element);
-            } else if (APIConstants.AI.AI_CONFIGURATION.equals(localName)){
+            } else if (APIConstants.AI.AI_CONFIGURATION.equals(localName)) {
                 setAiConfiguration(element);
+            } else if (APIConstants.AI.MCP.equals(localName)) {
+                setMCPConfigurations(element);
             } else if (APIConstants.TokenValidationConstants.TOKEN_VALIDATION_CONFIG.equals(localName)) {
                 setTokenValidation(element);
             } else if (APIConstants.ORG_BASED_ACCESS_CONTROL.equals(localName)) {
                 setOrgBasedAccessControlConfigs(element);
+            } else if (APIConstants.API_STORE_TAG.equals(localName)) {
+                setDevportalConfigurations(element);
             } else if (APIConstants.TENANT_SHARING_CONFIGS.equals(localName)) {
                     // Iterate through each <TenantSharingConfig>
                     for (Iterator<?> tenantSharingConfigs = element.getChildElements(); tenantSharingConfigs.hasNext(); ) {
@@ -825,9 +836,28 @@ public class APIManagerConfiguration {
                         this.embeddingProviderConfigurationDTO.setProperties(propertiesMap);
                     }
                 }
+            } else if (APIConstants.GatewayNotification.GATEWAY_NOTIFICATION_CONFIGURATION.equals(localName)) {
+                setGatewayNotificationConfiguration(element);
             }
             readChildElements(element, nameStack);
             nameStack.pop();
+        }
+    }
+
+    private void setDevportalConfigurations(OMElement omElement) {
+
+        if (omElement == null) {
+            log.debug("MCP Server configuration element is null. Skipping configuration parsing.");
+            return;
+        }
+        OMElement devportalModeOmElement =
+                omElement.getFirstChildWithName(new QName(APIConstants.DEVPORTAL_MODE));
+        if (devportalModeOmElement != null) {
+            String devportalModeStr = devportalModeOmElement.getText().trim().toUpperCase();
+
+            if (APIConstants.DEVPORTAL_MODES.contains(devportalModeStr)) {
+                devportalMode = devportalModeStr;
+            }
         }
     }
 
@@ -2871,6 +2901,49 @@ public class APIManagerConfiguration {
         return aiapiConfigurationsDTO;
     }
 
+    /**
+     * Set MCP Portal Configuration
+     *
+     * @param omElement XML Config
+     */
+    private void setMCPConfigurations(OMElement omElement) {
+
+        if (omElement == null) {
+            log.debug("MCP Server configuration element is null. Skipping configuration parsing.");
+            return;
+        }
+        OMElement mcpServerConfigElement =
+                omElement.getFirstChildWithName(new QName(APIConstants.AI.MCP_SUPPORT_ENABLED));
+        if (mcpServerConfigElement != null
+                && StringUtils.isNotEmpty(mcpServerConfigElement.getText())) {
+
+            isMCPSupportEnabled = Boolean.parseBoolean(mcpServerConfigElement.getText().trim());
+        }
+    }
+
+    /**
+     * Returns whether the MCP Portal is enabled or not.
+     *
+     * @return true if MCP Portal is enabled, false otherwise.
+     */
+    public boolean isMCPSupportEnabled() {
+
+        return isMCPSupportEnabled;
+    }
+
+    /**
+     * Set Devportal Mode
+     *
+     * @return Devportal mode.
+     */
+    public String getDevportalMode() {
+
+        if (isMCPSupportEnabled()) {
+            return devportalMode;
+        }
+        return APIConstants.DEVPORTAL_MODE_API_ONLY;
+    }
+
     private void setHashingAlgorithm(OMElement omElement) {
 
         OMElement hashingAlgorithm =
@@ -3058,5 +3131,138 @@ public class APIManagerConfiguration {
      */
     public APIMGovernanceConfigDTO getAPIMGovernanceConfigurationDto() {
         return apimGovConfigurationDto;
+    }
+
+    private void setGatewayNotificationConfiguration(org.apache.axiom.om.OMElement omElement) {
+        org.apache.axiom.om.OMElement enabledElem = omElement.getFirstChildWithName(
+                new QName(APIConstants.GatewayNotification.GATEWAY_NOTIFICATION_ENABLED));
+        if (enabledElem != null) {
+            gatewayNotificationConfiguration.setEnabled(Boolean.parseBoolean(enabledElem.getText()));
+        }
+        org.apache.axiom.om.OMElement gatewayIdElem = omElement.getFirstChildWithName(
+                new QName(APIConstants.GatewayNotification.GATEWAY_IDENTIFIER));
+        if (gatewayIdElem != null) {
+            gatewayNotificationConfiguration.setGatewayID(gatewayIdElem.getText());
+        }
+
+        org.apache.axiom.om.OMElement heartbeatElem = omElement.getFirstChildWithName(
+                new QName(APIConstants.GatewayNotification.HEARTBEAT));
+        if (heartbeatElem != null) {
+            org.apache.axiom.om.OMElement intervalElem = heartbeatElem.getFirstChildWithName(
+                    new QName(APIConstants.GatewayNotification.NOTIFY_INTERVAL_SECONDS));
+            if (intervalElem != null) {
+                gatewayNotificationConfiguration.getHeartbeat().setNotifyIntervalSeconds(
+                        Integer.parseInt(intervalElem.getText()));
+            }
+        }
+
+        org.apache.axiom.om.OMElement deploymentAckElem = omElement.getFirstChildWithName(
+                new QName(APIConstants.GatewayNotification.DEPLOYMENT_ACKNOWLEDGEMENT));
+        if (deploymentAckElem != null) {
+            org.apache.axiom.om.OMElement batchSizeElem = deploymentAckElem.getFirstChildWithName(
+                    new QName(APIConstants.GatewayNotification.BATCH_SIZE));
+            if (batchSizeElem != null) {
+                gatewayNotificationConfiguration.getDeploymentAcknowledgement().setBatchSize(
+                        Integer.parseInt(batchSizeElem.getText()));
+            }
+            org.apache.axiom.om.OMElement batchIntervalElem = deploymentAckElem.getFirstChildWithName(
+                    new QName(APIConstants.GatewayNotification.BATCH_INTERVAL_MILLIS));
+            if (batchIntervalElem != null) {
+                gatewayNotificationConfiguration.getDeploymentAcknowledgement().setBatchIntervalMillis(
+                        Long.parseLong(batchIntervalElem.getText()));
+            }
+            org.apache.axiom.om.OMElement maxRetryCountElem = deploymentAckElem.getFirstChildWithName(
+                    new QName(APIConstants.GatewayNotification.MAX_RETRY_COUNT));
+            if (maxRetryCountElem != null) {
+                gatewayNotificationConfiguration.getDeploymentAcknowledgement().setMaxRetryCount(
+                        Integer.parseInt(maxRetryCountElem.getText()));
+            }
+            org.apache.axiom.om.OMElement retryDurationElem = deploymentAckElem.getFirstChildWithName(
+                    new QName(APIConstants.GatewayNotification.RETRY_DURATION));
+            if (retryDurationElem != null) {
+                gatewayNotificationConfiguration.getDeploymentAcknowledgement().setRetryDuration(
+                        Long.parseLong(retryDurationElem.getText()));
+            }
+            org.apache.axiom.om.OMElement retryProgressionFactorElem = deploymentAckElem.getFirstChildWithName(
+                    new QName(APIConstants.GatewayNotification.RETRY_PROGRESSION_FACTOR));
+            if (retryProgressionFactorElem != null) {
+                gatewayNotificationConfiguration.getDeploymentAcknowledgement().setRetryProgressionFactor(
+                        Double.parseDouble(retryProgressionFactorElem.getText()));
+            }
+            org.apache.axiom.om.OMElement batchProcessorMinThreadElem = deploymentAckElem.getFirstChildWithName(
+                    new QName(APIConstants.GatewayNotification.BATCH_PROCESSOR_MIN_THREAD));
+            if (batchProcessorMinThreadElem != null) {
+                gatewayNotificationConfiguration.getDeploymentAcknowledgement().setBatchProcessorMinThread(
+                        Integer.parseInt(batchProcessorMinThreadElem.getText()));
+            }
+            org.apache.axiom.om.OMElement batchProcessorMaxThreadElem = deploymentAckElem.getFirstChildWithName(
+                    new QName(APIConstants.GatewayNotification.BATCH_PROCESSOR_MAX_THREAD));
+            if (batchProcessorMaxThreadElem != null) {
+                gatewayNotificationConfiguration.getDeploymentAcknowledgement().setBatchProcessorMaxThread(
+                        Integer.parseInt(batchProcessorMaxThreadElem.getText()));
+            }
+            org.apache.axiom.om.OMElement batchProcessorKeepAliveElem = deploymentAckElem.getFirstChildWithName(
+                    new QName(APIConstants.GatewayNotification.BATCH_PROCESSOR_KEEP_ALIVE));
+            if (batchProcessorKeepAliveElem != null) {
+                gatewayNotificationConfiguration.getDeploymentAcknowledgement().setBatchProcessorKeepAlive(
+                        Long.parseLong(batchProcessorKeepAliveElem.getText()));
+            }
+            org.apache.axiom.om.OMElement batchProcessorQueueSizeElem = deploymentAckElem.getFirstChildWithName(
+                    new QName(APIConstants.GatewayNotification.BATCH_PROCESSOR_QUEUE_SIZE));
+            if (batchProcessorQueueSizeElem != null) {
+                gatewayNotificationConfiguration.getDeploymentAcknowledgement().setBatchProcessorQueueSize(
+                        Integer.parseInt(batchProcessorQueueSizeElem.getText()));
+            }
+        }
+
+        org.apache.axiom.om.OMElement registrationElem = omElement.getFirstChildWithName(
+                new QName(APIConstants.GatewayNotification.REGISTRATION));
+        if (registrationElem != null) {
+            org.apache.axiom.om.OMElement maxRetryCountElem = registrationElem.getFirstChildWithName(
+                    new QName(APIConstants.GatewayNotification.MAX_RETRY_COUNT));
+            if (maxRetryCountElem != null) {
+                gatewayNotificationConfiguration.getRegistration().setMaxRetryCount(
+                        Integer.parseInt(maxRetryCountElem.getText()));
+            }
+            org.apache.axiom.om.OMElement retryDurationElem = registrationElem.getFirstChildWithName(
+                    new QName(APIConstants.GatewayNotification.RETRY_DURATION));
+            if (retryDurationElem != null) {
+                gatewayNotificationConfiguration.getRegistration().setRetryDuration(
+                        Long.parseLong(retryDurationElem.getText()));
+            }
+            org.apache.axiom.om.OMElement retryProgressionFactorElem = registrationElem.getFirstChildWithName(
+                    new QName(APIConstants.GatewayNotification.RETRY_PROGRESSION_FACTOR));
+            if (retryProgressionFactorElem != null) {
+                gatewayNotificationConfiguration.getRegistration().setRetryProgressionFactor(
+                        Double.parseDouble(retryProgressionFactorElem.getText()));
+            }
+        }
+
+        org.apache.axiom.om.OMElement cleanupElem = omElement.getFirstChildWithName(
+                new QName(APIConstants.GatewayNotification.GATEWAY_CLEANUP));
+        if (cleanupElem != null) {
+            org.apache.axiom.om.OMElement expireElem = cleanupElem.getFirstChildWithName(
+                    new QName(APIConstants.GatewayNotification.EXPIRE_TIME_SECONDS));
+            if (expireElem != null) {
+                gatewayNotificationConfiguration.getGatewayCleanupConfiguration().setExpireTimeSeconds(
+                        Integer.parseInt(expireElem.getText()));
+            }
+            org.apache.axiom.om.OMElement retentionElem = cleanupElem.getFirstChildWithName(
+                    new QName(APIConstants.GatewayNotification.DATA_RETENTION_PERIOD_SECONDS));
+            if (retentionElem != null) {
+                gatewayNotificationConfiguration.getGatewayCleanupConfiguration().setDataRetentionPeriodSeconds(
+                        Integer.parseInt(retentionElem.getText()));
+            }
+            org.apache.axiom.om.OMElement intervalElem = cleanupElem.getFirstChildWithName(
+                    new QName(APIConstants.GatewayNotification.CLEANUP_INTERVAL_SECONDS));
+            if (intervalElem != null) {
+                gatewayNotificationConfiguration.getGatewayCleanupConfiguration().setCleanupIntervalSeconds(
+                        Integer.parseInt(intervalElem.getText()));
+            }
+        }
+    }
+
+    public GatewayNotificationConfiguration getGatewayNotificationConfiguration() {
+        return gatewayNotificationConfiguration;
     }
 }

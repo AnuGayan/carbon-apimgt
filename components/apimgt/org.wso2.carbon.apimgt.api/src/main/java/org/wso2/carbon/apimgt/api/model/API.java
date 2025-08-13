@@ -26,12 +26,14 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.wso2.carbon.apimgt.api.APIConstants;
+import org.wso2.carbon.apimgt.api.UsedByMigrationClient;
 import org.wso2.carbon.apimgt.api.model.policy.Policy;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -246,6 +248,10 @@ public class API implements Serializable {
   
     private String primaryProductionEndpointId;
 
+    private List<Backend> backends = new ArrayList<>();
+
+    private Map<String, String> metadata = new HashMap<>();
+
     public AIConfiguration getAiConfiguration() {
 
         return aiConfiguration;
@@ -289,6 +295,7 @@ public class API implements Serializable {
         this.audiences = audiences;
     }
 
+    @UsedByMigrationClient
     public void setEnvironmentList(Set<String> environmentList) {
         this.environmentList = environmentList;
     }
@@ -400,6 +407,7 @@ public class API implements Serializable {
      * @param key   Name of the property.
      * @param value Value of the property.
      */
+    @UsedByMigrationClient
     public void addProperty(String key, String value) {
         additionalProperties.put(key, value);
     }
@@ -450,6 +458,7 @@ public class API implements Serializable {
         return environments;
     }
 
+    @UsedByMigrationClient
     public void setEnvironments(Set<String> environments) {
         this.environments = environments;
     }
@@ -468,6 +477,7 @@ public class API implements Serializable {
      *
      * @param implementation
      */
+    @UsedByMigrationClient
     public void setImplementation(String implementation) {
         this.implementation = implementation;
     }
@@ -490,10 +500,12 @@ public class API implements Serializable {
         this.uuid = uuid;
     }
 
+    @UsedByMigrationClient
     public String getUuid() {
         return uuid;
     }
 
+    @UsedByMigrationClient
     public void setUuid(String uuid) {
         this.uuid = uuid;
     } 
@@ -502,6 +514,7 @@ public class API implements Serializable {
         return productionMaxTps;
     }
 
+    @UsedByMigrationClient
     public void setProductionMaxTps(String productionMaxTps) {
         this.productionMaxTps = productionMaxTps;
     }
@@ -534,6 +547,7 @@ public class API implements Serializable {
         return advertiseOnly;
     }
 
+    @UsedByMigrationClient
     public void setAdvertiseOnly(boolean advertiseOnly) {
         this.advertiseOnly = advertiseOnly;
     }
@@ -558,6 +572,7 @@ public class API implements Serializable {
         return apiOwner;
     }
 
+    @UsedByMigrationClient
     public void setApiOwner(String apiOwner) {
         this.apiOwner = apiOwner;
     }
@@ -566,6 +581,7 @@ public class API implements Serializable {
         return redirectURL;
     }
 
+    @UsedByMigrationClient
     public void setRedirectURL(String redirectURL) {
         this.redirectURL = redirectURL;
     }
@@ -583,6 +599,7 @@ public class API implements Serializable {
         additionalProperties = new JSONObject();
     }
 
+    @UsedByMigrationClient
     public APIIdentifier getId() {
         return id;
     }
@@ -595,6 +612,7 @@ public class API implements Serializable {
         return transports;
     }
 
+    @UsedByMigrationClient
     public void setTransports(String transports) {
         this.transports = transports;
     }
@@ -603,10 +621,12 @@ public class API implements Serializable {
         return technicalOwner;
     }
 
+    @UsedByMigrationClient
     public void setTechnicalOwner(String technicalOwner) {
         this.technicalOwner = technicalOwner;
     }
 
+    @UsedByMigrationClient
     public String getTechnicalOwnerEmail() {
         return technicalOwnerEmail;
     }
@@ -619,6 +639,7 @@ public class API implements Serializable {
         return businessOwner;
     }
 
+    @UsedByMigrationClient
     public void setBusinessOwner(String businessOwner) {
         this.businessOwner = businessOwner;
     }
@@ -627,6 +648,7 @@ public class API implements Serializable {
         return businessOwnerEmail;
     }
 
+    @UsedByMigrationClient
     public void setBusinessOwnerEmail(String businessOwnerEmail) {
         this.businessOwnerEmail = businessOwnerEmail;
     }
@@ -636,10 +658,12 @@ public class API implements Serializable {
         return description;
     }
 
+    @UsedByMigrationClient
     public void setDescription(String description) {
         this.description = description;
     }
 
+    @UsedByMigrationClient
     public String getUrl() {
         return url;
     }
@@ -648,6 +672,7 @@ public class API implements Serializable {
         this.url = url;
     }
 
+    @UsedByMigrationClient
     public String getSandboxUrl() {
         return sandboxUrl;
     }
@@ -660,6 +685,7 @@ public class API implements Serializable {
         return wsdlUrl;
     }
 
+    @UsedByMigrationClient
     public void setContext(String context) {
         this.context = context;
     }
@@ -668,6 +694,7 @@ public class API implements Serializable {
         return context;
     }
 
+    @UsedByMigrationClient
     public void setContextTemplate(String contextTemplate) {
         this.contextTemplate = contextTemplate;
     }
@@ -676,6 +703,7 @@ public class API implements Serializable {
         return contextTemplate;
     }
 
+    @UsedByMigrationClient
     public void setWsdlUrl(String wsdlUrl) {
         this.wsdlUrl = wsdlUrl;
     }
@@ -684,6 +712,7 @@ public class API implements Serializable {
         return thumbnailUrl;
     }
 
+    @UsedByMigrationClient
     public void setThumbnailUrl(String thumbnailUrl) {
         this.thumbnailUrl = thumbnailUrl;
     }
@@ -693,6 +722,7 @@ public class API implements Serializable {
     }
     
     @Deprecated
+    @UsedByMigrationClient
     public void addTags(Set<String> tags) {
         this.tags.addAll(tags);
     }
@@ -732,6 +762,7 @@ public class API implements Serializable {
         return null;
     }
 
+    @UsedByMigrationClient
     public void setLastUpdated(Date lastUpdated) {
         if (lastUpdated != null) {
             this.lastUpdated = new Date(lastUpdated.getTime());
@@ -751,6 +782,7 @@ public class API implements Serializable {
     }
 
     @Deprecated
+    @UsedByMigrationClient
     public void addAvailableTiers(Set<Tier> availableTiers) {
         this.availableTiers.addAll(availableTiers);
     }
@@ -789,6 +821,7 @@ public class API implements Serializable {
         return uriTemplates;
     }
 
+    @UsedByMigrationClient
     public void setUriTemplates(Set<URITemplate> uriTemplates) {
         this.uriTemplates = uriTemplates;
     }
@@ -797,6 +830,7 @@ public class API implements Serializable {
         return status;
     }
 
+    @UsedByMigrationClient
     public void setStatus(String status) {
         this.status = status;
     }
@@ -809,6 +843,7 @@ public class API implements Serializable {
         return rating;
     }
 
+    @UsedByMigrationClient
     public void setRating(float rating) {
         this.rating = rating;
     }
@@ -821,6 +856,7 @@ public class API implements Serializable {
         return sequence;
     }
 
+    @UsedByMigrationClient
     public void setLatest(boolean latest) {
         isLatest = latest;
     }
@@ -844,6 +880,7 @@ public class API implements Serializable {
         return wadlUrl;
     }
 
+    @UsedByMigrationClient
     public void setWadlUrl(String wadlUrl) {
         this.wadlUrl = wadlUrl;
     }
@@ -852,6 +889,7 @@ public class API implements Serializable {
         return visibility;
     }
 
+    @UsedByMigrationClient
     public void setVisibility(String visibility) {
         this.visibility = visibility;
     }
@@ -860,6 +898,7 @@ public class API implements Serializable {
         return visibleRoles;
     }
 
+    @UsedByMigrationClient
     public void setVisibleRoles(String visibleRoles) {
         this.visibleRoles = visibleRoles;
     }
@@ -868,6 +907,7 @@ public class API implements Serializable {
         return visibleTenants;
     }
 
+    @UsedByMigrationClient
     public void setVisibleTenants(String visibleTenants) {
         this.visibleTenants = visibleTenants;
     }
@@ -898,6 +938,7 @@ public class API implements Serializable {
     /**
      * @param endpointUTUsername the endpointUTUsername to set
      */
+    @UsedByMigrationClient
     public void setEndpointUTUsername(String endpointUTUsername) {
         this.endpointUTUsername = endpointUTUsername;
     }
@@ -912,6 +953,7 @@ public class API implements Serializable {
     /**
      * @param endpointUTPassword the endpointUTPassword to set
      */
+    @UsedByMigrationClient
     public void setEndpointUTPassword(String endpointUTPassword) {
         this.endpointUTPassword = endpointUTPassword;
     }
@@ -926,6 +968,7 @@ public class API implements Serializable {
     /**
      * @param endpointSecured the endpointSecured to set
      */
+    @UsedByMigrationClient
     public void setEndpointSecured(boolean endpointSecured) {
         this.endpointSecured = endpointSecured;
     }
@@ -940,6 +983,7 @@ public class API implements Serializable {
     /**
      * @param endpointAuthDigest the endpointAuthDigest to set
      */
+    @UsedByMigrationClient
     public void setEndpointAuthDigest(boolean endpointAuthDigest) {
         this.endpointAuthDigest = endpointAuthDigest;
     }
@@ -951,6 +995,7 @@ public class API implements Serializable {
     /**
      * @param inSeq insequence for the API
      */
+    @UsedByMigrationClient
     public void setInSequence(String inSeq) {
         this.inSequence = inSeq;
     }
@@ -962,6 +1007,7 @@ public class API implements Serializable {
     /**
      * @param outSeq outSequence for the API
      */
+    @UsedByMigrationClient
     public void setOutSequence(String outSeq) {
         this.outSequence = outSeq;
     }
@@ -995,6 +1041,7 @@ public class API implements Serializable {
         return subscriptionAvailability;
     }
 
+    @UsedByMigrationClient
     public void setSubscriptionAvailability(String subscriptionAvailability) {
         this.subscriptionAvailability = subscriptionAvailability;
     }
@@ -1003,6 +1050,7 @@ public class API implements Serializable {
         return subscriptionAvailableTenants;
     }
 
+    @UsedByMigrationClient
     public void setSubscriptionAvailableTenants(String subscriptionAvailableTenants) {
         this.subscriptionAvailableTenants = subscriptionAvailableTenants;
     }
@@ -1112,6 +1160,7 @@ public class API implements Serializable {
         return endpointConfig;
     }
 
+    @UsedByMigrationClient
     public void setEndpointConfig(String endpointConfig) {
         try {
             if (endpointConfig != null && endpointConfig.contains(APIConstants.ENDPOINT_CONFIG_SESSION_TIMEOUT)) {
@@ -1146,6 +1195,7 @@ public class API implements Serializable {
         return responseCache;
     }
 
+    @UsedByMigrationClient
     public void setResponseCache(String responseCache) {
         this.responseCache = responseCache;
     }
@@ -1154,6 +1204,7 @@ public class API implements Serializable {
         return cacheTimeout;
     }
 
+    @UsedByMigrationClient
     public void setCacheTimeout(int cacheTimeout) {
         this.cacheTimeout = cacheTimeout;
     }
@@ -1162,6 +1213,7 @@ public class API implements Serializable {
         return faultSequence;
     }
 
+    @UsedByMigrationClient
     public void setFaultSequence(String faultSequence) {
         this.faultSequence = faultSequence;
     }
@@ -1178,11 +1230,13 @@ public class API implements Serializable {
         return scopes;
     }
 
+    @UsedByMigrationClient
     public void setScopes(Set<Scope> scopes) {
         this.scopes = scopes;
     }
 
     @Deprecated
+    @UsedByMigrationClient
     public void setAsDefaultVersion(boolean value) {
         isDefaultVersion = value;
     }
@@ -1207,6 +1261,7 @@ public class API implements Serializable {
         return corsConfiguration;
     }
 
+    @UsedByMigrationClient
     public void setCorsConfiguration(CORSConfiguration corsConfiguration) {
         this.corsConfiguration = corsConfiguration;
     }
@@ -1215,6 +1270,7 @@ public class API implements Serializable {
         return this.monetizationCategory;
     }
 
+    @UsedByMigrationClient
     public void setMonetizationCategory(String monetizationCategory) {
         this.monetizationCategory = monetizationCategory;
     }
@@ -1248,14 +1304,17 @@ public class API implements Serializable {
         return apiLevelPolicy;
     }
 
+    @UsedByMigrationClient
     public void setApiLevelPolicy(String apiLevelPolicy) {
         this.apiLevelPolicy = apiLevelPolicy;
     }
 
+    @UsedByMigrationClient
     public String getType() {
         return type;
     }
 
+    @UsedByMigrationClient
     public void setType(String type) {
         if (StringUtils.isEmpty(type) || NULL_VALUE.equalsIgnoreCase(StringUtils.trim(type))) {
             this.type = "HTTP";
@@ -1288,6 +1347,7 @@ public class API implements Serializable {
         return accessControlRoles;
     }
 
+    @UsedByMigrationClient
     public void setAccessControlRoles(String accessControlRoles) {
         this.accessControlRoles = accessControlRoles;
     }
@@ -1296,6 +1356,7 @@ public class API implements Serializable {
         return accessControl;
     }
 
+    @UsedByMigrationClient
     public void setAccessControl(String accessControl) {
         this.accessControl = accessControl;
     }
@@ -1304,6 +1365,7 @@ public class API implements Serializable {
         return authorizationHeader;
     }
 
+    @UsedByMigrationClient
     public void setAuthorizationHeader(String authorizationHeader) {
         this.authorizationHeader = authorizationHeader;
     }
@@ -1329,6 +1391,7 @@ public class API implements Serializable {
      *
      * @param enableSchemaValidation Given Status.
      */
+    @UsedByMigrationClient
     public void setEnableSchemaValidation(boolean enableSchemaValidation) {
         this.enableSchemaValidation = enableSchemaValidation;
     }
@@ -1365,6 +1428,7 @@ public class API implements Serializable {
      *
      * @param apiSecurity Relevant type of gateway security for the API.
      */
+    @UsedByMigrationClient
     public void setApiSecurity(String apiSecurity) {
         if (apiSecurity != null) {
             this.apiSecurity = apiSecurity;
@@ -1418,6 +1482,7 @@ public class API implements Serializable {
         return enableStore;
     }
 
+    @UsedByMigrationClient
     public void setEnableStore(boolean enableStore) {
         this.enableStore = enableStore;
     }
@@ -1427,6 +1492,7 @@ public class API implements Serializable {
         return testKey;
     }
 
+    @UsedByMigrationClient
     public void setTestKey(String testKey) {
         this.testKey = testKey;
     }
@@ -1460,6 +1526,7 @@ public class API implements Serializable {
         return sb.toString();
     }
 
+    @UsedByMigrationClient
     public void setApiCategories(List<APICategory> apiCategories) {
         this.apiCategories = apiCategories;
     }
@@ -1534,11 +1601,13 @@ public class API implements Serializable {
         this.organization = organization;
     }
 
+    @UsedByMigrationClient
     public String getVersionTimestamp() {
 
         return versionTimestamp;
     }
 
+    @UsedByMigrationClient
     public void setVersionTimestamp(String versionTimestamp) {
 
         this.versionTimestamp = versionTimestamp;
@@ -1630,6 +1699,11 @@ public class API implements Serializable {
         return isEgress;
     }
 
+    public boolean isEgressAPI() {
+
+        return isEgress == 1;
+    }
+
     public void setEgress(int egress) {
         isEgress = egress;
     }
@@ -1650,5 +1724,25 @@ public class API implements Serializable {
 
     public void setPrimarySandboxEndpointId(String primarySandboxEndpointId) {
         this.primarySandboxEndpointId = primarySandboxEndpointId;
+    }
+
+    public List<Backend> getBackends() {
+
+        return backends;
+    }
+
+    public void setBackends(List<Backend> backends) {
+
+        this.backends = backends;
+    }
+
+    public Map<String, String> getMetadata() {
+
+        return metadata;
+    }
+
+    public void setMetadata(Map<String, String> metadata) {
+
+        this.metadata = metadata;
     }
 }

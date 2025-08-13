@@ -812,11 +812,23 @@ public enum ExceptionCodes implements ErrorHandler {
             "Endpoint URL is invalid"),
     INVALID_MEDIA_TYPE_VALIDATION(902050, "Invalid or mismatched media type detected.", 415,
             "File extension '%s' does not match detected MIME type '%s'"),
+    MCP_SERVER_VALIDATION_FAILED(902051, "MCP server validation failed", 400,
+            "Error occurred while validating the MCP server."),
 
     // Guardrail related codes
     GUARDRAIL_VIOLATION(900514, "Guardrail intervened.", 446,
-            "Guardrail constraint violation detected.");
+            "Guardrail constraint violation detected."),
 
+    // gateway notification related codes
+    GATEWAY_NOTIFICATION_BAD_REQUEST(902052, "Invalid request for gateway notification", 400,
+            "Invalid request for gateway notification. %s"),
+    GATEWAY_NOTIFICATION_INTERNAL_SERVER_ERROR(902053, "Internal server error while processing gateway notification",
+            500, "Error occurred while processing gateway notification."),
+    GATEWAY_DEPLOYMENT_STATUS_ACKNOWLEDGMENT_LIST_EMPTY(902051, "Invalid request: Empty or null acknowledgment list", 400,
+            "Invalid request: Empty or null acknowledgment list"),
+    GATEWAY_DEPLOYMENT_STATUS_INTERNAL_SERVER_ERROR(902054, "Internal server error.", 500,
+                                                    "Error occurred while retrieving/persisting deployment status "
+                                                            + "acknowledgment");
     private final long errorCode;
     private final String errorMessage;
     private final int httpStatusCode;
