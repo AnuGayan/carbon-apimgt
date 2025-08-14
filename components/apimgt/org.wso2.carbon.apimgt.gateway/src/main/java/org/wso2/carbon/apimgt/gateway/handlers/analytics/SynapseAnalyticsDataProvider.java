@@ -523,7 +523,8 @@ public class SynapseAnalyticsDataProvider implements AnalyticsDataProvider {
                 buildResponseMessage = false;
             }
         }
-        Map headers = (Map) messageContext.getProperty(TRANSPORT_HEADERS);
+        Map headers = (Map) ((Axis2MessageContext) messageContext).getAxis2MessageContext()
+                .getProperty(TRANSPORT_HEADERS);
         if (headers != null  && headers.get(HttpHeaders.CONTENT_LENGTH) != null) {
             responseSize = Integer.parseInt(headers.get(HttpHeaders.CONTENT_LENGTH).toString());
         }
