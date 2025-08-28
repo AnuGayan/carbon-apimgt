@@ -74,7 +74,7 @@ public class XMLSchemaValidator extends AbstractMediator {
         APIMThreatAnalyzer apimThreatAnalyzer = null;
         String apiContext;
         String requestMethod;
-        String contentType;
+        String contentType = "";
         boolean validRequest = true;
         org.apache.axis2.context.MessageContext axis2MC = ((Axis2MessageContext) messageContext).
                 getAxis2MessageContext();
@@ -83,7 +83,10 @@ public class XMLSchemaValidator extends AbstractMediator {
         if (contentTypeObject != null) {
             contentType = contentTypeObject.toString();
         } else {
-            contentType = axis2MC.getProperty(ThreatProtectorConstants.SOAP_CONTENT_TYPE).toString();
+            Object contentTypeProperty = axis2MC.getProperty(ThreatProtectorConstants.SOAP_CONTENT_TYPE);
+            if (contentTypeProperty != null) {
+                contentType = contentTypeProperty.toString();
+            }
         }
         apiContext = messageContext.getProperty(ThreatProtectorConstants.API_CONTEXT).toString();
         if (!APIConstants.SupportedHTTPVerbs.GET.name().equalsIgnoreCase(requestMethod) &&
