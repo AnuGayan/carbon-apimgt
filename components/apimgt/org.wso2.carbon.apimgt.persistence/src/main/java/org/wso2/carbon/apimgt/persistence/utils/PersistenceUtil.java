@@ -55,7 +55,6 @@ public class PersistenceUtil {
         throw new APIManagementException(msg);
     }
 
-
     /**
      * When an input is having '-AT-',replace it with @ [This is required to persist API data between registry and database]
      *

@@ -22,6 +22,7 @@ import org.wso2.carbon.apimgt.api.model.APIProduct;
 import org.wso2.carbon.apimgt.api.model.APIProductIdentifier;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.template.APITemplateException;
+import org.wso2.carbon.apimgt.impl.utils.GatewayUtils;
 import org.wso2.carbon.apimgt.rest.api.publisher.v1.common.internal.ServiceReferenceHolder;
 
 /**
@@ -107,7 +108,7 @@ public class APIConfigContext extends ConfigContext {
     private void setApiProductVelocityContext(APIProduct apiProduct, VelocityContext context) {
         APIProductIdentifier id = apiProduct.getId();
         //set the api name version and context
-        context.put("apiName", id.getName());
+        context.put("apiName", this.getAPIProductName(apiProduct));
         context.put("apiVersion", id.getVersion());
 
         // We set the context pattern now to support plugable version strategy
@@ -145,7 +146,19 @@ public class APIConfigContext extends ConfigContext {
     }
 
     public String getAPIName(API api) {
-        return api.getId().getApiName();
+        if (GatewayUtils.isSynapseAPIPrefixEnabled()) {
+            return APIConstants.SYNAPSE_API_NAME_PREFIX + "--" + api.getId().getApiName();
+        } else {
+            return api.getId().getApiName();
+        }
+    }
+
+    public String getAPIProductName(APIProduct product) {
+        if (GatewayUtils.isSynapseAPIPrefixEnabled()) {
+            return APIConstants.SYNAPSE_API_NAME_PREFIX + "--" + product.getId().getName();
+        } else {
+            return product.getId().getName();
+        }
     }
 
     /**

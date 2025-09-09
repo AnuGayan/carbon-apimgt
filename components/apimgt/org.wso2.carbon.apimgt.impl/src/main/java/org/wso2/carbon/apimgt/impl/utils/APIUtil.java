@@ -309,6 +309,8 @@ public final class APIUtil {
 
     private static boolean isContextCacheInitialized = false;
 
+    private static final String caseSensitiveCheckEnabled = System.getProperty(APIConstants.CASE_SENSITIVE_CHECK_PATH);
+
     public static final String DISABLE_ROLE_VALIDATION_AT_SCOPE_CREATION = "disableRoleValidationAtScopeCreation";
 
     public static final String DISABLE_API_CONTEXT_VALIDATION = "disableApiContextValidation";
@@ -4297,7 +4299,11 @@ public final class APIUtil {
      */
     public static String getSequenceExtensionName(API api) {
 
-        return api.getId().getApiName() + ":v" + api.getId().getVersion();
+        if (GatewayUtils.isSynapseAPIPrefixEnabled()) {
+            return APIConstants.SYNAPSE_API_NAME_PREFIX + "--" + api.getId().getApiName() + ":v" + api.getId().getVersion();
+        } else {
+            return api.getId().getApiName() + ":v" + api.getId().getVersion();
+        }
     }
 
     /**
@@ -4308,7 +4314,11 @@ public final class APIUtil {
      */
     public static String getSequenceExtensionName(String name, String version) {
 
-        return name + ":v" + version;
+        if (GatewayUtils.isSynapseAPIPrefixEnabled()) {
+            return APIConstants.SYNAPSE_API_NAME_PREFIX + "--" + name + ":v" + version;
+        } else {
+            return name + ":v" + version;
+        }
     }
 
     /**
@@ -7045,11 +7055,18 @@ public final class APIUtil {
      * @return true if the Array contains the role specified.
      */
     public static boolean compareRoleList(String[] userRoleList, String accessControlRole) {
-
         if (userRoleList != null) {
             for (String userRole : userRoleList) {
-                if (userRole.equalsIgnoreCase(accessControlRole)) {
-                    return true;
+                if (userRole != null) {
+                    if (Boolean.parseBoolean(caseSensitiveCheckEnabled)) {
+                        if (userRole.equals(accessControlRole)) {
+                            return true;
+                        }
+                    } else {
+                        if (userRole.equalsIgnoreCase(accessControlRole)) {
+                            return true;
+                        }
+                    }
                 }
             }
         }

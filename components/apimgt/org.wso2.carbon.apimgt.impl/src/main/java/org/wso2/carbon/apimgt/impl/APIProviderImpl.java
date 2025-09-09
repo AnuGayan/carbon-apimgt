@@ -52,6 +52,7 @@ import org.wso2.carbon.apimgt.api.dto.CertificateMetadataDTO;
 import org.wso2.carbon.apimgt.api.dto.ClientCertificateDTO;
 import org.wso2.carbon.apimgt.api.dto.ClonePolicyMetadataDTO;
 import org.wso2.carbon.apimgt.api.dto.EnvironmentPropertiesDTO;
+import org.wso2.carbon.apimgt.api.dto.KeyManagerConfigurationDTO;
 import org.wso2.carbon.apimgt.api.dto.UserApplicationAPIUsage;
 import org.wso2.carbon.apimgt.api.model.API;
 import org.wso2.carbon.apimgt.api.model.APIIdentifier;
@@ -97,6 +98,7 @@ import org.wso2.carbon.apimgt.api.model.SubscribedAPI;
 import org.wso2.carbon.apimgt.api.model.Subscriber;
 import org.wso2.carbon.apimgt.api.model.SwaggerData;
 import org.wso2.carbon.apimgt.api.model.Tier;
+import org.wso2.carbon.apimgt.api.model.TokenEndpointConnectionConfigType;
 import org.wso2.carbon.apimgt.api.model.URITemplate;
 import org.wso2.carbon.apimgt.api.model.Usage;
 import org.wso2.carbon.apimgt.api.model.policy.APIPolicy;
@@ -519,6 +521,8 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                 .getTenantDomain(APIUtil.replaceEmailDomainBack(api.getId().getProviderName()));
         validateResourceThrottlingTiers(api, tenantDomain);
         validateKeyManagers(api);
+        // Validate API level and operation level policies
+        validateAPIPolicyParameters(api, tenantDomain);
         String apiName = api.getId().getApiName();
         String provider = APIUtil.replaceEmailDomain(api.getId().getProviderName());
 
@@ -621,8 +625,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
      * @throws APIManagementException if an error occurs while adding the policies
      */
     private void addAPIPolicies(API api, String tenantDomain) throws APIManagementException {
-        // Validate API level and operation level policies
-        validateAPIPolicyParameters(api, tenantDomain);
         // Add API level and operation level policies
         apiMgtDAO.addAPIPoliciesMapping(api.getUuid(), api.getUriTemplates(), api.getApiPolicies(), tenantDomain);
     }
@@ -916,6 +918,10 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         validateAndSetTransports(api);
         validateAndSetAPISecurity(api);
         validateKeyManagers(api);
+        migrateMediationPoliciesOfAPI(api, tenantDomain, false);
+        // Validate API level and operation level policies
+        validateAPIPolicyParameters(api, tenantDomain);
+
         String publishedDefaultVersion = getPublishedDefaultVersion(api.getId());
         String prevDefaultVersion = getDefaultVersion(api.getId());
         api.setMonetizationEnabled(existingAPI.isMonetizationEnabled());
@@ -951,12 +957,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         }
         int tenantId = APIUtil.getInternalOrganizationId(organization);
         validateResourceThrottlingTiers(api, tenantDomain);
-
-        if (APIUtil.isSequenceDefined(api.getInSequence()) || APIUtil.isSequenceDefined(api.getOutSequence())
-                || APIUtil.isSequenceDefined(api.getFaultSequence())) {
-            migrateMediationPoliciesOfAPI(api, tenantDomain, false);
-        }
-
         //get product resource mappings on API before updating the API. Update uri templates on api will remove all
         //product mappings as well.
         List<APIProductResource> productResources = apiMgtDAO.getProductMappingsForAPI(api);
@@ -1030,8 +1030,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
      * @throws APIManagementException if an error occurs while updating the policy mappings
      */
     private void updateAPIPolicies(API api, String tenantDomain) throws APIManagementException {
-        // Validate API level and operation level policies
-        validateAPIPolicyParameters(api, tenantDomain);
         // Update API level and operation level policies
         apiMgtDAO.updateAPIPoliciesMapping(api.getUuid(), api.getUriTemplates(), api.getApiPolicies(), tenantDomain);
     }
@@ -1039,7 +1037,16 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
     private void validateKeyManagers(API api) throws APIManagementException {
 
         Map<String, KeyManagerDto> tenantKeyManagers = KeyManagerHolder.getGlobalAndTenantKeyManagers(tenantDomain);
+        List<KeyManagerConfigurationDTO> keyManagerConfigurationsByOrganization = apiMgtDAO.getKeyManagerConfigurationsByOrganization(
+                organization);
+        Set<String> disabledKeyManagers = keyManagerConfigurationsByOrganization.stream()
+                .filter(config -> !config.isEnabled()).map(KeyManagerConfigurationDTO::getName)
+                .collect(Collectors.toSet());
 
+        if (log.isDebugEnabled()) {
+            log.debug("Validating key managers for API: " + api.getId().getApiName());
+        }
+        
         List<String> configuredMissingKeyManagers = new ArrayList<>();
         for (String keyManager : api.getKeyManagers()) {
             if (!APIConstants.KeyManager.API_LEVEL_ALL_KEY_MANAGERS.equals(keyManager)) {
@@ -1056,6 +1063,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                 }
             }
         }
+        configuredMissingKeyManagers.removeAll(disabledKeyManagers);
         if (!configuredMissingKeyManagers.isEmpty()) {
             throw new APIManagementException(
                     "Key Manager(s) Not found :" + String.join(" , ", configuredMissingKeyManagers),
@@ -1432,70 +1440,72 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
     protected void migrateMediationPoliciesOfAPI(API api, String organization, boolean updatePolicyMapping)
             throws APIManagementException {
 
-        Map<String, String> clonedPoliciesMap = new HashMap<>();
-        String apiUUID = api.getUuid();
+        if (APIUtil.isSequenceDefined(api.getInSequence()) || APIUtil.isSequenceDefined(api.getOutSequence())
+                || APIUtil.isSequenceDefined(api.getFaultSequence())) {
+            Map<String, String> clonedPoliciesMap = new HashMap<>();
+            String apiUUID = api.getUuid();
 
-        loadMediationPoliciesToAPI(api, organization);
+            loadMediationPoliciesToAPI(api, organization);
 
-        if (APIUtil.isSequenceDefined(api.getInSequence())) {
-            Mediation inSequenceMediation = api.getInSequenceMediation();
-            OperationPolicyData existingPolicy = getAPISpecificOperationPolicyByPolicyName(
-                    inSequenceMediation.getName(), APIConstants.DEFAULT_POLICY_VERSION, api.getUuid(), null,
-                    organization, false);
-            String inFlowPolicyId;
-            if (existingPolicy == null) {
-                OperationPolicyData inSeqPolicyData =
-                        APIUtil.getPolicyDataForMediationFlow(api, APIConstants.OPERATION_SEQUENCE_TYPE_REQUEST,
-                                organization);
-                inFlowPolicyId = addAPISpecificOperationPolicy(apiUUID, inSeqPolicyData, organization);
-            } else {
-                inFlowPolicyId = existingPolicy.getPolicyId();
-            }
-            clonedPoliciesMap.put(inSequenceMediation.getName(), inFlowPolicyId);
-            api.setInSequence(null);
-            api.setInSequenceMediation(null);
-        }
-
-        if (APIUtil.isSequenceDefined(api.getOutSequence())) {
-            Mediation outSequenceMediation = api.getOutSequenceMediation();
-            OperationPolicyData existingPolicy = getAPISpecificOperationPolicyByPolicyName(
-                    outSequenceMediation.getName(), APIConstants.DEFAULT_POLICY_VERSION, api.getUuid(), null,
-                    organization, false);
-            String outFlowPolicyId;
-            if (existingPolicy == null) {
-                OperationPolicyData outSeqPolicyData =
-                        APIUtil.getPolicyDataForMediationFlow(api, APIConstants.OPERATION_SEQUENCE_TYPE_RESPONSE,
-                                organization);
-                outFlowPolicyId = addAPISpecificOperationPolicy(apiUUID, outSeqPolicyData, organization);
-            } else {
-                outFlowPolicyId = existingPolicy.getPolicyId();
-            }
-            clonedPoliciesMap.put(outSequenceMediation.getName(), outFlowPolicyId);
-            api.setOutSequence(null);
-            api.setOutSequenceMediation(null);
-        }
-
-        if (APIUtil.isSequenceDefined(api.getFaultSequence())) {
-            Mediation faultSequenceMediation = api.getFaultSequenceMediation();
-            OperationPolicyData existingPolicy = getAPISpecificOperationPolicyByPolicyName(
-                    faultSequenceMediation.getName(), APIConstants.DEFAULT_POLICY_VERSION, api.getUuid(), null,
-                    organization, false);
-            String faultFlowPolicyId;
-            if (existingPolicy == null) {
-                OperationPolicyData faultSeqPolicyData =
-                        APIUtil.getPolicyDataForMediationFlow(api, APIConstants.OPERATION_SEQUENCE_TYPE_FAULT,
-                                organization);
-                faultFlowPolicyId = addAPISpecificOperationPolicy(apiUUID, faultSeqPolicyData, organization);
-            } else {
-                faultFlowPolicyId = existingPolicy.getPolicyId();
+            if (APIUtil.isSequenceDefined(api.getInSequence())) {
+                Mediation inSequenceMediation = api.getInSequenceMediation();
+                OperationPolicyData existingPolicy = getAPISpecificOperationPolicyByPolicyName(
+                        inSequenceMediation.getName(), APIConstants.DEFAULT_POLICY_VERSION, api.getUuid(), null,
+                        organization, false);
+                String inFlowPolicyId;
+                if (existingPolicy == null) {
+                    OperationPolicyData inSeqPolicyData =
+                            APIUtil.getPolicyDataForMediationFlow(api, APIConstants.OPERATION_SEQUENCE_TYPE_REQUEST,
+                                    organization);
+                    inFlowPolicyId = addAPISpecificOperationPolicy(apiUUID, inSeqPolicyData, organization);
+                } else {
+                    inFlowPolicyId = existingPolicy.getPolicyId();
+                }
+                clonedPoliciesMap.put(inSequenceMediation.getName(), inFlowPolicyId);
+                api.setInSequence(null);
+                api.setInSequenceMediation(null);
             }
 
-            clonedPoliciesMap.put(faultSequenceMediation.getName(), faultFlowPolicyId);
-            api.setFaultSequence(null);
-            api.setFaultSequenceMediation(null);
-        }
+            if (APIUtil.isSequenceDefined(api.getOutSequence())) {
+                Mediation outSequenceMediation = api.getOutSequenceMediation();
+                OperationPolicyData existingPolicy = getAPISpecificOperationPolicyByPolicyName(
+                        outSequenceMediation.getName(), APIConstants.DEFAULT_POLICY_VERSION, api.getUuid(), null,
+                        organization, false);
+                String outFlowPolicyId;
+                if (existingPolicy == null) {
+                    OperationPolicyData outSeqPolicyData =
+                            APIUtil.getPolicyDataForMediationFlow(api, APIConstants.OPERATION_SEQUENCE_TYPE_RESPONSE,
+                                    organization);
+                    outFlowPolicyId = addAPISpecificOperationPolicy(apiUUID, outSeqPolicyData, organization);
+                } else {
+                    outFlowPolicyId = existingPolicy.getPolicyId();
+                }
+                clonedPoliciesMap.put(outSequenceMediation.getName(), outFlowPolicyId);
+                api.setOutSequence(null);
+                api.setOutSequenceMediation(null);
+            }
 
-        setMigratedPolicyIdsToPolicies(api, clonedPoliciesMap, updatePolicyMapping);
+            if (APIUtil.isSequenceDefined(api.getFaultSequence())) {
+                Mediation faultSequenceMediation = api.getFaultSequenceMediation();
+                OperationPolicyData existingPolicy = getAPISpecificOperationPolicyByPolicyName(
+                        faultSequenceMediation.getName(), APIConstants.DEFAULT_POLICY_VERSION, api.getUuid(), null,
+                        organization, false);
+                String faultFlowPolicyId;
+                if (existingPolicy == null) {
+                    OperationPolicyData faultSeqPolicyData =
+                            APIUtil.getPolicyDataForMediationFlow(api, APIConstants.OPERATION_SEQUENCE_TYPE_FAULT,
+                                    organization);
+                    faultFlowPolicyId = addAPISpecificOperationPolicy(apiUUID, faultSeqPolicyData, organization);
+                } else {
+                    faultFlowPolicyId = existingPolicy.getPolicyId();
+                }
+
+                clonedPoliciesMap.put(faultSequenceMediation.getName(), faultFlowPolicyId);
+                api.setFaultSequence(null);
+                api.setFaultSequenceMediation(null);
+            }
+            setMigratedPolicyIdsToPolicies(api, clonedPoliciesMap, updatePolicyMapping);
+        }
     }
 
     /**
@@ -1977,11 +1987,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
             throw new APIMgtResourceAlreadyExistsException(
                     "Version " + newVersion + " exists for api " + existingAPI.getId().getApiName());
         }
-        if (APIUtil.isSequenceDefined(existingAPI.getInSequence()) || APIUtil.isSequenceDefined(existingAPI.getOutSequence())
-                || APIUtil.isSequenceDefined(existingAPI.getFaultSequence())) {
-            migrateMediationPoliciesOfAPI(existingAPI, organization, true);
-        }
-
+        migrateMediationPoliciesOfAPI(existingAPI, organization, true);
         existingAPI.setOrganization(organization);
         APIIdentifier existingAPIId = existingAPI.getId();
         String existingAPICreatedTime = existingAPI.getCreatedTime();
@@ -5283,6 +5289,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                 populateAPIStatus(api);
                 populateDefaultVersion(api);
                 populatePolicyTypeInAPI(api);
+                populateEndpointSecurityDefaults(api);
                 return api;
             } else {
                 String msg = "Failed to get API. API artifact corresponding to artifactId " + uuid + " does not exist";
@@ -6832,11 +6839,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
             throws APIManagementException {
         //In case the mediation sequences are not migrated yet with an API update, migrate API Policies first
         API api = getAPIbyUUID(apiId, organization);
-        if (APIUtil.isSequenceDefined(api.getInSequence()) || APIUtil.isSequenceDefined(api.getOutSequence())
-                || APIUtil.isSequenceDefined(api.getFaultSequence())) {
-            migrateMediationPoliciesOfAPI(api, tenantDomain, true);
-        }
-
+        migrateMediationPoliciesOfAPI(api, tenantDomain, true);
         Set<URITemplate> uriTemplatesWithPolicies = apiMgtDAO.getURITemplatesWithOperationPolicies(apiId);
 
         if (!uriTemplatesWithPolicies.isEmpty()) {
@@ -7671,5 +7674,84 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         } catch (APIPersistenceException e) {
             throw new APIManagementException("Error while sequences to the api  " + apiId, e);
         }        
+    }
+
+    /**
+     * Populates default values for endpoint security settings in the given API's endpoint configuration.
+     *
+     * @param api The {@link API} object whose endpoint security defaults need to be populated.
+     * @throws ParseException If there is an error while parsing the endpoint configuration JSON.
+     */
+    private void populateEndpointSecurityDefaults(API api) throws ParseException {
+        String endpointConfig = api.getEndpointConfig();
+        if (StringUtils.isNotEmpty(endpointConfig)) {
+            JSONObject endpointConfigJson = (JSONObject) new JSONParser().parse(endpointConfig);
+            if (endpointConfigJson != null && endpointConfigJson.get(APIConstants.ENDPOINT_SECURITY) != null) {
+                JSONObject endpointSecurityJson = (JSONObject) endpointConfigJson.get(APIConstants.ENDPOINT_SECURITY);
+                if (endpointSecurityJson.get(APIConstants.ENDPOINT_SECURITY_PRODUCTION) != null) {
+                    JSONObject productionEndpoint = (JSONObject) endpointSecurityJson.get(APIConstants.ENDPOINT_SECURITY_PRODUCTION);
+                    setDefaultTokenEndpointConnectionConfigType(productionEndpoint);
+                }
+                if (endpointSecurityJson.get(APIConstants.ENDPOINT_SECURITY_SANDBOX) != null) {
+                    JSONObject sandboxEndpoint = (JSONObject) endpointSecurityJson.get(APIConstants.ENDPOINT_SECURITY_SANDBOX);
+                    setDefaultTokenEndpointConnectionConfigType(sandboxEndpoint);
+                }
+            }
+            api.setEndpointConfig(endpointConfigJson.toJSONString());
+        }
+    }
+
+    /**
+     * Sets the default token endpoint connection configuration type for the given endpoint.
+     *
+     * If the endpoint's security type is OAuth, this method ensures that the default values
+     * for connection timeout and proxy configurations types are properly assigned.
+     *
+     * @param endpoint The JSON object representing the endpoint configuration.
+     */
+    private void setDefaultTokenEndpointConnectionConfigType(JSONObject endpoint) {
+        if (endpoint.get(APIConstants.ENDPOINT_SECURITY_TYPE) != null && endpoint.get(APIConstants
+                .ENDPOINT_SECURITY_TYPE).toString().equalsIgnoreCase(APIConstants.ENDPOINT_SECURITY_TYPE_OAUTH)) {
+            // Populate default values for connection timeout and proxy configurations
+            if (endpoint.get(APIConstants.CONNECTION_TIMEOUT_CONFIG_TYPE) == null) {
+                if (isDefaultConnectionTimeout(endpoint, APIConstants.CONNECTION_TIMEOUT_DURATION)
+                        && isDefaultConnectionTimeout(endpoint, APIConstants.CONNECTION_REQUEST_TIMEOUT_DURATION)
+                        && isDefaultConnectionTimeout(endpoint, APIConstants.SOCKET_TIMEOUT_DURATION)) {
+                    // If all the connection timeouts are null or -1, use global config
+                    endpoint.put(APIConstants.CONNECTION_TIMEOUT_CONFIG_TYPE,
+                            TokenEndpointConnectionConfigType.GLOBAL.toString());
+                } else {
+                    endpoint.put(APIConstants.CONNECTION_TIMEOUT_CONFIG_TYPE,
+                            TokenEndpointConnectionConfigType.ENDPOINT_SPECIFIC.toString());
+                }
+            }
+            if (endpoint.get(APIConstants.PROXY_CONFIG_TYPE) == null) {
+                JSONObject proxyConfigs = (JSONObject) endpoint.get(APIConstants.PROXY_CONFIGS);
+                if (proxyConfigs != null && Boolean.TRUE.equals(proxyConfigs.get(APIConstants.PROXY_ENABLED))) {
+                    // If proxy configurations are enabled, use endpoint specific config
+                    endpoint.put(APIConstants.PROXY_CONFIG_TYPE, TokenEndpointConnectionConfigType
+                            .ENDPOINT_SPECIFIC.toString());
+                } else {
+                    endpoint.put(APIConstants.PROXY_CONFIG_TYPE, TokenEndpointConnectionConfigType.GLOBAL.toString());
+                }
+            }
+        }
+    }
+
+    /**
+     * Checks if the connection timeout value for the given endpoint is set to the default value.
+     *
+     * This method checks if the value for the specified connection timeout type in the provided
+     * endpoint is either null, or equals to the default connection timeout value.
+     *
+     * @param endpoint              JSONObject representing the endpoint configuration.
+     * @param connectionTimeoutType String indicating the type of connection timeout to check.
+     * @return true if the connection timeout value is either null or set to the default value, otherwise false.
+     */
+    private boolean isDefaultConnectionTimeout(JSONObject endpoint, String connectionTimeoutType) {
+        return endpoint.get(connectionTimeoutType) == null
+                || APIConstants.CONNECTION_TIMEOUT_DEFAULT.equals(endpoint.get(connectionTimeoutType))
+                || Integer.valueOf(APIConstants.CONNECTION_TIMEOUT_DEFAULT).equals(endpoint.get(connectionTimeoutType))
+                || Long.valueOf(APIConstants.CONNECTION_TIMEOUT_DEFAULT).equals(endpoint.get(connectionTimeoutType));
     }
 }

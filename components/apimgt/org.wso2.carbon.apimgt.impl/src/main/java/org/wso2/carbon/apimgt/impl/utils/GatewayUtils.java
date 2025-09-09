@@ -143,6 +143,13 @@ public class GatewayUtils {
                 .concat(APIConstants.ENDPOINT_SECURITY_PASSWORD).concat("--").concat(type);
     }
 
+    public static String retrieveOAuthProxyPasswordAlias(String name, String version, String type) {
+
+        return name.concat("--v").concat(version).concat("--")
+                .concat(APIConstants.ENDPOINT_SECURITY_TYPE_OAUTH).concat("--")
+                .concat(APIConstants.ENDPOINT_SECURITY_PROXY_PASSWORD).concat("--").concat(type);
+    }
+
     public static String retrieveBasicAuthAlias(String name, String version, String type) {
 
         return name.concat("--v").concat(version).concat("--").concat(type);
@@ -183,5 +190,10 @@ public class GatewayUtils {
             }
         }
         return ttl;
+    }
+
+    public static boolean isSynapseAPIPrefixEnabled() {
+
+        return Boolean.parseBoolean(System.getProperty(APIConstants.ENABLE_SYNAPSE_API_PREFIX));
     }
 }
