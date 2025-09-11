@@ -40,11 +40,9 @@ public class OrganizationKeyManagerDto {
         return keyManagerMap.get(name);
     }
 
-    public void putKeyManagerDto(KeyManagerDto keyManagerDto, String type) {
+    public void putKeyManagerDto(KeyManagerDto keyManagerDto) {
 
-        if (APIConstants.KeyManager.DEFAULT_KEY_MANAGER.equals(keyManagerDto.getName()) && (
-                APIConstants.KeyManager.DEFAULT_KEY_MANAGER_TYPE.equals(type)
-                        || APIConstants.KeyManager.WSO2_IS_KEY_MANAGER_TYPE.equals(type))) {
+        if (APIConstants.KeyManager.DEFAULT_KEY_MANAGER.equals(keyManagerDto.getName())) {
             Map<String, KeyManagerDto> newKeyManagerMap = new LinkedHashMap<>();
             newKeyManagerMap.put(keyManagerDto.getName(), keyManagerDto);
             keyManagerMap.remove(keyManagerDto.getName());
