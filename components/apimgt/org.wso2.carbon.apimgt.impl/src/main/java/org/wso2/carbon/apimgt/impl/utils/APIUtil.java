@@ -7056,7 +7056,7 @@ public final class APIUtil {
 
         if (userRoleList != null) {
             for (String userRole : userRoleList) {
-                if (userRole.equalsIgnoreCase(accessControlRole)) {
+                if (userRole != null && userRole.equalsIgnoreCase(accessControlRole)) {
                     return true;
                 }
             }
