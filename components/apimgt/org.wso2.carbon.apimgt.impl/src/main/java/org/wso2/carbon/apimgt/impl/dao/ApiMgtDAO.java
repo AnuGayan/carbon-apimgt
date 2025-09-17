@@ -4222,8 +4222,10 @@ public class ApiMgtDAO {
                 application.setIsBlackListed(rs.getBoolean("ENABLED"));
                 application.setOwner(rs.getString("CREATED_BY"));
                 application.setTokenType(rs.getString("TOKEN_TYPE"));
-                application.setLastUpdatedTime(String.valueOf(rs.getTimestamp("APP_UPDATED_TIME").getTime()));
-                application.setCreatedTime(String.valueOf(rs.getTimestamp("APP_CREATED_TIME").getTime()));
+                Timestamp updated_time = rs.getTimestamp("APP_UPDATED_TIME");
+                application.setLastUpdatedTime(updated_time == null ? null : String.valueOf(updated_time.getTime()));
+                Timestamp createdTime = rs.getTimestamp("APP_CREATED_TIME");
+                application.setCreatedTime(createdTime == null ? null : String.valueOf(createdTime.getTime()));
 
                 if (multiGroupAppSharingEnabled) {
                     setGroupIdInApplication(connection,application);
@@ -6387,8 +6389,10 @@ public class ApiMgtDAO {
                 application.setGroupId(rs.getString("GROUP_ID"));
                 application.setOwner(rs.getString("CREATED_BY"));
                 application.setTokenType(rs.getString("TOKEN_TYPE"));
-                application.setLastUpdatedTime(String.valueOf(rs.getTimestamp("UPDATED_TIME").getTime()));
-                application.setCreatedTime(String.valueOf(rs.getTimestamp("CREATED_TIME").getTime()));
+                Timestamp updated_time = rs.getTimestamp("UPDATED_TIME");
+                application.setLastUpdatedTime(updated_time == null ? null : String.valueOf(updated_time.getTime()));
+                Timestamp createdTime = rs.getTimestamp("CREATED_TIME");
+                application.setCreatedTime(createdTime == null ? null : String.valueOf(createdTime.getTime()));
 
                 if (multiGroupAppSharingEnabled) {
                     setGroupIdInApplication(connection, application);
@@ -6459,8 +6463,10 @@ public class ApiMgtDAO {
                 application.setTokenType(rs.getString("TOKEN_TYPE"));
                 application.setOrganization(rs.getString("ORGANIZATION"));
                 subscriber.setId(rs.getInt("SUBSCRIBER_ID"));
-                application.setLastUpdatedTime(String.valueOf(rs.getTimestamp("UPDATED_TIME").getTime()));
-                application.setCreatedTime(String.valueOf(rs.getTimestamp("CREATED_TIME").getTime()));
+                Timestamp updated_time = rs.getTimestamp("UPDATED_TIME");
+                application.setLastUpdatedTime(updated_time == null ? null : String.valueOf(updated_time.getTime()));
+                Timestamp createdTime = rs.getTimestamp("CREATED_TIME");
+                application.setCreatedTime(createdTime == null ? null : String.valueOf(createdTime.getTime()));
 
                 String tenantDomain = MultitenantUtils.getTenantDomain(subscriberName);
                 Map<String, Map<String, OAuthApplicationInfo>>
@@ -6614,8 +6620,10 @@ public class ApiMgtDAO {
                 application.setUUID(rs.getString("UUID"));
                 application.setTier(rs.getString("APPLICATION_TIER"));
                 subscriber.setId(rs.getInt("SUBSCRIBER_ID"));
-                application.setLastUpdatedTime(String.valueOf(rs.getTimestamp("UPDATED_TIME").getTime()));
-                application.setCreatedTime(String.valueOf(rs.getTimestamp("CREATED_TIME").getTime()));
+                Timestamp updated_time = rs.getTimestamp("UPDATED_TIME");
+                application.setLastUpdatedTime(updated_time == null ? null : String.valueOf(updated_time.getTime()));
+                Timestamp createdTime = rs.getTimestamp("CREATED_TIME");
+                application.setCreatedTime(createdTime == null ? null : String.valueOf(createdTime.getTime()));
 
                 String tenantDomain = MultitenantUtils.getTenantDomain(subscriberName);
                 Map<String, Map<String, OAuthApplicationInfo>>
@@ -6686,8 +6694,6 @@ public class ApiMgtDAO {
                 application.setOwner(rs.getString("CREATED_BY"));
                 application.setOrganization(rs.getString("ORGANIZATION"));
                 subscriber.setId(rs.getInt("SUBSCRIBER_ID"));
-                application.setLastUpdatedTime(String.valueOf(rs.getTimestamp("UPDATED_TIME").getTime()));
-                application.setCreatedTime(String.valueOf(rs.getTimestamp("CREATED_TIME").getTime()));
                 if (multiGroupAppSharingEnabled) {
                     if (application.getGroupId() == null || application.getGroupId().isEmpty()) {
                         application.setGroupId(getGroupId(connection, application.getId()));
@@ -14436,8 +14442,10 @@ public class ApiMgtDAO {
                 application.setTokenType(rs.getString("TOKEN_TYPE"));
                 application.setKeyType(rs.getString("KEY_TYPE"));
                 application.setOrganization(rs.getString("ORGANIZATION"));
-                application.setLastUpdatedTime(String.valueOf(rs.getTimestamp("UPDATED_TIME").getTime()));
-                application.setCreatedTime(String.valueOf(rs.getTimestamp("CREATED_TIME").getTime()));
+                Timestamp updatedTime = rs.getTimestamp("UPDATED_TIME");
+                application.setLastUpdatedTime(updatedTime == null ? null : String.valueOf(updatedTime.getTime()));
+                Timestamp createdTime = rs.getTimestamp("CREATED_TIME");
+                application.setCreatedTime(createdTime == null ? null : String.valueOf(createdTime.getTime()));
 
                 if (multiGroupAppSharingEnabled) {
                     if (application.getGroupId() == null || application.getGroupId().isEmpty()) {
