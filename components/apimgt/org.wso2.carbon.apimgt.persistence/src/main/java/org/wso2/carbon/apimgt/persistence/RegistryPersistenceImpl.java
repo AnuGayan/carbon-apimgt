@@ -577,6 +577,11 @@ public class RegistryPersistenceImpl implements APIPersistence {
             if (api.getSwaggerDefinition() != null) {
                 String apiPath = GovernanceUtils.getArtifactPath(registry, api.getUuid());
                 int prependIndex = apiPath.lastIndexOf(APIConstants.API_RESOURCE_NAME);
+                if (prependIndex == -1) {
+                    throw new APIPersistenceException(
+                            "API resource name '" + APIConstants.API_RESOURCE_NAME + "' not found in API path: "
+                                    + apiPath);
+                }
                 String apiSourcePath = apiPath.substring(0, prependIndex);
                 String resourcePath = apiSourcePath + RegistryConstants.PATH_SEPARATOR
                         + APIConstants.API_OAS_DEFINITION_RESOURCE_NAME;
@@ -782,6 +787,11 @@ public class RegistryPersistenceImpl implements APIPersistence {
                 API api = RegistryPersistenceUtil.getApiForPublishing(registry, apiArtifact);
                 String apiPath = GovernanceUtils.getArtifactPath(registry, apiId);
                 int prependIndex = apiPath.lastIndexOf(APIConstants.API_RESOURCE_NAME);
+                if (prependIndex == -1) {
+                    throw new APIPersistenceException(
+                            "API resource name '" + APIConstants.API_RESOURCE_NAME + "' not found in API path: "
+                                    + apiPath);
+                }
                 String apiSourcePath = apiPath.substring(0, prependIndex);
                 String definitionPath = apiSourcePath + RegistryConstants.PATH_SEPARATOR
                         + APIConstants.API_OAS_DEFINITION_RESOURCE_NAME;
@@ -1968,6 +1978,11 @@ public class RegistryPersistenceImpl implements APIPersistence {
             String visibility = apiArtifact.getAttribute(APIConstants.API_OVERVIEW_VISIBILITY);
             String apiPath = GovernanceUtils.getArtifactPath(registry, apiId);
             int prependIndex = apiPath.lastIndexOf(APIConstants.API_RESOURCE_NAME);
+            if (prependIndex == -1) {
+                throw new OASPersistenceException(
+                        "API resource name '" + APIConstants.API_RESOURCE_NAME + "' not found in API path: "
+                                + apiPath);
+            }
             String apiSourcePath = apiPath.substring(0, prependIndex);
             String resourcePath = apiSourcePath + RegistryConstants.PATH_SEPARATOR
                     + APIConstants.API_OAS_DEFINITION_RESOURCE_NAME;
