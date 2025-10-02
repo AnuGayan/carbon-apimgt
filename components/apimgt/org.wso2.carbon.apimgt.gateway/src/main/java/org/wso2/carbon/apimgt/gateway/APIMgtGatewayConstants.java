@@ -208,5 +208,20 @@ public class APIMgtGatewayConstants {
 
     public static final String GOOGLE_ANALYTICS_SECURE_HASHING = "googleAnalyticsSecureHashingEnabled";
     public static final String ENABLE_SCHEMA_VALIDATION_FOR_ACCEPT_HEADER = "enableSchemaValidationForAcceptHeader";
+
+    public static final String AUTO_TRANSPORT_OPERATION_CLEANUP = "autoTransportOperationCleanup";
+
+    // Basic Auth Client Pool configurations
+    public static final String BASIC_AUTH_VALIDATOR = "BasicAuthValidator.";
+    public static final String CONNECTION_POOL = "ConnectionPool.";
+    public static final String BASIC_AUTH_VALIDATOR_CONNECTION_POOL_MAX_IDLE =
+            BASIC_AUTH_VALIDATOR + CONNECTION_POOL + "MaxIdle";
+    public static final String BASIC_AUTH_VALIDATOR_CONNECTION_POOL_INIT_IDLE_CAPACITY =
+            BASIC_AUTH_VALIDATOR + CONNECTION_POOL + "InitIdleCapacity";
+    public static final String BASIC_AUTH_VALIDATOR_CONNECTION_POOL_MAX_ACTIVE =
+            BASIC_AUTH_VALIDATOR + CONNECTION_POOL + "MaxActive";
+    public static final String BASIC_AUTH_VALIDATOR_CONNECTION_POOL_MAX_WAIT_MILLIS =
+            BASIC_AUTH_VALIDATOR + CONNECTION_POOL + "MaxWaitMillis";
+
 }
 
