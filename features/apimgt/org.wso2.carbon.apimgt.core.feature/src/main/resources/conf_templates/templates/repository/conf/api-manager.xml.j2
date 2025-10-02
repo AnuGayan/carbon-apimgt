@@ -440,6 +440,14 @@
       {% endif %}
     </APIKeyValidator>
 
+    <BasicAuthValidator>
+        <ConnectionPool>
+            <MaxIdle>{{apim.basic_authenticator.max_idle}}</MaxIdle>
+            <InitIdleCapacity>{{apim.basic_authenticator.init_idle_capacity}}</InitIdleCapacity>
+            <MaxActive>{{apim.basic_authenticator.max_active}}</MaxActive>
+            <MaxWaitMillis>{{apim.basic_authenticator.max_wait_millis}}</MaxWaitMillis>
+        </ConnectionPool>
+    </BasicAuthValidator>
 
     <OAuthConfigurations>
         <!-- Remove OAuth headers from outgoing message. -->
