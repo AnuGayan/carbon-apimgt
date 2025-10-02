@@ -1182,10 +1182,6 @@
           "type" : "string",
           "description" : "Context of the API."
         },
-        "contextTemplate" : {
-          "type" : "string",
-          "description" : "Context template of the API."
-        },
         "policy" : {
           "type" : "string",
           "description" : "API level throttling policy."
@@ -1358,8 +1354,8 @@
           "type" : "string",
           "example" : "EXCHANGED",
           "description" : "The type of the tokens to be used (exchanged or without exchanged). Accepted values are EXCHANGED, DIRECT or BOTH.",
-          "enum" : [ "EXCHANGED", "DIRECT", "BOTH" ],
-          "default" : "DIRECT"
+          "default" : "DIRECT",
+          "enum" : [ "EXCHANGED", "DIRECT", "BOTH" ]
         }
       }
     },
