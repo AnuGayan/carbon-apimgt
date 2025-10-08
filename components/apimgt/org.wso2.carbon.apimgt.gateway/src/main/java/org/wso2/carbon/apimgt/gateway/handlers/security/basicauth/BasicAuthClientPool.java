@@ -98,7 +98,7 @@ public class BasicAuthClientPool {
 
         // Create GenericObjectPool with Commons Pool 2 configuration
         GenericObjectPoolConfig<BasicAuthClient> poolConfig = new GenericObjectPoolConfig<>();
-        poolConfig.setMaxTotal(maxActive);
+        poolConfig.setMaxTotal(maxActive + maxIdle);
         poolConfig.setBlockWhenExhausted(true);
         poolConfig.setMaxWaitMillis(maxWaitMillis);
         poolConfig.setMaxIdle(maxIdle);
