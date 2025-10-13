@@ -1048,6 +1048,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         }
         
         List<String> configuredMissingKeyManagers = new ArrayList<>();
+        List<String> validKeyManagers = new ArrayList<>();
         for (String keyManager : api.getKeyManagers()) {
             if (!APIConstants.KeyManager.API_LEVEL_ALL_KEY_MANAGERS.equals(keyManager)) {
                 KeyManagerDto selectedKeyManager = null;
@@ -1060,7 +1061,11 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                 }
                 if (selectedKeyManager == null) {
                     configuredMissingKeyManagers.add(keyManager);
+                } else if (!disabledKeyManagers.contains(keyManager)) {
+                    validKeyManagers.add(keyManager);
                 }
+            } else {
+                validKeyManagers.add(keyManager);
             }
         }
         configuredMissingKeyManagers.removeAll(disabledKeyManagers);
@@ -1068,6 +1073,11 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
             throw new APIManagementException(
                     "Key Manager(s) Not found :" + String.join(" , ", configuredMissingKeyManagers),
                     ExceptionCodes.KEY_MANAGER_NOT_REGISTERED);
+        }
+        if (validKeyManagers.isEmpty()) {
+            throw new APIManagementException(
+                    "API must have at least one valid and enabled key manager configured",
+                    ExceptionCodes.KEY_MANAGER_NOT_FOUND);
         }
     }
 
