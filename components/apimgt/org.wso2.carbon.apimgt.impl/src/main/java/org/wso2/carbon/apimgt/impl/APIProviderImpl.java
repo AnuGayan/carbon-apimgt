@@ -917,7 +917,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         //Validate Transports
         validateAndSetTransports(api);
         validateAndSetAPISecurity(api);
-        validateKeyManagers(api);
+        validateKeyManagers(api, existingAPI.getKeyManagers());
         migrateMediationPoliciesOfAPI(api, tenantDomain, false);
         // Validate API level and operation level policies
         validateAPIPolicyParameters(api, tenantDomain);
@@ -1035,6 +1035,11 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
     }
 
     private void validateKeyManagers(API api) throws APIManagementException {
+        // Validate Key Managers in Add API
+        validateKeyManagers(api, null);
+    }
+
+    private void validateKeyManagers(API api, List<String> existingKeyManagers) throws APIManagementException {
 
         Map<String, KeyManagerDto> tenantKeyManagers = KeyManagerHolder.getGlobalAndTenantKeyManagers(tenantDomain);
         List<KeyManagerConfigurationDTO> keyManagerConfigurationsByOrganization = apiMgtDAO.getKeyManagerConfigurationsByOrganization(
@@ -1048,7 +1053,6 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         }
         
         List<String> configuredMissingKeyManagers = new ArrayList<>();
-        List<String> validKeyManagers = new ArrayList<>();
         for (String keyManager : api.getKeyManagers()) {
             if (!APIConstants.KeyManager.API_LEVEL_ALL_KEY_MANAGERS.equals(keyManager)) {
                 KeyManagerDto selectedKeyManager = null;
@@ -1061,18 +1065,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                 }
                 if (selectedKeyManager == null) {
                     configuredMissingKeyManagers.add(keyManager);
-                } else if (!disabledKeyManagers.contains(keyManager)) {
-                    validKeyManagers.add(keyManager);
-                    if (log.isDebugEnabled()) {
-                        log.debug("Added valid key manager: " + keyManager + " for API: " + api.getId().getApiName());
-                    }
                 }
-            } else {
-                // Treat ALL as "any enabled tenant KM"; include only enabled ones
-                tenantKeyManagers.values().stream()
-                        .map(KeyManagerDto::getName)
-                        .filter(kmName -> !disabledKeyManagers.contains(kmName))
-                        .forEach(validKeyManagers::add);
             }
         }
         configuredMissingKeyManagers.removeAll(disabledKeyManagers);
@@ -1081,19 +1074,40 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                     "Key Manager(s) Not found :" + String.join(" , ", configuredMissingKeyManagers),
                     ExceptionCodes.KEY_MANAGER_NOT_REGISTERED);
         }
-        if (validKeyManagers.isEmpty()) {
-            log.error("No valid and enabled key managers found for API: " + api.getId().getApiName());
-            String disabledMsg = "";
-            List<String> apiKeyManagers = api.getKeyManagers();
-            List<String> foundButDisabled = apiKeyManagers.stream().filter(disabledKeyManagers::contains)
+
+        List<String> keyManagersToValidate = api.getKeyManagers();
+        List<String> validKeyManagers = new ArrayList<>();
+        if (existingKeyManagers != null) {
+            // Filters to keep only key managers that are not in the old existing key managers list
+            keyManagersToValidate = api.getKeyManagers().stream()
+                    .filter(km -> !existingKeyManagers.contains(km))
                     .collect(Collectors.toList());
-            if (!foundButDisabled.isEmpty()) {
-                disabledMsg = " The following key managers are configured but disabled: "
-                        + String.join(", ", foundButDisabled) + ".";
+
+            // Add old existing key managers to valid list if they are available in updated API as well
+            validKeyManagers.addAll(existingKeyManagers.stream()
+                    .filter(km -> api.getKeyManagers().contains(km))
+                    .collect(Collectors.toList()));
+        }
+
+        for (String keyManager : keyManagersToValidate) {
+            if (!APIConstants.KeyManager.API_LEVEL_ALL_KEY_MANAGERS.equals(keyManager)) {
+                if (!disabledKeyManagers.contains(keyManager)) {
+                    validKeyManagers.add(keyManager);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Added valid key manager: " + keyManager + " for API: " + api.getId().getApiName());
+                    }
+                }
+            } else {
+                tenantKeyManagers.values().stream()
+                        .map(KeyManagerDto::getName)
+                        .filter(kmName -> !disabledKeyManagers.contains(kmName))
+                        .forEach(validKeyManagers::add);
             }
+        }
+        if (validKeyManagers.isEmpty()) {
             throw new APIManagementException(
-                    "API must have at least one key manager that is both configured (registered) and enabled."
-                    + disabledMsg, ExceptionCodes.KEY_MANAGER_NOT_FOUND);
+                    "API must have at least one valid and enabled key manager configured",
+                    ExceptionCodes.KEY_MANAGER_NOT_FOUND);
         }
     }
 
