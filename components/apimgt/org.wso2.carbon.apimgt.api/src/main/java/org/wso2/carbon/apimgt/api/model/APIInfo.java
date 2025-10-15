@@ -34,7 +34,7 @@ public class APIInfo {
     private String createdBy;
     private String updatedTime;
     private String updatedBy;
-    private Object status;
+    private String status;
     private int revisionsCreated;
     private boolean isRevision;
     private String organization;
@@ -167,7 +167,7 @@ public class APIInfo {
         this.updatedBy = updatedBy;
     }
 
-    public Object getStatus() {
+    public String getStatus() {
 
         return status;
     }
@@ -221,7 +221,7 @@ public class APIInfo {
         private String createdBy;
         private String updatedTime;
         private String updatedBy;
-        private Object status;
+        private String status;
         private int revisionsCreated;
         private boolean isRevision;
         private String organization;
