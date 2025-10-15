@@ -10082,7 +10082,7 @@ public class ApiMgtDAO {
                                 .provider(resultSet.getString("API_PROVIDER"))
                                 .context(context)
                                 .contextTemplate(contextTemplate)
-                                .status(APIUtil.getApiStatus(resultSet.getString("STATUS")))
+                                .status(resultSet.getString("STATUS"))
                                 .apiType(apiType)
                                 .createdBy(resultSet.getString("CREATED_BY"))
                                 .createdTime(resultSet.getString("CREATED_TIME"))

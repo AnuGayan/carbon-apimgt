@@ -492,7 +492,7 @@ public class ApisApiServiceImpl implements ApisApiService {
             //validate if api exists
             APIInfo apiInfo = CommonUtils.validateAPIExistence(apiId);
             //validate API update operation permitted based on the LC state
-            validateAPIOperationsPerLC(apiInfo.getStatus().toString());
+            validateAPIOperationsPerLC(apiInfo.getStatus());
 
             String organization = RestApiUtil.getValidatedOrganization(messageContext);
             APIProvider apiProvider = RestApiCommonUtil.getLoggedInUserProvider();
@@ -1154,7 +1154,7 @@ public class ApisApiServiceImpl implements ApisApiService {
 
             if (isAPIExistDB) {
                 //validate API update operation permitted based on the LC state
-                validateAPIOperationsPerLC(apiInfo.getStatus().toString());
+                validateAPIOperationsPerLC(apiInfo.getStatus());
 
                 try {
                     //check if the API has subscriptions
@@ -1324,7 +1324,7 @@ public class ApisApiServiceImpl implements ApisApiService {
             //validate if api exists
             APIInfo apiInfo = CommonUtils.validateAPIExistence(apiId);
             //validate API update operation permitted based on the LC state
-            validateAPIOperationsPerLC(apiInfo.getStatus().toString());
+            validateAPIOperationsPerLC(apiInfo.getStatus());
             if (inputStream != null && inlineContent != null) {
                 RestApiUtil.handleBadRequest("Only one of 'file' and 'inlineContent' should be specified", log);
             }
@@ -1409,7 +1409,7 @@ public class ApisApiServiceImpl implements ApisApiService {
             //validate if api exists
             APIInfo apiInfo = CommonUtils.validateAPIExistence(apiId);
             //validate API update operation permitted based on the LC state
-            validateAPIOperationsPerLC(apiInfo.getStatus().toString());
+            validateAPIOperationsPerLC(apiInfo.getStatus());
 
             //this will fail if user does not have access to the API or the API does not exist
             //APIIdentifier apiIdentifier = APIMappingUtil.getAPIIdentifierFromUUID(apiId, organization);
@@ -1482,7 +1482,7 @@ public class ApisApiServiceImpl implements ApisApiService {
             //validate if api exists
             APIInfo apiInfo = CommonUtils.validateAPIExistence(apiId);
             //validate API update operation permitted based on the LC state
-            validateAPIOperationsPerLC(apiInfo.getStatus().toString());
+            validateAPIOperationsPerLC(apiInfo.getStatus());
 
             String sourceUrl = body.getSourceUrl();
             Documentation oldDocument = apiProvider.getDocumentation(apiId, documentId, organization);
@@ -1590,7 +1590,7 @@ public class ApisApiServiceImpl implements ApisApiService {
             //validate if api exists
             APIInfo apiInfo = CommonUtils.validateAPIExistence(apiId);
             //validate API update operation permitted based on the LC state
-            validateAPIOperationsPerLC(apiInfo.getStatus().toString());
+            validateAPIOperationsPerLC(apiInfo.getStatus());
             String organization = RestApiUtil.getValidatedOrganization(messageContext);
             Documentation documentation = PublisherCommonUtils.addDocumentationToAPI(body, apiId, organization);
             DocumentDTO newDocumentDTO = DocumentationMappingUtil.fromDocumentationToDTO(documentation);
@@ -2492,7 +2492,7 @@ public class ApisApiServiceImpl implements ApisApiService {
             //validate if api exists
             APIInfo apiInfo = CommonUtils.validateAPIExistence(apiId);
             //validate API update operation permitted based on the LC state
-            validateAPIOperationsPerLC(apiInfo.getStatus().getStatus());
+            validateAPIOperationsPerLC(apiInfo.getStatus());
             String organization = RestApiUtil.getValidatedOrganization(messageContext);
 
             //Handle URL and file based definition imports
@@ -2600,7 +2600,7 @@ public class ApisApiServiceImpl implements ApisApiService {
             //validate if api exists
             APIInfo apiInfo = CommonUtils.validateAPIExistence(apiId);
             //validate API update operation permitted based on the LC state
-            validateAPIOperationsPerLC(apiInfo.getStatus().toString());
+            validateAPIOperationsPerLC(apiInfo.getStatus());
 
             String organization = RestApiUtil.getValidatedOrganization(messageContext);
             String fileName = fileDetail.getDataHandler().getName();
@@ -3165,7 +3165,7 @@ public class ApisApiServiceImpl implements ApisApiService {
         //validate if api exists
         APIInfo apiInfo = CommonUtils.validateAPIExistence(apiId);
         //validate API update operation permitted based on the LC state
-        validateAPIOperationsPerLC(apiInfo.getStatus().toString());
+        validateAPIOperationsPerLC(apiInfo.getStatus());
 
         WSDLValidationResponse validationResponse = validateWSDLAndReset(fileInputStream, fileDetail, url);
         if (StringUtils.isNotBlank(url)) {
@@ -3705,7 +3705,7 @@ public class ApisApiServiceImpl implements ApisApiService {
             }
 
             //validate API update operation permitted based on the LC state
-            validateAPIOperationsPerLC(apiInfo.getStatus().toString());
+            validateAPIOperationsPerLC(apiInfo.getStatus());
 
             APIRevision apiRevision = new APIRevision();
             apiRevision.setApiUUID(apiId);
@@ -3768,7 +3768,7 @@ public class ApisApiServiceImpl implements ApisApiService {
         //validate if api exists
         APIInfo apiInfo = CommonUtils.validateAPIExistence(apiId);
         //validate API update operation permitted based on the LC state
-        validateAPIOperationsPerLC(apiInfo.getStatus().toString());
+        validateAPIOperationsPerLC(apiInfo.getStatus());
 
         apiProvider.deleteAPIRevision(apiId, revisionId, organization);
         List<APIRevision> apiRevisions = apiProvider.getAPIRevisions(apiId);
@@ -3796,7 +3796,7 @@ public class ApisApiServiceImpl implements ApisApiService {
         //validate if api exists
         APIInfo apiInfo = CommonUtils.validateAPIExistence(apiId);
         //validate API update operation permitted based on the LC state
-        validateAPIOperationsPerLC(apiInfo.getStatus().toString());
+        validateAPIOperationsPerLC(apiInfo.getStatus());
 
         String organization = RestApiUtil.getValidatedOrganization(messageContext);
 
@@ -3860,7 +3860,7 @@ public class ApisApiServiceImpl implements ApisApiService {
         //validate if api exists
         APIInfo apiInfo = CommonUtils.validateAPIExistence(apiId);
         //validate API update operation permitted based on the LC state
-        validateAPIOperationsPerLC(apiInfo.getStatus().toString());
+        validateAPIOperationsPerLC(apiInfo.getStatus());
 
         String organization = RestApiUtil.getValidatedOrganization(messageContext);
 
@@ -3911,7 +3911,7 @@ public class ApisApiServiceImpl implements ApisApiService {
         //validate if api exists
         APIInfo apiInfo = CommonUtils.validateAPIExistence(apiId);
         //validate API update operation permitted based on the LC state
-        validateAPIOperationsPerLC(apiInfo.getStatus().toString());
+        validateAPIOperationsPerLC(apiInfo.getStatus());
 
         apiProvider.restoreAPIRevision(apiId, revisionId, organization);
         APIDTO apiToReturn = getAPIByID(apiId, apiProvider, organization);
@@ -4122,7 +4122,7 @@ public class ApisApiServiceImpl implements ApisApiService {
             //validate if api exists
             APIInfo apiInfo = CommonUtils.validateAPIExistence(apiId);
             //validate API update operation permitted based on the LC state
-            validateAPIOperationsPerLC(apiInfo.getStatus().toString());
+            validateAPIOperationsPerLC(apiInfo.getStatus());
 
             //Handle URL and file based definition imports
             if (url != null || fileInputStream != null) {
@@ -4255,7 +4255,7 @@ public class ApisApiServiceImpl implements ApisApiService {
             //validate if api exists
             APIInfo apiInfo = CommonUtils.validateAPIExistence(apiId);
             //validate API update operation permitted based on the LC state
-            validateAPIOperationsPerLC(apiInfo.getStatus().toString());
+            validateAPIOperationsPerLC(apiInfo.getStatus());
 
             API api = apiProvider.getLightweightAPIByUUID(apiId, organization);
             API originalAPI = apiProvider.getAPIbyUUID(apiId, organization);
@@ -4413,7 +4413,7 @@ public class ApisApiServiceImpl implements ApisApiService {
         //validate if api exists
         APIInfo apiInfo = CommonUtils.validateAPIExistence(apiId);
         //validate API update operation permitted based on the LC state
-        validateAPIOperationsPerLC(apiInfo.getStatus().toString());
+        validateAPIOperationsPerLC(apiInfo.getStatus());
 
         String revisionId = apIRevisionDeploymentDTO.getRevisionUuid();
         String vhost = apIRevisionDeploymentDTO.getVhost();
