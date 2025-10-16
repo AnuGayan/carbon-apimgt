@@ -384,4 +384,7 @@ public final class APIConstants {
 
     public static final String API_OVERVIEW_GATEWAY_VENDOR = "overview_gatewayVendor";
     public static final String ASYNC_API_TRANSPORT_PROTOCOLS = "overview_asyncTransportProtocols";
+
+    public static final String SOAP_TO_REST_RESOURCE = "soap_to_rest";
+    public static final String TEXT_XML = "text/xml";
 }
