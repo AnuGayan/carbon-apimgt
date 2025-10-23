@@ -45,6 +45,7 @@ import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.impl.utils.LifeCycleUtils;
 import org.wso2.carbon.apimgt.persistence.exceptions.APIPersistenceException;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.user.core.util.UserCoreUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -287,8 +288,9 @@ public class WorkflowUtils {
             //tenant flow is already started from the rest api service impl. no need to start from here
             PrivilegedCarbonContext.getThreadLocalCarbonContext().setUsername(invoker);
             APIIdentifier apiIdentifier = new APIIdentifier(providerName, apiName, version);
-            APIProvider apiProvider = APIManagerFactory.getInstance().getAPIProvider(providerName);
             String tenantDomain = APIUtil.getTenantDomainFromTenantId(tenantId);
+            String invokerWithTenant = UserCoreUtil.addTenantDomainToEntry(invoker, tenantDomain);
+            APIProvider apiProvider = APIManagerFactory.getInstance().getAPIProvider(invokerWithTenant);
             String uuid = apiMgtDAO.getUUIDFromIdentifier(apiIdentifier, tenantDomain);
             if (WorkflowStatus.APPROVED.equals(workflowDTO.getStatus())) {
                 if (StringUtils.isNotEmpty(uuid)) {
