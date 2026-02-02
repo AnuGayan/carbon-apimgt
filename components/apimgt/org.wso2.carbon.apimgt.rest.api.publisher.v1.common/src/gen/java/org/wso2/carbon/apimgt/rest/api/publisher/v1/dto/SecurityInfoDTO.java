@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import java.util.ArrayList;
+import java.util.List;
 import javax.validation.constraints.*;
 
 /**
@@ -26,6 +28,13 @@ public class SecurityInfoDTO   {
     private Boolean isSecure = false;
     private String header = null;
     private String value = null;
+    private String dcrUrl = null;
+    private String tokenUrl = null;
+    private String username = null;
+    private String password = null;
+    private String grantType = null;
+    private List<String> scopes = new ArrayList<String>();
+    private String clientName = null;
 
   /**
    * Indicates whether the URL is secure (HTTPS) or not (HTTP).
@@ -81,6 +90,132 @@ public class SecurityInfoDTO   {
     this.value = value;
   }
 
+  /**
+   * Endpoint URL for Dynamic Client Registration
+   **/
+  public SecurityInfoDTO dcrUrl(String dcrUrl) {
+    this.dcrUrl = dcrUrl;
+    return this;
+  }
+
+
+  @ApiModelProperty(example = "https://example.com/.well-known/oauth-authorization-server", value = "Endpoint URL for Dynamic Client Registration")
+  @JsonProperty("dcrUrl")
+  public String getDcrUrl() {
+    return dcrUrl;
+  }
+  public void setDcrUrl(String dcrUrl) {
+    this.dcrUrl = dcrUrl;
+  }
+
+  /**
+   * Token Endpoint URL
+   **/
+  public SecurityInfoDTO tokenUrl(String tokenUrl) {
+    this.tokenUrl = tokenUrl;
+    return this;
+  }
+
+
+  @ApiModelProperty(example = "https://example.com/token", value = "Token Endpoint URL")
+  @JsonProperty("tokenUrl")
+  public String getTokenUrl() {
+    return tokenUrl;
+  }
+  public void setTokenUrl(String tokenUrl) {
+    this.tokenUrl = tokenUrl;
+  }
+
+  /**
+   * Username for authentication
+   **/
+  public SecurityInfoDTO username(String username) {
+    this.username = username;
+    return this;
+  }
+
+
+  @ApiModelProperty(example = "admin", value = "Username for authentication")
+  @JsonProperty("username")
+  public String getUsername() {
+    return username;
+  }
+  public void setUsername(String username) {
+    this.username = username;
+  }
+
+  /**
+   * Password for authentication
+   **/
+  public SecurityInfoDTO password(String password) {
+    this.password = password;
+    return this;
+  }
+
+
+  @ApiModelProperty(example = "password", value = "Password for authentication")
+  @JsonProperty("password")
+  public String getPassword() {
+    return password;
+  }
+  public void setPassword(String password) {
+    this.password = password;
+  }
+
+  /**
+   * Grant type for authentication
+   **/
+  public SecurityInfoDTO grantType(String grantType) {
+    this.grantType = grantType;
+    return this;
+  }
+
+
+  @ApiModelProperty(example = "password", value = "Grant type for authentication")
+  @JsonProperty("grantType")
+  public String getGrantType() {
+    return grantType;
+  }
+  public void setGrantType(String grantType) {
+    this.grantType = grantType;
+  }
+
+  /**
+   * Scopes for authentication
+   **/
+  public SecurityInfoDTO scopes(List<String> scopes) {
+    this.scopes = scopes;
+    return this;
+  }
+
+
+  @ApiModelProperty(example = "[\"scope1\",\"scope2\"]", value = "Scopes for authentication")
+  @JsonProperty("scopes")
+  public List<String> getScopes() {
+    return scopes;
+  }
+  public void setScopes(List<String> scopes) {
+    this.scopes = scopes;
+  }
+
+  /**
+   * Client Name for DCR
+   **/
+  public SecurityInfoDTO clientName(String clientName) {
+    this.clientName = clientName;
+    return this;
+  }
+
+
+  @ApiModelProperty(example = "WSO2_APIM_Client", value = "Client Name for DCR")
+  @JsonProperty("clientName")
+  public String getClientName() {
+    return clientName;
+  }
+  public void setClientName(String clientName) {
+    this.clientName = clientName;
+  }
+
 
   @Override
   public boolean equals(java.lang.Object o) {
@@ -93,12 +228,19 @@ public class SecurityInfoDTO   {
     SecurityInfoDTO securityInfo = (SecurityInfoDTO) o;
     return Objects.equals(isSecure, securityInfo.isSecure) &&
         Objects.equals(header, securityInfo.header) &&
-        Objects.equals(value, securityInfo.value);
+        Objects.equals(value, securityInfo.value) &&
+        Objects.equals(dcrUrl, securityInfo.dcrUrl) &&
+        Objects.equals(tokenUrl, securityInfo.tokenUrl) &&
+        Objects.equals(username, securityInfo.username) &&
+        Objects.equals(password, securityInfo.password) &&
+        Objects.equals(grantType, securityInfo.grantType) &&
+        Objects.equals(scopes, securityInfo.scopes) &&
+        Objects.equals(clientName, securityInfo.clientName);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(isSecure, header, value);
+    return Objects.hash(isSecure, header, value, dcrUrl, tokenUrl, username, password, grantType, scopes, clientName);
   }
 
   @Override
@@ -109,6 +251,13 @@ public class SecurityInfoDTO   {
     sb.append("    isSecure: ").append(toIndentedString(isSecure)).append("\n");
     sb.append("    header: ").append(toIndentedString(header)).append("\n");
     sb.append("    value: ").append(toIndentedString(value)).append("\n");
+    sb.append("    dcrUrl: ").append(toIndentedString(dcrUrl)).append("\n");
+    sb.append("    tokenUrl: ").append(toIndentedString(tokenUrl)).append("\n");
+    sb.append("    username: ").append(toIndentedString(username)).append("\n");
+    sb.append("    password: ").append(toIndentedString(password)).append("\n");
+    sb.append("    grantType: ").append(toIndentedString(grantType)).append("\n");
+    sb.append("    scopes: ").append(toIndentedString(scopes)).append("\n");
+    sb.append("    clientName: ").append(toIndentedString(clientName)).append("\n");
     sb.append("}");
     return sb.toString();
   }

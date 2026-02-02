@@ -14822,6 +14822,36 @@ components:
           type: string
           description: Value used for the authentication header.
           example: Bearer <token>
+        dcrUrl:
+          type: string
+          description: Endpoint URL for Dynamic Client Registration
+          example: https://example.com/.well-known/oauth-authorization-server
+        tokenUrl:
+          type: string
+          description: Token Endpoint URL
+          example: https://example.com/token
+        username:
+          type: string
+          description: Username for authentication
+          example: admin
+        password:
+          type: string
+          description: Password for authentication
+          example: password
+        grantType:
+          type: string
+          description: Grant type for authentication
+          example: password
+        scopes:
+          type: array
+          description: Scopes for authentication
+          items:
+            type: string
+          example: ["scope1", "scope2"]
+        clientName:
+          type: string
+          description: Client Name for DCR
+          example: WSO2_APIM_Client
 
     MCPServerValidationResponse:
       title: MCP Server validation Response

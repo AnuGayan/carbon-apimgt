@@ -5022,9 +5022,17 @@ public class PublisherCommonUtils {
         try {
             final String authHeader = securityInfo != null ? securityInfo.getHeader() : null;
             final String authValue = securityInfo != null ? securityInfo.getValue() : null;
+            final String dcrUrl = securityInfo != null ? securityInfo.getDcrUrl() : null;
+            final String tokenUrl = securityInfo != null ? securityInfo.getTokenUrl() : null;
+            final String username = securityInfo != null ? securityInfo.getUsername() : null;
+            final String password = securityInfo != null ? securityInfo.getPassword() : null;
+            final String grantType = securityInfo != null ? securityInfo.getGrantType() : null;
+            final List<String> scopes = securityInfo != null ? securityInfo.getScopes() : null;
+            final String clientName = securityInfo != null ? securityInfo.getClientName() : null;
 
             MCPInitializerAndToolFetcher fetcher =
-                    new MCPInitializerAndToolFetcher(serverUrl, authHeader, authValue, secureRequested);
+                    new MCPInitializerAndToolFetcher(serverUrl, authHeader, authValue, secureRequested,
+                            dcrUrl, tokenUrl, username, password, grantType, scopes, clientName);
 
             org.json.JSONObject toolsJson = fetcher.initializeAndFetchTools();
             response.setContent(toolsJson != null ? toolsJson.toString() : null);

@@ -28,6 +28,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.ExceptionCodes;
@@ -36,6 +37,8 @@ import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Initializes an MCP server and fetches the available tools via JSON-RPC.
@@ -45,16 +48,40 @@ public class MCPInitializerAndToolFetcher {
     private static final Log log = LogFactory.getLog(MCPInitializerAndToolFetcher.class);
 
     private final String mcpServerUrl;
-    private final String authHeaderName;
-    private final String authHeaderValue;
     private final boolean secure;
+    private String authHeaderName;
+    private String authHeaderValue;
+    private final String dcrUrl;
+    private final String tokenUrl;
+    private final String username;
+    private final String password;
+    private final String grantType;
+    private final List<String> scopes;
+    private final String clientName;
+
+    private String clientId;
+    private String clientSecret;
 
     public MCPInitializerAndToolFetcher(String mcpServerURL, String header, String value, boolean isSecure) {
+
+        this(mcpServerURL, header, value, isSecure, null, null, null, null, null, null, null);
+    }
+
+    public MCPInitializerAndToolFetcher(String mcpServerURL, String header, String value, boolean isSecure,
+                                        String dcrUrl, String tokenUrl, String username, String password,
+                                        String grantType, List<String> scopes, String clientName) {
 
         this.mcpServerUrl = mcpServerURL;
         this.authHeaderName = header;
         this.authHeaderValue = value;
         this.secure = isSecure;
+        this.dcrUrl = dcrUrl;
+        this.tokenUrl = tokenUrl;
+        this.username = username;
+        this.password = password;
+        this.grantType = grantType;
+        this.scopes = scopes;
+        this.clientName = clientName;
     }
 
     /**
@@ -74,6 +101,14 @@ public class MCPInitializerAndToolFetcher {
 
         try (CloseableHttpClient httpClient =
                      (CloseableHttpClient) APIUtil.getHttpClient(endpoint.getPort(), endpoint.getProtocol())) {
+
+            if (StringUtils.isNotEmpty(dcrUrl)) {
+                performDCR(httpClient);
+            }
+
+            if (StringUtils.isNotEmpty(tokenUrl)) {
+                generateToken(httpClient);
+            }
 
             // 1) initialize
             JSONObject initializePayload = buildInitializePayload();
@@ -112,7 +147,7 @@ public class MCPInitializerAndToolFetcher {
         payload.put(APIConstants.MCP.RpcConstants.METHOD, APIConstants.MCP.METHOD_INITIALIZE);
 
         JSONObject params = new JSONObject();
-        params.put(APIConstants.MCP.PROTOCOL_VERSION_KEY, APIConstants.MCP.PROTOCOL_VERSION_2025_JUNE);
+        params.put(APIConstants.MCP.PROTOCOL_VERSION_KEY, APIConstants.MCP.PROTOCOL_VERSION_2024_NOVEMBER);
 
         JSONObject capabilities = new JSONObject();
         JSONObject roots = new JSONObject().put(APIConstants.MCP.LIST_CHANGED_KEY, true);
@@ -275,5 +310,100 @@ public class MCPInitializerAndToolFetcher {
         }
 
         return toolsArray;
+    }
+
+    /**
+     * Perform Dynamic Client Registration.
+     *
+     * @param httpClient CloseableHttpClient
+     * @throws APIManagementException if DCR fails
+     */
+    private void performDCR(CloseableHttpClient httpClient) throws APIManagementException {
+
+        JSONObject dcrPayload = new JSONObject();
+        dcrPayload.put("client_name", clientName);
+        if (StringUtils.isNotEmpty(grantType)) {
+            JSONArray grantTypes = new JSONArray();
+            grantTypes.put(grantType);
+            dcrPayload.put(APIConstants.JSON_GRANT_TYPES, grantTypes);
+        }
+        JSONArray redirectUris = new JSONArray();
+        redirectUris.put("");
+        dcrPayload.put("redirect_uris", redirectUris); // Assuming implicit/password grant mostly for MCP
+
+        HttpPost dcrRequest = new HttpPost(dcrUrl);
+        dcrRequest.setHeader(APIConstants.HEADER_CONTENT_TYPE, APIConstants.APPLICATION_JSON_MEDIA_TYPE);
+        dcrRequest.setEntity(new StringEntity(dcrPayload.toString(), StandardCharsets.UTF_8));
+
+        try (CloseableHttpResponse response = httpClient.execute(dcrRequest)) {
+            int status = response.getStatusLine().getStatusCode();
+            String responseBody = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+            if (status >= 200 && status < 300) {
+                JSONObject responseJson = new JSONObject(responseBody);
+                if (responseJson.has(APIConstants.JSON_CLIENT_ID) && responseJson.has(APIConstants.JSON_CLIENT_SECRET)) {
+                    this.clientId = responseJson.getString(APIConstants.JSON_CLIENT_ID);
+                    this.clientSecret = responseJson.getString(APIConstants.JSON_CLIENT_SECRET);
+                } else {
+                    throw new APIManagementException("DCR response missing client_id or client_secret");
+                }
+            } else {
+                throw new APIManagementException("DCR failed: HTTP " + status + " " + responseBody);
+            }
+        } catch (Exception e) {
+            throw new APIManagementException("Error during DCR: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Generate Access Token.
+     *
+     * @param httpClient CloseableHttpClient
+     * @throws APIManagementException if token generation fails
+     */
+    private void generateToken(CloseableHttpClient httpClient) throws APIManagementException {
+
+        HttpPost tokenRequest = new HttpPost(tokenUrl);
+        tokenRequest.setHeader(APIConstants.HEADER_CONTENT_TYPE, APIConstants.OAuthConstants.APPLICATION_X_WWW_FORM_URLENCODED);
+
+        // Construct body
+        StringBuilder body = new StringBuilder();
+        body.append(APIConstants.OAuthConstants.GRANT_TYPE).append("=").append(grantType != null ? grantType : APIConstants.GRANT_TYPE_PASSWORD);
+        if (StringUtils.isNotEmpty(username)) {
+            body.append("&").append(APIConstants.JSON_USERNAME).append("=").append(username);
+        }
+        if (StringUtils.isNotEmpty(password)) {
+            body.append("&").append(APIConstants.PASSWORD).append("=").append(password);
+        }
+        if (scopes != null && !scopes.isEmpty()) {
+            body.append("&").append(APIConstants.OAuthConstants.SCOPE).append("=").append(String.join(" ", scopes));
+        }
+
+        if (StringUtils.isNotEmpty(clientId) && StringUtils.isNotEmpty(clientSecret)) {
+            String credentials = clientId + ":" + clientSecret;
+            String base64Credentials = java.util.Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
+            tokenRequest.setHeader(APIConstants.AUTHORIZATION_HEADER_DEFAULT, "Basic " + base64Credentials);
+        }
+
+        tokenRequest.setEntity(new StringEntity(body.toString(), StandardCharsets.UTF_8));
+
+        try (CloseableHttpResponse response = httpClient.execute(tokenRequest)) {
+            int status = response.getStatusLine().getStatusCode();
+            String responseBody = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+            if (status >= 200 && status < 300) {
+                JSONObject responseJson = new JSONObject(responseBody);
+                if (responseJson.has(APIConstants.OAuthConstants.ACCESS_TOKEN)) {
+                    String token = responseJson.getString(APIConstants.OAuthConstants.ACCESS_TOKEN);
+                    // Set the token as the auth header for subsequent MCP calls
+                    this.authHeaderName = APIConstants.AUTHORIZATION_HEADER_DEFAULT;
+                    this.authHeaderValue = "Bearer " + token;
+                } else {
+                    throw new APIManagementException("Token response missing access_token");
+                }
+            } else {
+                throw new APIManagementException("Token generation failed: HTTP " + status + " " + responseBody);
+            }
+        } catch (Exception e) {
+            throw new APIManagementException("Error during Token generation: " + e.getMessage(), e);
+        }
     }
 }
