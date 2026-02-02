@@ -91,6 +91,9 @@ public class McpInitHandler extends AbstractHandler implements ManagedLifecycle 
                     StringUtils.equals(APIConstants.HTTP_GET, httpMethod)) {
                 // No JSON-RPC payload in GET requests to /mcp resource, hence hardcoding no auth to false
                 messageContext.setProperty(APIMgtGatewayConstants.MCP_NO_AUTH_REQUEST, false);
+            } else if (StringUtils.startsWith(path, APIMgtGatewayConstants.MCP_REGISTER_RESOURCE) &&
+                    StringUtils.equals(APIConstants.HTTP_POST, httpMethod)) {
+                messageContext.setProperty(APIMgtGatewayConstants.MCP_NO_AUTH_REQUEST, false);
             } else {
                 boolean isNoAuthMCPRequest = isNoAuthMCPRequest(buildMCPRequest(messageContext));
                 messageContext.setProperty(APIMgtGatewayConstants.MCP_NO_AUTH_REQUEST, isNoAuthMCPRequest);

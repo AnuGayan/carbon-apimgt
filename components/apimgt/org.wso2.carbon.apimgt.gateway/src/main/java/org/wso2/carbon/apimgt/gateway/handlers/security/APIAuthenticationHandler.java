@@ -492,7 +492,8 @@ public class APIAuthenticationHandler extends AbstractHandler implements Managed
                 String authenticationScheme;
                 String mcpMethod = (String) messageContext.getProperty(APIMgtGatewayConstants.MCP_METHOD);
                 if (APIConstants.API_TYPE_MCP.equalsIgnoreCase(apiType) &&
-                        ((APIConstants.MCP.METHOD_TOOL_LIST.equals(mcpMethod)) || isMCPGetRequest(messageContext))) {
+                        ((APIConstants.MCP.METHOD_TOOL_LIST.equals(mcpMethod)) || isMCPGetRequest(messageContext) ||
+                                isMCPRegisterRequest(messageContext))) {
                     authenticationScheme = APIConstants.AUTH_NO_AUTHENTICATION;
                 } else {
                     authenticationScheme = getAPIKeyValidator().getResourceAuthenticationScheme(messageContext);
@@ -973,5 +974,11 @@ public class APIAuthenticationHandler extends AbstractHandler implements Managed
         String path = (String) messageContext.getProperty(APIMgtGatewayConstants.API_ELECTED_RESOURCE);
         String httpMethod = (String) messageContext.getProperty(APIMgtGatewayConstants.HTTP_METHOD);
         return (APIConstants.MCP.MCP_RESOURCES_MCP.equals(path) && APIConstants.HTTP_GET.equalsIgnoreCase(httpMethod));
+    }
+
+    public boolean isMCPRegisterRequest(MessageContext messageContext) {
+        String path = (String) messageContext.getProperty(APIMgtGatewayConstants.API_ELECTED_RESOURCE);
+        String httpMethod = (String) messageContext.getProperty(APIMgtGatewayConstants.HTTP_METHOD);
+        return (APIConstants.MCP.MCP_RESOURCES_REGISTER.equals(path) && APIConstants.HTTP_POST.equalsIgnoreCase(httpMethod));
     }
 }
