@@ -972,6 +972,7 @@ public class APIAuthenticationHandler extends AbstractHandler implements Managed
     public boolean isMCPGetRequest(MessageContext messageContext) {
         String path = (String) messageContext.getProperty(APIMgtGatewayConstants.API_ELECTED_RESOURCE);
         String httpMethod = (String) messageContext.getProperty(APIMgtGatewayConstants.HTTP_METHOD);
-        return (APIConstants.MCP.MCP_RESOURCES_MCP.equals(path) && APIConstants.HTTP_GET.equalsIgnoreCase(httpMethod));
+        return ((APIConstants.MCP.MCP_RESOURCES_MCP.equals(path) ||
+                APIConstants.MCP.MCP_RESOURCES_WELL_KNOWN.equals(path)) && APIConstants.HTTP_GET.equalsIgnoreCase(httpMethod));
     }
 }

@@ -380,5 +380,31 @@ public class APIAuthenticationHandlerTestCase {
         Assert.assertTrue(true);
     }
 
+    @Test
+    public void testIsMCPGetRequest() {
+        APIAuthenticationHandler apiAuthenticationHandler = new APIAuthenticationHandler();
+        MessageContext messageContext = Mockito.mock(MessageContext.class);
+
+        // Test Case 1: /mcp + GET -> true
+        Mockito.when(messageContext.getProperty(APIMgtGatewayConstants.API_ELECTED_RESOURCE)).thenReturn(APIConstants.MCP.MCP_RESOURCES_MCP);
+        Mockito.when(messageContext.getProperty(APIMgtGatewayConstants.HTTP_METHOD)).thenReturn(APIConstants.HTTP_GET);
+        Assert.assertTrue(apiAuthenticationHandler.isMCPGetRequest(messageContext));
+
+        // Test Case 2: /.well-known/oauth-protected-resource + GET -> true
+        Mockito.when(messageContext.getProperty(APIMgtGatewayConstants.API_ELECTED_RESOURCE)).thenReturn(APIConstants.MCP.MCP_RESOURCES_WELL_KNOWN);
+        Mockito.when(messageContext.getProperty(APIMgtGatewayConstants.HTTP_METHOD)).thenReturn(APIConstants.HTTP_GET);
+        Assert.assertTrue(apiAuthenticationHandler.isMCPGetRequest(messageContext));
+
+        // Test Case 3: /mcp + POST -> false
+        Mockito.when(messageContext.getProperty(APIMgtGatewayConstants.API_ELECTED_RESOURCE)).thenReturn(APIConstants.MCP.MCP_RESOURCES_MCP);
+        Mockito.when(messageContext.getProperty(APIMgtGatewayConstants.HTTP_METHOD)).thenReturn(APIConstants.HTTP_POST);
+        Assert.assertFalse(apiAuthenticationHandler.isMCPGetRequest(messageContext));
+
+        // Test Case 4: /other + GET -> false
+        Mockito.when(messageContext.getProperty(APIMgtGatewayConstants.API_ELECTED_RESOURCE)).thenReturn("/other");
+        Mockito.when(messageContext.getProperty(APIMgtGatewayConstants.HTTP_METHOD)).thenReturn(APIConstants.HTTP_GET);
+        Assert.assertFalse(apiAuthenticationHandler.isMCPGetRequest(messageContext));
+    }
+
 }
 
