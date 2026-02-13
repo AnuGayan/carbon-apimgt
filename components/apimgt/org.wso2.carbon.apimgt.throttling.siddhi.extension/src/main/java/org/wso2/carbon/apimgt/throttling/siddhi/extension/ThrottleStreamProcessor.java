@@ -146,13 +146,13 @@ public class ThrottleStreamProcessor extends StreamProcessor implements Scheduli
                 scheduler.notifyAt(expireEventTime);
             }
             long currentTime = executionPlanContext.getTimestampGenerator().currentTime();
-            boolean sendEvents;
+            boolean sendResetEvent;
             if (currentTime >= expireEventTime) {
                 expireEventTime += timeInMilliSeconds;
                 scheduler.notifyAt(expireEventTime);
-                sendEvents = true;
+                sendResetEvent = true;
             } else {
-                sendEvents = false;
+                sendResetEvent = false;
             }
 
             while (streamEventChunk.hasNext()) {
@@ -167,10 +167,14 @@ public class ThrottleStreamProcessor extends StreamProcessor implements Scheduli
                 clonedStreamEvent.setTimestamp(expireEventTime);
                 expiredEventChunk.add(clonedStreamEvent);
             }
-            if (sendEvents) {
+            if (sendResetEvent) {
                 expiredEventChunk.reset();
-                if (expiredEventChunk.getFirst() != null) {
-                    streamEventChunk.add(expiredEventChunk.getFirst());
+                StreamEvent firstExpiredEvent = expiredEventChunk.getFirst();
+                if (firstExpiredEvent != null) {
+                    StreamEvent resetEvent = streamEventCloner.copyStreamEvent(firstExpiredEvent);
+                    resetEvent.setType(StreamEvent.Type.RESET);
+                    resetEvent.setTimestamp(expireEventTime);
+                    streamEventChunk.add(resetEvent);
                 }
                 expiredEventChunk.clear();
             }

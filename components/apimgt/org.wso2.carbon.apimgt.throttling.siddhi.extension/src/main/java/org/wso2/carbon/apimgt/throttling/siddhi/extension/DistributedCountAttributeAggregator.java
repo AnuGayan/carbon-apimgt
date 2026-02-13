@@ -24,6 +24,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -42,7 +43,7 @@ import org.wso2.siddhi.query.api.definition.Attribute;
 public class DistributedCountAttributeAggregator extends AttributeAggregator {
 
     private static final Log log = LogFactory.getLog(DistributedCountAttributeAggregator.class);
-    private static Attribute.Type type = Attribute.Type.LONG;
+    private static final Attribute.Type type = Attribute.Type.LONG;
     private KeyValueStoreClient kvStoreClient;
     private String key;
     private final AtomicLong localCounter = new AtomicLong(0L);
@@ -68,6 +69,7 @@ public class DistributedCountAttributeAggregator extends AttributeAggregator {
 
     // Static shared scheduler for all aggregators
     private static ScheduledExecutorService kvStoreSyncScheduler = null;
+    private static ScheduledFuture<?> masterSyncTask = null;
     private static final ScheduledExecutorService masterScheduler =
             Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, Thread.currentThread().getName()));
 
@@ -145,7 +147,13 @@ public class DistributedCountAttributeAggregator extends AttributeAggregator {
             long currentUnsyncedCount = unsyncedCounter.getAndSet(0L);
             try {
                 if (currentUnsyncedCount == 0) {
-                    localCounter.set(Long.parseLong(kvStoreClient.get(key)));
+                    String kvStoreValue = kvStoreClient.get(key);
+                    if (kvStoreValue == null) {
+                        kvStoreClient.set(key, "0");
+                        localCounter.set(0L);
+                    } else {
+                        localCounter.set(Long.parseLong(kvStoreValue));
+                    }
                 } else if (currentUnsyncedCount > 0) {
                     localCounter.set(kvStoreClient.incrementBy(key, currentUnsyncedCount));
                 } else {
@@ -190,7 +198,14 @@ public class DistributedCountAttributeAggregator extends AttributeAggregator {
 
     @Override
     public Object processAdd(Object[] data) {
-        return processAdd((Object) data);
+        if (log.isDebugEnabled()) {
+            log.debug("DistributedCountAggregator: processAdd called with data: "
+                    + (data != null && data.length > 0 ? data[0] : null));
+        }
+        if (isResetRequested(data)) {
+            return reset();
+        }
+        return processAdd(data != null && data.length > 0 ? data[0] : null);
     }
 
 
@@ -204,6 +219,9 @@ public class DistributedCountAttributeAggregator extends AttributeAggregator {
      */
     @Override
     public Object processRemove(Object data) {
+        if (log.isDebugEnabled()) {
+            log.debug("DistributedCountAggregator: processRemove called with data: " + data);
+        }
         try {
             localCounter.decrementAndGet();
             if (distributedThrottlingEnabled && kvStoreClient != null && key != null) {
@@ -219,7 +237,11 @@ public class DistributedCountAttributeAggregator extends AttributeAggregator {
 
     @Override
     public Object processRemove(Object[] data) {
-        return processRemove((Object) data);
+        if (log.isDebugEnabled()) {
+            log.debug("DistributedCountAggregator: processRemove called with data: "
+                    + (data != null && data.length > 0 ? data[0] : null));
+        }
+        return processRemove(data != null && data.length > 0 ? data[0] : null);
     }
 
 
@@ -232,11 +254,16 @@ public class DistributedCountAttributeAggregator extends AttributeAggregator {
      */
     @Override
     public Object reset() {
+        if (log.isDebugEnabled()) {
+            log.debug("DistributedCountAggregator: reset called");
+        }
         try {
-            localCounter.set(0L);
-            if (distributedThrottlingEnabled && kvStoreClient != null && key != null) {
-                kvStoreClient.set(key, "0");
-                unsyncedCounter.set(0L); // Clear pending changes
+            synchronized (kvStoreLock) {
+                localCounter.set(0L);
+                if (distributedThrottlingEnabled && kvStoreClient != null && key != null) {
+                    unsyncedCounter.set(0L); // Clear pending changes before hard-resetting distributed value.
+                    kvStoreClient.set(key, "0");
+                }
             }
             return 0L;
 
@@ -259,6 +286,9 @@ public class DistributedCountAttributeAggregator extends AttributeAggregator {
      */
     @Override
     public void stop() {
+        if (log.isDebugEnabled()) {
+            log.debug("DistributedCountAggregator: stop called");
+        }
         try {
             // Only remove if key is not null and distributed throttling is enabled
             if (distributedThrottlingEnabled && key != null) {
@@ -278,6 +308,9 @@ public class DistributedCountAttributeAggregator extends AttributeAggregator {
 
     @Override
     public Object[] currentState() {
+        if (log.isDebugEnabled()) {
+            log.debug("DistributedCountAggregator: currentState called");
+        }
         if (distributedThrottlingEnabled && kvStoreClient != null && key != null) {
             try {
                 syncWithKVStore();
@@ -290,6 +323,9 @@ public class DistributedCountAttributeAggregator extends AttributeAggregator {
 
     @Override
     public void restoreState(Object[] state) {
+        if (log.isDebugEnabled()) {
+            log.debug("DistributedCountAggregator: restoreState called with state: " + state);
+        }
         Map.Entry<String, Object> stateEntry = (Map.Entry<String, Object>) state[0];
         long restoredValue = (Long) stateEntry.getValue();
 
@@ -305,6 +341,13 @@ public class DistributedCountAttributeAggregator extends AttributeAggregator {
         }
     }
 
+    /**
+     * Retrieves the distributed throttle configuration for the API Manager.
+     * Attempts to fetch the configuration from the service reference holder.
+     * If fetching the configuration fails, logs a warning message and returns null.
+     *
+     * @return the {@link DistributedThrottleConfig} instance if successfully loaded, or null if loading fails.
+     */
     private static DistributedThrottleConfig getDistributedThrottleConfig() {
         try {
             return ServiceReferenceHolder.getInstance()
@@ -340,7 +383,7 @@ public class DistributedCountAttributeAggregator extends AttributeAggregator {
             log.debug("Starting key-value store sync scheduler with interval: "
                     + kvStoreSyncIntervalMilliseconds + " ms, pool size: " + corePoolSize);
 
-            masterScheduler.scheduleAtFixedRate(() -> {
+            masterSyncTask = masterScheduler.scheduleAtFixedRate(() -> {
                 try {
                     CompletableFuture<?>[] futures = ACTIVE_AGGREGATORS.values().stream()
                             .map(aggregator -> CompletableFuture.runAsync(() -> {
@@ -373,6 +416,10 @@ public class DistributedCountAttributeAggregator extends AttributeAggregator {
      */
     public static void shutdownScheduler() {
         synchronized (schedulerLock) {
+            if (masterSyncTask != null) {
+                masterSyncTask.cancel(false);
+                masterSyncTask = null;
+            }
             if (kvStoreSyncScheduler != null && !kvStoreSyncScheduler.isShutdown()) {
                 log.debug("Shutting down key-value store sync scheduler...");
                 kvStoreSyncScheduler.shutdown();
@@ -399,5 +446,8 @@ public class DistributedCountAttributeAggregator extends AttributeAggregator {
         }
     }
 
-}
+    private boolean isResetRequested(Object[] data) {
+        return data != null && data.length > 1 && Boolean.TRUE.equals(data[1]);
+    }
 
+}
