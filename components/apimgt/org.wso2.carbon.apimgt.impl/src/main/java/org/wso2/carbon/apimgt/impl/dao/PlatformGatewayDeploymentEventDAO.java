@@ -199,6 +199,27 @@ public class PlatformGatewayDeploymentEventDAO {
     }
 
     /**
+     * Delete delivered events older than the given timestamp to prevent unbounded table growth.
+     *
+     * @param before delete rows where DELIVERED_AT IS NOT NULL AND DELIVERED_AT &lt; before
+     * @return number of rows deleted
+     */
+    public int deleteDeliveredEventsOlderThan(Timestamp before) throws APIManagementException {
+        if (before == null) {
+            return 0;
+        }
+        try (Connection connection = APIMgtDBUtil.getConnection();
+             PreparedStatement ps = connection.prepareStatement(
+                     SQLConstants.PlatformGatewayDeploymentEventSQLConstants.DELETE_DELIVERED_EVENTS_OLDER_THAN)) {
+            ps.setTimestamp(1, before);
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            log.error("Error deleting old delivered deployment events: " + e.getMessage(), e);
+            throw new APIManagementException("Error deleting old delivered events", e);
+        }
+    }
+
+    /**
      * Record returned from getPendingEventsForGateway (id and payload for send + mark delivered).
      */
     public static class DeploymentEventRecord {

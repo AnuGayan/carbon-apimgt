@@ -37,6 +37,7 @@ import org.wso2.carbon.apimgt.impl.config.APIMConfigServiceImpl;
 import org.wso2.carbon.apimgt.impl.service.PlatformGatewayArtifactServiceImpl;
 import org.wso2.carbon.apimgt.impl.service.PlatformGatewayDeploymentEventServiceImpl;
 import org.wso2.carbon.apimgt.impl.service.PlatformGatewayServiceImpl;
+import org.wso2.carbon.apimgt.impl.gateway.PlatformGatewayAPIKeyEventService;
 import org.wso2.carbon.apimgt.impl.gateway.PlatformGatewayDeploymentDispatcher;
 import org.wso2.carbon.apimgt.impl.gatewayartifactsynchronizer.ArtifactSaver;
 import org.wso2.carbon.apimgt.impl.gatewayartifactsynchronizer.GatewayArtifactGenerator;
@@ -94,6 +95,9 @@ public class ServiceReferenceHolder {
 
     /** Optional dispatcher for platform gateway deploy/undeploy; when null, platform notifier no-ops. */
     private PlatformGatewayDeploymentDispatcher platformGatewayDeploymentDispatcher;
+
+    /** Optional service to broadcast API key lifecycle events to connected platform gateways. */
+    private PlatformGatewayAPIKeyEventService platformGatewayAPIKeyEventService;
 
     private ServiceReferenceHolder() {
 
@@ -255,6 +259,14 @@ public class ServiceReferenceHolder {
 
     public void setPlatformGatewayDeploymentDispatcher(PlatformGatewayDeploymentDispatcher platformGatewayDeploymentDispatcher) {
         this.platformGatewayDeploymentDispatcher = platformGatewayDeploymentDispatcher;
+    }
+
+    public PlatformGatewayAPIKeyEventService getPlatformGatewayAPIKeyEventService() {
+        return platformGatewayAPIKeyEventService;
+    }
+
+    public void setPlatformGatewayAPIKeyEventService(PlatformGatewayAPIKeyEventService platformGatewayAPIKeyEventService) {
+        this.platformGatewayAPIKeyEventService = platformGatewayAPIKeyEventService;
     }
 
     public ArtifactSaver getArtifactSaver() {

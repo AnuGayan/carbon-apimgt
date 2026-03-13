@@ -69,15 +69,10 @@ public class PlatformGatewayApiKeyAuthInterceptor extends AbstractPhaseIntercept
         try {
             gateway = PlatformGatewayTokenUtil.verifyToken(apiKey);
         } catch (Exception e) {
-            if (log.isDebugEnabled()) {
-                log.debug("Platform gateway api-key verification failed", e);
-            }
+            log.warn("Platform gateway api-key verification failed with unexpected error", e);
             throw new AuthenticationException("Unauthenticated request");
         }
         if (gateway == null) {
-            if (log.isDebugEnabled()) {
-                log.debug("Platform gateway api-key invalid or expired");
-            }
             throw new AuthenticationException("Unauthenticated request");
         }
         message.put(RestApiConstants.REQUEST_AUTHENTICATION_SCHEME, RestApiConstants.PLATFORM_GATEWAY_API_KEY);

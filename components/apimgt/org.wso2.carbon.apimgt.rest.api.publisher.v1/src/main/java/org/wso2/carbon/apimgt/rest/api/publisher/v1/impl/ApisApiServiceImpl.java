@@ -70,6 +70,7 @@ import org.wso2.carbon.apimgt.impl.restapi.publisher.OperationPoliciesApiService
 import org.wso2.carbon.apimgt.impl.utils.APIMWSDLReader;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.impl.utils.AsyncApiParserImplUtil;
+import org.wso2.carbon.apimgt.impl.gateway.PlatformGatewayAPIKeyEventService;
 import org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.impl.utils.CertificateMgtUtils;
 import org.wso2.carbon.apimgt.impl.workflow.WorkflowConstants;
@@ -3916,6 +3917,20 @@ public class ApisApiServiceImpl implements ApisApiService {
         APIKeyDTO apiKeyDTO = new APIKeyDTO();
         apiKeyDTO.setApikey(token);
         apiKeyDTO.setValidityTime(60 * 1000);
+        // Notify connected platform gateways so they can add the key to their cache
+        PlatformGatewayAPIKeyEventService eventService =
+                ServiceReferenceHolder.getInstance().getPlatformGatewayAPIKeyEventService();
+        if (eventService != null) {
+            try {
+                eventService.broadcastAPIKeyCreated(apiId, token, "internal", "*",
+                        null, null, null, null, null, userName);
+                log.info("Broadcast apikey.created to platform gateways for apiId=" + apiId);
+            } catch (Exception e) {
+                log.warn("Failed to broadcast apikey.created to platform gateways: " + e.getMessage(), e);
+            }
+        } else {
+            log.info("Platform gateway API key event service not available; skipping apikey.created broadcast for apiId=" + apiId);
+        }
         return Response.ok().entity(apiKeyDTO).build();
     }
 

@@ -765,6 +765,8 @@ public class ApplicationsApiServiceImpl implements ApplicationsApiService {
                                     }
                                     String tokenIdentifier = payload.getString(APIConstants.JwtTokenConstants.JWT_ID);
                                     String tenantDomain = RestApiCommonUtil.getLoggedInUserTenantDomain();
+                                    // JWT-style revoke: no apiId/keyName. For opaque key revoke with apiId/keyName use
+                                    // revokeAPIKey(tokenIdentifier, expiryTime, tenantDomain, apiId, keyName, userId).
                                     apiConsumer.revokeAPIKey(tokenIdentifier, expiryTime, tenantDomain);
                                     return Response.ok().build();
                                 } else {

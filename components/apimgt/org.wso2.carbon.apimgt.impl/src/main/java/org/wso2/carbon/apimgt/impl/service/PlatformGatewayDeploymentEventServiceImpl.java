@@ -49,6 +49,26 @@ public class PlatformGatewayDeploymentEventServiceImpl implements PlatformGatewa
     }
 
     @Override
+    public List<PlatformGatewayDeploymentEventRecord> getPendingEventsForGateway(String gatewayId)
+            throws APIManagementException {
+        List<PlatformGatewayDeploymentEventDAO.DeploymentEventRecord> daoList =
+                PlatformGatewayDeploymentEventDAO.getInstance().getPendingEventsForGateway(gatewayId);
+        List<PlatformGatewayDeploymentEventRecord> result = new ArrayList<>(daoList.size());
+        for (PlatformGatewayDeploymentEventDAO.DeploymentEventRecord r : daoList) {
+            result.add(new PlatformGatewayDeploymentEventRecord(r.getId(), r.getPayload()));
+        }
+        return result;
+    }
+
+    @Override
+    public void markDelivered(List<String> eventIds) throws APIManagementException {
+        if (eventIds == null || eventIds.isEmpty()) {
+            return;
+        }
+        PlatformGatewayDeploymentEventDAO.getInstance().markDelivered(eventIds);
+    }
+
+    @Override
     public List<PlatformGatewayDeploymentEventRecord> getAndMarkDeliveredPendingEventsForGateway(String gatewayId)
             throws APIManagementException {
         List<PlatformGatewayDeploymentEventDAO.DeploymentEventRecord> daoList =
@@ -58,5 +78,14 @@ public class PlatformGatewayDeploymentEventServiceImpl implements PlatformGatewa
             result.add(new PlatformGatewayDeploymentEventRecord(r.getId(), r.getPayload()));
         }
         return result;
+    }
+
+    @Override
+    public int cleanupDeliveredEventsOlderThan(long retentionMs) throws APIManagementException {
+        if (retentionMs <= 0) {
+            return 0;
+        }
+        java.sql.Timestamp before = new java.sql.Timestamp(System.currentTimeMillis() - retentionMs);
+        return PlatformGatewayDeploymentEventDAO.getInstance().deleteDeliveredEventsOlderThan(before);
     }
 }

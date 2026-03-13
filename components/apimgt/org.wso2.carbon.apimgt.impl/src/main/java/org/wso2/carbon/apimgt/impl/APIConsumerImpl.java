@@ -110,6 +110,7 @@ import org.wso2.carbon.apimgt.impl.dto.TierPermissionDTO;
 import org.wso2.carbon.apimgt.impl.dto.WorkflowDTO;
 import org.wso2.carbon.apimgt.impl.factory.GatewayHolder;
 import org.wso2.carbon.apimgt.impl.factory.KeyManagerHolder;
+import org.wso2.carbon.apimgt.impl.gateway.PlatformGatewayAPIKeyEventService;
 import org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.impl.monetization.DefaultMonetizationImpl;
 import org.wso2.carbon.apimgt.impl.notifier.events.ApplicationEvent;
@@ -3696,7 +3697,14 @@ APIConstants.AuditLogConstants.DELETED, this.username);
         return getOpenAPIDefinitionForDeployment(api, environmentName, kmId);
     }
 
+    @Override
     public void revokeAPIKey(String apiKey, long expiryTime, String tenantDomain) throws APIManagementException {
+        revokeAPIKey(apiKey, expiryTime, tenantDomain, null, null, null);
+    }
+
+    @Override
+    public void revokeAPIKey(String apiKey, long expiryTime, String tenantDomain, String apiId, String keyName,
+                             String userId) throws APIManagementException {
 
         RevocationRequestPublisher revocationRequestPublisher = RevocationRequestPublisher.getInstance();
         Properties properties = new Properties();
@@ -3713,6 +3721,21 @@ APIConstants.AuditLogConstants.DELETED, this.username);
                 apiKey, APIConstants.API_KEY_AUTH_TYPE,
                 expiryTime, tenantId);
         revocationRequestPublisher.publishRevocationEvents(apiKey, properties);
+
+        // Notify connected platform gateways when apiId and keyName are known (e.g. opaque key revoke)
+        if (StringUtils.isNotBlank(apiId) && StringUtils.isNotBlank(keyName)) {
+            PlatformGatewayAPIKeyEventService eventService =
+                    ServiceReferenceHolder.getInstance().getPlatformGatewayAPIKeyEventService();
+            if (eventService != null) {
+                try {
+                    eventService.broadcastAPIKeyRevoked(apiId, keyName, userId);
+                } catch (Exception e) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Failed to broadcast apikey.revoked to platform gateways: " + e.getMessage());
+                    }
+                }
+            }
+        }
     }
 
     /**

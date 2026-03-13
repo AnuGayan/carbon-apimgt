@@ -5244,6 +5244,17 @@ public class SQLConstants {
         /** Get platform revision artifact (YAML bytes) from AM_GW_API_ARTIFACTS. */
         public static final String SELECT_REVISION_ARTIFACT_SQL =
                 "SELECT ARTIFACT FROM AM_GW_API_ARTIFACTS WHERE API_ID = ? AND REVISION_ID = ?";
+        /** List all deployments (API_UUID, REVISION_UUID, DEPLOYED_TIME) for a gateway by name. */
+        public static final String SELECT_DEPLOYMENTS_BY_GATEWAY_NAME =
+                "SELECT r.API_UUID, drm.REVISION_UUID, drm.DEPLOYED_TIME FROM AM_DEPLOYMENT_REVISION_MAPPING drm "
+                        + "INNER JOIN AM_REVISION r ON drm.REVISION_UUID = r.REVISION_UUID WHERE drm.NAME = ?";
+        /** Same as above with optional since filter (DEPLOYED_TIME >= ?). */
+        public static final String SELECT_DEPLOYMENTS_BY_GATEWAY_NAME_SINCE =
+                "SELECT r.API_UUID, drm.REVISION_UUID, drm.DEPLOYED_TIME FROM AM_DEPLOYMENT_REVISION_MAPPING drm "
+                        + "INNER JOIN AM_REVISION r ON drm.REVISION_UUID = r.REVISION_UUID WHERE drm.NAME = ? AND drm.DEPLOYED_TIME >= ?";
+        /** Resolve REVISION_UUID to API_UUID for batch lookup. */
+        public static final String SELECT_API_UUID_BY_REVISION_UUID =
+                "SELECT API_UUID FROM AM_REVISION WHERE REVISION_UUID = ?";
     }
 
     /** SQL for AM_GW_PLATFORM_DEPLOYMENT_EVENT (multi-CP WebSocket sync: persist then push on connect). */
@@ -5254,5 +5265,8 @@ public class SQLConstants {
                 "SELECT ID, PAYLOAD FROM AM_GW_PLATFORM_DEPLOYMENT_EVENT WHERE GATEWAY_ID = ? AND DELIVERED_AT IS NULL ORDER BY CREATED_AT";
         public static final String UPDATE_MARK_DELIVERED =
                 "UPDATE AM_GW_PLATFORM_DEPLOYMENT_EVENT SET DELIVERED_AT = ? WHERE ID = ?";
+        /** Delete delivered events older than the given timestamp to prevent unbounded table growth. */
+        public static final String DELETE_DELIVERED_EVENTS_OLDER_THAN =
+                "DELETE FROM AM_GW_PLATFORM_DEPLOYMENT_EVENT WHERE DELIVERED_AT IS NOT NULL AND DELIVERED_AT < ?";
     }
 }

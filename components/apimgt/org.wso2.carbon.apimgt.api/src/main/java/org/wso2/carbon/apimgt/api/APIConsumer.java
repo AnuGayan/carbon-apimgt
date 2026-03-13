@@ -782,6 +782,20 @@ public interface APIConsumer extends APIManager {
     void revokeAPIKey(String apiKey, long expiryTime, String tenantDomain) throws APIManagementException;
 
     /**
+     * Revoke an API key and optionally notify connected platform gateways (when apiId and keyName are provided).
+     * Use this overload when revoking an opaque API key and the apiId/keyName are known (e.g. from opaque key store).
+     *
+     * @param apiKey       token identifier to revoke
+     * @param expiryTime   expiry time
+     * @param tenantDomain tenant domain
+     * @param apiId        API UUID (optional; when non-null and keyName non-null, apikey.revoked is broadcast to platform gateways)
+     * @param keyName      key name (optional)
+     * @param userId       user id (optional, for event payload)
+     */
+    void revokeAPIKey(String apiKey, long expiryTime, String tenantDomain, String apiId, String keyName, String userId)
+            throws APIManagementException;
+
+    /**
      * Updates the details of the specified user application.
      *
      * @param query Search query typed by the user at the devportal

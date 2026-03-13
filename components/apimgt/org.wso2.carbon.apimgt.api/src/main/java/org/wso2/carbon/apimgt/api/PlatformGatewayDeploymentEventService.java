@@ -42,6 +42,23 @@ public interface PlatformGatewayDeploymentEventService {
             throws APIManagementException;
 
     /**
+     * Get pending events for the gateway (DELIVERED_AT IS NULL). Does not mark as delivered.
+     * Used by the scheduler to push to already-connected gateways; caller must send then call markDelivered.
+     *
+     * @param gatewayId gateway UUID
+     * @return list of records (id, payload)
+     */
+    List<PlatformGatewayDeploymentEventRecord> getPendingEventsForGateway(String gatewayId)
+            throws APIManagementException;
+
+    /**
+     * Mark the given event IDs as delivered. Call after sending payloads to the gateway.
+     *
+     * @param eventIds event IDs returned from getPendingEventsForGateway
+     */
+    void markDelivered(List<String> eventIds) throws APIManagementException;
+
+    /**
      * Get pending events for the gateway and mark them as delivered in one transaction.
      * Call when gateway connects; send each payload over WebSocket then they are already marked.
      *
@@ -50,4 +67,13 @@ public interface PlatformGatewayDeploymentEventService {
      */
     List<PlatformGatewayDeploymentEventRecord> getAndMarkDeliveredPendingEventsForGateway(String gatewayId)
             throws APIManagementException;
+
+    /**
+     * Delete delivered events older than the given retention window to prevent unbounded table growth.
+     * Only rows with DELIVERED_AT set and older than (now - retentionMs) are removed.
+     *
+     * @param retentionMs retention window in milliseconds (e.g. 86400000 = 24 hours)
+     * @return number of rows deleted
+     */
+    int cleanupDeliveredEventsOlderThan(long retentionMs) throws APIManagementException;
 }

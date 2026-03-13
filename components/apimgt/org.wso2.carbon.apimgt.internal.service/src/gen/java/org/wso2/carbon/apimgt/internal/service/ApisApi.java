@@ -64,7 +64,7 @@ ApisApiService delegate = new ApisApiServiceImpl();
     @ApiResponses(value = { 
         @ApiResponse(code = 200, message = "API definition (zip with api.yaml when Accept application/zip, else JSON).", response = File.class),
         @ApiResponse(code = 404, message = "API not found", response = Void.class),
-        @ApiResponse(code = 200, message = "Unexpected error", response = Void.class) })
+        @ApiResponse(code = 200, message = "Unexpected error", response = ErrorDTO.class) })
     public Response apisApiIdGet(@ApiParam(value = "API UUID.",required=true) @PathParam("apiId") String apiId,  @ApiParam(value = "application/zip for API Platform gateway format; application/json for APIList." , defaultValue="application/json")@HeaderParam("Accept") String accept) throws APIManagementException{
         return delegate.apisApiIdGet(apiId, accept, securityContext);
     }

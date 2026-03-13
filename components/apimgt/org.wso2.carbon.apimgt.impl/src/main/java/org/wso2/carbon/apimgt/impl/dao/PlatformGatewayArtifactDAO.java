@@ -30,6 +30,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * DAO for platform gateway revision-scoped artifact storage using AM_GW_API_ARTIFACTS.
@@ -178,6 +180,85 @@ public class PlatformGatewayArtifactDAO {
         } catch (SQLException e) {
             log.error("Error deleting all revision artifacts for API " + apiId, e);
             throw new APIManagementException("Error deleting revision artifacts for API", e);
+        }
+    }
+
+    /**
+     * List all deployments (apiUuid, revisionUuid, deployedTime) for a gateway by name.
+     * Optional since: if non-null, only rows with DEPLOYED_TIME >= since are returned.
+     */
+    public List<DeploymentRow> listDeploymentsByGatewayName(String gatewayName, Timestamp since)
+            throws APIManagementException {
+        if (gatewayName == null) {
+            return new ArrayList<>();
+        }
+        String sql = since != null
+                ? SQLConstants.PlatformGatewayArtifactSQLConstants.SELECT_DEPLOYMENTS_BY_GATEWAY_NAME_SINCE
+                : SQLConstants.PlatformGatewayArtifactSQLConstants.SELECT_DEPLOYMENTS_BY_GATEWAY_NAME;
+        try (Connection connection = APIMgtDBUtil.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, gatewayName.trim());
+            if (since != null) {
+                ps.setTimestamp(2, since);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                List<DeploymentRow> rows = new ArrayList<>();
+                while (rs.next()) {
+                    rows.add(new DeploymentRow(
+                            rs.getString("API_UUID"),
+                            rs.getString("REVISION_UUID"),
+                            rs.getTimestamp("DEPLOYED_TIME")));
+                }
+                return rows;
+            }
+        } catch (SQLException e) {
+            log.error("Error listing deployments for gateway " + gatewayName, e);
+            throw new APIManagementException("Error listing deployments for platform gateway", e);
+        }
+    }
+
+    /**
+     * Resolve REVISION_UUID to API_UUID (for batch deployment lookup).
+     */
+    public String getApiUuidByRevisionUuid(String revisionUuid) throws APIManagementException {
+        if (revisionUuid == null) {
+            return null;
+        }
+        try (Connection connection = APIMgtDBUtil.getConnection();
+             PreparedStatement ps = connection.prepareStatement(
+                     SQLConstants.PlatformGatewayArtifactSQLConstants.SELECT_API_UUID_BY_REVISION_UUID)) {
+            ps.setString(1, revisionUuid.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getString("API_UUID") : null;
+            }
+        } catch (SQLException e) {
+            log.error("Error resolving API_UUID for revision " + revisionUuid, e);
+            throw new APIManagementException("Error resolving API for revision", e);
+        }
+    }
+
+    /** One row from listDeploymentsByGatewayName. */
+    public static class DeploymentRow {
+        private final String apiUuid;
+        private final String revisionUuid;
+        private final Timestamp deployedTime;
+
+        public DeploymentRow(String apiUuid, String revisionUuid, Timestamp deployedTime) {
+            this.apiUuid = apiUuid;
+            this.revisionUuid = revisionUuid;
+            this.deployedTime = deployedTime;
+        }
+
+        public String getApiUuid() {
+            return apiUuid;
+        }
+
+        public String getRevisionUuid() {
+            return revisionUuid;
+        }
+
+        public Timestamp getDeployedTime() {
+            return deployedTime;
         }
     }
 }

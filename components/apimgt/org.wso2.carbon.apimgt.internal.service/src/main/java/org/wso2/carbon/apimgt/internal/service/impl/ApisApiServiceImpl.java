@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -244,22 +245,15 @@ public class ApisApiServiceImpl implements ApisApiService {
         if (messageContext == null) {
             return null;
         }
-        Message message = messageContext.get(Message.class);
-        if (message == null) {
+        HttpServletRequest request = (HttpServletRequest) messageContext.getHttpServletRequest();
+        if (request == null) {
             return null;
         }
-        @SuppressWarnings("unchecked")
-        Map<String, List<String>> headers = (Map<String, List<String>>) message.get(Message.PROTOCOL_HEADERS);
-        if (headers == null) {
+        String header = request.getHeader("api-key");
+        if (StringUtils.isBlank(header)) {
             return null;
         }
-        for (Map.Entry<String, List<String>> e : headers.entrySet()) {
-            if (e.getKey() != null && "api-key".equalsIgnoreCase(e.getKey()) && e.getValue() != null
-                    && !e.getValue().isEmpty()) {
-                return e.getValue().get(0);
-            }
-        }
-        return null;
+        return header;
     }
 
     private static byte[] buildZipWithYaml(String yamlContent) throws APIManagementException {
