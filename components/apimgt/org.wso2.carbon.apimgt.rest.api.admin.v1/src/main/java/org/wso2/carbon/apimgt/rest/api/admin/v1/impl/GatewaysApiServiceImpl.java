@@ -81,7 +81,7 @@ public class GatewaysApiServiceImpl implements GatewaysApiService {
     private static final String GATEWAY_PROP_BASE_URL = "baseUrl";
 
     @Override
-    public Response gatewaysPost(CreatePlatformGatewayRequestDTO body, MessageContext messageContext)
+    public Response createPlatformGateway(CreatePlatformGatewayRequestDTO body, MessageContext messageContext)
             throws APIManagementException {
         String organization = RestApiUtil.getValidatedOrganization(messageContext);
         validateCreateBody(body);
@@ -275,7 +275,7 @@ public class GatewaysApiServiceImpl implements GatewaysApiService {
     }
 
     @Override
-    public Response gatewaysGet(MessageContext messageContext) throws APIManagementException {
+    public Response getPlatformGateways(MessageContext messageContext) throws APIManagementException {
         String organization = RestApiUtil.getValidatedOrganization(messageContext);
         PlatformGatewayService service =
                 ServiceReferenceHolder.getInstance().getPlatformGatewayService();
@@ -299,7 +299,7 @@ public class GatewaysApiServiceImpl implements GatewaysApiService {
     }
 
     @Override
-    public Response gatewaysGatewayIdPut(String gatewayId, UpdatePlatformGatewayRequestDTO body,
+    public Response updatePlatformGateway(String gatewayId, UpdatePlatformGatewayRequestDTO body,
             MessageContext messageContext) throws APIManagementException {
         validateIdentifier(gatewayId, "gatewayId");
         String organization = RestApiUtil.getValidatedOrganization(messageContext);
@@ -344,7 +344,7 @@ public class GatewaysApiServiceImpl implements GatewaysApiService {
     }
 
     @Override
-    public Response gatewaysGatewayIdDelete(String gatewayId, MessageContext messageContext)
+    public Response deletePlatformGateway(String gatewayId, MessageContext messageContext)
             throws APIManagementException {
         validateIdentifier(gatewayId, "gatewayId");
         String organization = RestApiUtil.getValidatedOrganization(messageContext);
@@ -357,7 +357,7 @@ public class GatewaysApiServiceImpl implements GatewaysApiService {
     }
 
     @Override
-    public Response gatewaysGatewayIdRegenerateTokenPost(String gatewayId, MessageContext messageContext)
+    public Response regeneratePlatformGatewayToken(String gatewayId, MessageContext messageContext)
             throws APIManagementException {
         validateIdentifier(gatewayId, "gatewayId");
         String organization = RestApiUtil.getValidatedOrganization(messageContext);

@@ -2255,6 +2255,7 @@ paths:
     get:
       tags:
         - Platform Gateways
+      operationId: getPlatformGateways
       summary: Get all platform gateways
       description: |
         Get all registered platform gateways for the organization.
@@ -2279,6 +2280,7 @@ paths:
     post:
       tags:
         - Platform Gateways
+      operationId: createPlatformGateway
       summary: Register a platform gateway
       description: |
         Register a new platform gateway. A registration token is generated and returned
@@ -2317,6 +2319,7 @@ paths:
     post:
       tags:
         - Platform Gateways
+      operationId: regeneratePlatformGatewayToken
       summary: Regenerate registration token for a platform gateway
       description: |
         Regenerate the registration token for an existing platform gateway. The old token is revoked
@@ -2354,6 +2357,7 @@ paths:
     put:
       tags:
         - Platform Gateways
+      operationId: updatePlatformGateway
       summary: Update a platform gateway
       description: |
         Update platform gateway metadata. Request body must include all updatable fields (displayName,
@@ -2389,6 +2393,7 @@ paths:
     delete:
       tags:
         - Platform Gateways
+      operationId: deletePlatformGateway
       summary: Delete a platform gateway
       description: |
         Delete a platform gateway and all its references (tokens, instance mappings, revision deployment
