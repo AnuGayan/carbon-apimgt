@@ -2253,6 +2253,7 @@ paths:
   ######################################################
   /gateways:
     get:
+      operationId: gatewaysGet
       tags:
         - Platform Gateways
       summary: Get all platform gateways
@@ -2277,6 +2278,7 @@ paths:
           source: 'curl -k -H "Authorization: Bearer ae4eae22-3f65-387b-a171-d37eaa366fa8"
           "https://127.0.0.1:9443/api/am/admin/v4/gateways"'
     post:
+      operationId: gatewaysPost
       tags:
         - Platform Gateways
       summary: Register a platform gateway
@@ -2315,6 +2317,7 @@ paths:
 
   /gateways/{gatewayId}/regenerate-token:
     post:
+      operationId: gatewaysGatewayIdRegenerateTokenPost
       tags:
         - Platform Gateways
       summary: Regenerate registration token for a platform gateway
@@ -2352,6 +2355,7 @@ paths:
 
   /gateways/{gatewayId}:
     put:
+      operationId: gatewaysGatewayIdPut
       tags:
         - Platform Gateways
       summary: Update a platform gateway
@@ -2387,6 +2391,7 @@ paths:
         - OAuth2Security:
             - apim:admin
     delete:
+      operationId: gatewaysGatewayIdDelete
       tags:
         - Platform Gateways
       summary: Delete a platform gateway
@@ -5782,7 +5787,7 @@ components:
         status:
           type: string
           readOnly: true
-          description: For platform gateway environments (gatewayType api-platform), connection status to the control plane (Active or Inactive).
+          description: For platform gateway environments (gatewayType Platform), connection status to the control plane (Active or Inactive).
           example: Active
           default: Active
           enum:
