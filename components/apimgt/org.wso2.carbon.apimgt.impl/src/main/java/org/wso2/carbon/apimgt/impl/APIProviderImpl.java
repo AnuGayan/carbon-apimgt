@@ -558,6 +558,8 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         }
         //Validate Transports
         validateAndSetTransports(api);
+        // For Platform Gateway APIs, derive apiSecurity from hub policies
+        deriveApiSecurityFromHubPolicies(api);
         validateAndSetAPISecurity(api);
 
         if (api.getAdditionalProperties() != null) {
@@ -1027,6 +1029,8 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                 .getTenantDomain(APIUtil.replaceEmailDomainBack(api.getId().getProviderName()));
         //Validate Transports
         validateAndSetTransports(api);
+        // For Platform Gateway APIs, derive apiSecurity from hub policies
+        deriveApiSecurityFromHubPolicies(api);
         validateAndSetAPISecurity(api);
         validateKeyManagers(api, existingAPI.getKeyManagers());
 
@@ -1094,6 +1098,8 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
 
         //Validate Transports
         validateAndSetTransports(api);
+        // For Platform Gateway APIs, derive apiSecurity from hub policies
+        deriveApiSecurityFromHubPolicies(api);
         validateAndSetAPISecurity(api);
         try {
             api.setCreatedTime(existingAPI.getCreatedTime());
@@ -2285,6 +2291,84 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                 && APIConstants.WSO2_API_PLATFORM_GATEWAY.equalsIgnoreCase(api.getGatewayType());
     }
 
+    /**
+     * For Platform Gateway APIs, derives apiSecurity from hub policies at both API-level and operation-level.
+     * This ensures DevPortal functionalities work correctly by populating apiSecurity from the
+     * attached authentication policies.
+     * Maps: api-key-auth → api_key, basic-auth → basic_auth, jwt-auth → oauth2
+     *
+     * @param api The API object to process
+     */
+    private void deriveApiSecurityFromHubPolicies(API api) {
+        if (!isPlatformGatewayApi(api)) {
+            return;
+        }
+
+        Set<String> securitySchemes = new LinkedHashSet<>();
+        boolean hasApiKeyPolicy = false;
+        boolean hasJwtPolicy = false;
+
+        // Collect from API-level hub policies
+        List<OperationPolicy> apiLevelPolicies = api.getHubPolicies();
+        if (apiLevelPolicies != null) {
+            for (OperationPolicy policy : apiLevelPolicies) {
+                String policyName = policy.getPolicyName();
+                collectSecuritySchemeFromPolicy(policyName, securitySchemes);
+                if ("api-key-auth".equalsIgnoreCase(policyName)) {
+                    hasApiKeyPolicy = true;
+                } else if ("jwt-auth".equalsIgnoreCase(policyName)) {
+                    hasJwtPolicy = true;
+                }
+            }
+        }
+
+        // Collect from operation-level (URITemplate) hub policies
+        Set<URITemplate> uriTemplates = api.getUriTemplates();
+        if (uriTemplates != null) {
+            for (URITemplate template : uriTemplates) {
+                List<OperationPolicy> opPolicies = template.getHubPolicies();
+                if (opPolicies != null) {
+                    for (OperationPolicy policy : opPolicies) {
+                        String policyName = policy.getPolicyName();
+                        collectSecuritySchemeFromPolicy(policyName, securitySchemes);
+                        if ("api-key-auth".equalsIgnoreCase(policyName)) {
+                            hasApiKeyPolicy = true;
+                        } else if ("jwt-auth".equalsIgnoreCase(policyName)) {
+                            hasJwtPolicy = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Set derived apiSecurity if any auth policies found
+        if (!securitySchemes.isEmpty()) {
+            api.setApiSecurity(String.join(",", securitySchemes));
+
+            if (hasApiKeyPolicy && api.getApiKeyHeader() == null) {
+                api.setApiKeyHeader(APIConstants.API_KEY_HEADER_DEFAULT);
+            }
+            if (hasJwtPolicy && api.getAuthorizationHeader() == null) {
+                api.setAuthorizationHeader(APIConstants.AUTHORIZATION_HEADER_DEFAULT);
+            }
+        }
+    }
+
+    /**
+     * Maps hub policy name to API security scheme and adds to the collection.
+     *
+     * @param policyName      The hub policy name
+     * @param securitySchemes The set to add the mapped security scheme to
+     */
+    private void collectSecuritySchemeFromPolicy(String policyName, Set<String> securitySchemes) {
+        if ("api-key-auth".equalsIgnoreCase(policyName)) {
+            securitySchemes.add(APIConstants.API_SECURITY_API_KEY);
+        } else if ("basic-auth".equalsIgnoreCase(policyName)) {
+            securitySchemes.add(APIConstants.API_SECURITY_BASIC_AUTH);
+        } else if ("jwt-auth".equalsIgnoreCase(policyName)) {
+            securitySchemes.add(APIConstants.DEFAULT_API_SECURITY_OAUTH2);
+        }
+    }
 
     @Override
     public boolean validateAppliedPolicyWithSpecification(OperationPolicySpecification policySpecification,
