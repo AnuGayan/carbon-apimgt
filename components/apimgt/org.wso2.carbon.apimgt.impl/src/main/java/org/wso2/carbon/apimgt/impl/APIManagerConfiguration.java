@@ -3502,60 +3502,14 @@ public class APIManagerConfiguration {
             }
         }
 
-        // New: platform gateway connect-with-token configuration (separate element)
+        // Universal Gateway version configuration for UI quick-start metadata.
         OMElement pgConnectElem = omElement.getFirstChildWithName(
                 new QName(APIConstants.GatewayNotification.PLATFORM_GATEWAY_CONNECT_CONFIGURATION));
         if (pgConnectElem != null) {
-            List<org.wso2.carbon.apimgt.impl.dto.ConnectGatewayConfig> connectGateways = new ArrayList<>();
             OMElement globalVersionEl = pgConnectElem.getFirstChildWithName(new QName("UniversalGatewayVersion"));
             if (globalVersionEl != null && globalVersionEl.getText() != null
                     && !globalVersionEl.getText().trim().isEmpty()) {
                 platformGatewayConnectConfig.setUniversalGatewayVersion(globalVersionEl.getText().trim());
-            }
-            OMElement connectGatewaysElem = pgConnectElem.getFirstChildWithName(
-                    new QName(APIConstants.GatewayNotification.CONNECT_GATEWAYS));
-            if (connectGatewaysElem != null) {
-                Iterator<?> connectIt = connectGatewaysElem.getChildrenWithName(
-                        new QName(APIConstants.GatewayNotification.CONNECT));
-                while (connectIt != null && connectIt.hasNext()) {
-                    OMElement connectElem = (OMElement) connectIt.next();
-                    if (connectElem == null) {
-                        continue;
-                    }
-                    org.wso2.carbon.apimgt.impl.dto.ConnectGatewayConfig entry =
-                            new org.wso2.carbon.apimgt.impl.dto.ConnectGatewayConfig();
-                    OMElement rt = connectElem.getFirstChildWithName(
-                            new QName(APIConstants.GatewayNotification.REGISTRATION_TOKEN));
-                    if (rt != null && rt.getText() != null && !rt.getText().trim().isEmpty()) {
-                        entry.setRegistrationToken(rt.getText().trim());
-                    }
-                    OMElement nameEl = connectElem.getFirstChildWithName(
-                            new QName(APIConstants.GatewayNotification.CONNECT_NAME));
-                    if (nameEl != null && nameEl.getText() != null) {
-                        entry.setName(nameEl.getText().trim());
-                    }
-                    OMElement displayEl = connectElem.getFirstChildWithName(
-                            new QName(APIConstants.GatewayNotification.CONNECT_DISPLAY_NAME));
-                    if (displayEl != null && displayEl.getText() != null) {
-                        entry.setDisplayName(displayEl.getText().trim());
-                    }
-                    OMElement descEl = connectElem.getFirstChildWithName(
-                            new QName(APIConstants.GatewayNotification.CONNECT_DESCRIPTION));
-                    if (descEl != null && descEl.getText() != null) {
-                        entry.setDescription(descEl.getText().trim());
-                    }
-                    OMElement urlEl = connectElem.getFirstChildWithName(
-                            new QName(APIConstants.GatewayNotification.CONNECT_URL));
-                    if (urlEl != null && urlEl.getText() != null && !urlEl.getText().trim().isEmpty()) {
-                        entry.setUrl(urlEl.getText().trim());
-                    }
-                    if (!entry.getRegistrationToken().isEmpty()) {
-                        connectGateways.add(entry);
-                    }
-                }
-            }
-            if (!connectGateways.isEmpty()) {
-                platformGatewayConnectConfig.setConnectGateways(connectGateways);
             }
         }
     }
@@ -3565,8 +3519,7 @@ public class APIManagerConfiguration {
     }
 
     /**
-     * Connect-with-token config ([[apim.universal_gateway.connect]]). Use this for the connect flow only;
-     * notification/heartbeat code should use {@link #getGatewayNotificationConfiguration()}.
+     * Universal gateway metadata config.
      */
     public PlatformGatewayConnectConfig getPlatformGatewayConnectConfig() {
         return platformGatewayConnectConfig;
