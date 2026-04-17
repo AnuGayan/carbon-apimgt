@@ -5932,7 +5932,7 @@ components:
           description: Universal Gateway versions from config. Set for deploy targets so UI can show version choices in the quick-start guide.
           items:
             type: string
-            example: "0.11.0"
+            example: "1.0.0"
     EnvironmentList:
       title: Environment List
       type: object
@@ -6758,7 +6758,7 @@ components:
           description: Universal Gateway versions for the quick-start guide.
           items:
             type: string
-            example: "0.11.0"
+            example: "1.0.0"
         consumptionExportEnabled:
           type: boolean
           description: Whether the ConsumptionDataExportService OSGi service is available

@@ -427,6 +427,7 @@ public enum ExceptionCodes implements ErrorHandler {
     SCOPE_VALIDATION_FAILED(900986, "Scope validation failed", 412, "Scope validation failed"),
     SHARED_SCOPE_DISPLAY_NAME_NOT_SPECIFIED(900987, "Shared Scope display name not specified", 400,
             "Shared Scope display name not specified"),
+    INVALID_SCOPE_NAME(901004, "Invalid Scope name", 400, "Invalid Scope name"),
     BLOCK_CONDITION_RETRIEVE_PARAMS_EXCEPTION(900254, "Block conditions retrieval error", 400,
             "Provided query parameters are not valid"),
     BLOCK_CONDITION_RETRIEVE_FAILED(900255, "Failed to get Block conditions", 500,
@@ -930,7 +931,9 @@ public enum ExceptionCodes implements ErrorHandler {
                                                     "Error occurred while retrieving/persisting deployment status "
                                                             + "acknowledgment"),
     API_DEPLOYMENT_ERROR(902060, "Error while deploying API to Gateway", 207,
-            "Error while deploying API to Gateway. %s");
+            "Error while deploying API to Gateway. %s"),
+    API_KEY_ASSOCIATION_NOT_AVAILABLE(902061, "API key association not available", 404,
+                       "API key association not available for the given application and API.");
     private final long errorCode;
     private final String errorMessage;
     private final int httpStatusCode;

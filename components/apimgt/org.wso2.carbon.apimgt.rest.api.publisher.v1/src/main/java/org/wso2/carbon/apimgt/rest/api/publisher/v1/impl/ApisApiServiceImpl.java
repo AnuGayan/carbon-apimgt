@@ -96,7 +96,6 @@ import org.wso2.carbon.core.util.CryptoUtil;
 import software.amazon.awssdk.core.exception.SdkClientException;
 
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.ByteArrayInputStream;
@@ -219,14 +218,15 @@ public class ApisApiServiceImpl implements ApisApiService {
     }
 
     @Override
-    public Response getSequenceBackendContent(String type, String apiId, MessageContext messageContext) throws APIManagementException {
+    public Response getSequenceBackendContent(String type, String apiId, MessageContext messageContext)
+            throws APIManagementException {
         APIProvider apiProvider = RestApiCommonUtil.getLoggedInUserProvider();
         CommonUtils.validateAPIExistence(apiId);
 
         SequenceBackendData data = apiProvider.getCustomBackendByAPIUUID(apiId, type);
         if (data == null) {
             throw new APIMgtResourceNotFoundException(
-                    "Couldn't retrieve an existing Sequence Backend for API: " + apiId,
+                    "Couldn't retrieve an existing sequence backend for API: " + apiId,
                     ExceptionCodes.from(ExceptionCodes.CUSTOM_BACKEND_NOT_FOUND, apiId));
         }
         File file = RestApiPublisherUtils.exportCustomBackendData(data.getSequence(), data.getName());
@@ -508,17 +508,15 @@ public class ApisApiServiceImpl implements ApisApiService {
     }
 
     @Override
-    public Response sequenceBackendUpdate(String apiId, InputStream sequenceInputStream,
-                                          Attachment sequenceDetail, String type, MessageContext messageContext) throws APIManagementException {
+    public Response sequenceBackendUpdate(String apiId, InputStream sequenceInputStream, Attachment sequenceDetail,
+            String type, MessageContext messageContext) throws APIManagementException {
         String username = RestApiCommonUtil.getLoggedInUsername();
         APIProvider apiProvider = RestApiCommonUtil.getProvider(username);
         String organization = RestApiUtil.getValidatedOrganization(messageContext);
         API api = apiProvider.getAPIbyUUID(apiId, organization, APIConstants.API_IDENTIFIER_TYPE);
         api.setOrganization(organization);
-        MultivaluedMap<String, String> headers = sequenceDetail.getHeaders();
-        String contentDecomp = headers.getFirst("Content-Disposition");
-
-        PublisherCommonUtils.updateCustomBackend(api, apiProvider, type, sequenceInputStream, contentDecomp);
+        RestApiPublisherUtils.attachSequenceToSequenceBackend(api, apiProvider, type, sequenceInputStream,
+                sequenceDetail);
         return Response.ok().build();
     }
 
@@ -2854,7 +2852,8 @@ public class ApisApiServiceImpl implements ApisApiService {
                     String errorMessage = "Resource id should not be empty to update a resource policy.";
                     RestApiUtil.handleBadRequest(errorMessage, log);
                 }
-                boolean isValidSchema = RestApiPublisherUtils.validateXMLSchema(body.getContent());
+                String wrappedContent = "<xml>" + body.getContent() + "</xml>";
+                boolean isValidSchema = APIUtil.validateXMLSchema(wrappedContent);
                 if (isValidSchema) {
                     List<SOAPToRestSequence> sequence = api.getSoapToRestSequences();
                     for (SOAPToRestSequence soapToRestSequence : sequence) {

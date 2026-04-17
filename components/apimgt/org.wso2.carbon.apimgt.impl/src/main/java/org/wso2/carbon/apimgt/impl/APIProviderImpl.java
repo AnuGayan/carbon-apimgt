@@ -5358,6 +5358,14 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
             }
             if (api != null) {
                 validateApiLifeCycleForApiProducts(api);
+                if (APIUtil.isSequenceDefined(api.getInSequence()) || APIUtil.isSequenceDefined(api.getOutSequence())
+                        || APIUtil.isSequenceDefined(api.getFaultSequence())) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Migrating mediation policies for reference API: " + api.getId() +
+                                " in tenant domain: " + tenantDomain);
+                    }
+                    migrateMediationPoliciesOfAPI(api, tenantDomain, false);
+                }
                 if (api.getSwaggerDefinition() != null) {
                     api.setSwaggerDefinition(getOpenAPIDefinition(apiUUID, product.getOrganization()));
                 }
@@ -5572,10 +5580,20 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                 apiUUID = apiProductResource.getApiId();
                 api = getAPIbyUUID(apiUUID, tenantDomain);
             }
-            if (APIConstants.API_SUBTYPE_AI_API.equals(api.getSubtype())) {
-                log.warn("Cannot create API Products using AI APIs.");
-                throw new APIManagementException(
-                        ExceptionCodes.from(ExceptionCodes.INVALID_API_FOR_API_PRODUCT, APIConstants.AI.AI));
+            if (api != null) {
+                if (APIConstants.API_SUBTYPE_AI_API.equals(api.getSubtype())) {
+                    log.warn("Cannot create API Products using AI APIs.");
+                    throw new APIManagementException(
+                            ExceptionCodes.from(ExceptionCodes.INVALID_API_FOR_API_PRODUCT, APIConstants.AI.AI));
+                }
+                if (APIUtil.isSequenceDefined(api.getInSequence()) || APIUtil.isSequenceDefined(api.getOutSequence())
+                        || APIUtil.isSequenceDefined(api.getFaultSequence())) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Migrating mediation policies for reference API: " + api.getId() +
+                                " in tenant domain: " + tenantDomain);
+                    }
+                    migrateMediationPoliciesOfAPI(api, tenantDomain, false);
+                }
             }
             if (api.getSwaggerDefinition() != null) {
                 api.setSwaggerDefinition(getOpenAPIDefinition(apiUUID, tenantDomain));

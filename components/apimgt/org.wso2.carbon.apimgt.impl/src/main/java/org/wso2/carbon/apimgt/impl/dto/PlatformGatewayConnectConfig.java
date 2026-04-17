@@ -23,16 +23,14 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Config for the Universal Gateway connect feature ([[apim.universal_gateway.connect]]).
- * Separate from {@link GatewayNotificationConfiguration} so existing notification/heartbeat
- * code is unchanged. Used only by the connect-with-token flow.
+ * Config for Universal Gateway metadata (e.g. versions advertised to the UI).
+ * Separate from {@link GatewayNotificationConfiguration} for notification/heartbeat settings.
  */
 public class PlatformGatewayConnectConfig {
-    private List<ConnectGatewayConfig> connectGateways = new ArrayList<>();
     private List<String> universalGatewayVersions = new ArrayList<>();
 
     /**
-     * Global Universal Gateway versions (e.g. ["0.9.0", "0.11.0"]).
+     * Global Universal Gateway versions (e.g. ["0.11.0","1.0.0"]).
      */
     public List<String> getUniversalGatewayVersions() {
         if (universalGatewayVersions == null) {
@@ -45,19 +43,5 @@ public class PlatformGatewayConnectConfig {
         this.universalGatewayVersions = universalGatewayVersions != null
                 ? new ArrayList<>(universalGatewayVersions)
                 : new ArrayList<>();
-    }
-
-    /**
-     * Connect configs (one per gateway) for connect-with-token. If empty, platform connect is disabled.
-     */
-    public List<ConnectGatewayConfig> getConnectGateways() {
-        if (connectGateways == null) {
-            connectGateways = new ArrayList<>();
-        }
-        return connectGateways;
-    }
-
-    public void setConnectGateways(List<ConnectGatewayConfig> connectGateways) {
-        this.connectGateways = connectGateways != null ? new ArrayList<>(connectGateways) : new ArrayList<>();
     }
 }
